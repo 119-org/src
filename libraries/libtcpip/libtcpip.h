@@ -1,12 +1,32 @@
 #ifndef _LIBTCPIP_H_
 #define _LIBTCPIP_H_
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
+
+#ifdef WIN32
 #include <WinSock2.h>
 #include <ws2tcpip.h>
 
 #pragma comment(lib, "ws2_32")
+
+#elif LINUX
+#include <sys/types.h>
+
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <asm/ioctls.h>
+#include <errno.h>
+typedef int SOCKET;
+#define INVALID_SOCKET	-1
+#define SOCKET_ERROR	-1
+#define WSACleanup()	do{}while(0);
+#define WSAGetLastError()	0
+#endif
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,9 +35,9 @@ extern "C" {
 #define UDP_MSG_MAX_LEN		1460	//MTU
 #define TCP_MSG_MAX_LEN		1452
 
-	int init_socket();
-	int close_socket();
-	int shutdown_socket();
+int socket_init();
+int socket_close();
+int socket_shutdown();
 
 	int tcp_socket(SOCKET* s);
 	int tcp_bind(SOCKET* s, u_short port);
