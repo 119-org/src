@@ -233,14 +233,6 @@ int get_addrinfo(char* ip, char* port)
 	return 0;
 }
 
-//int set_cb_msg(cb_msg_callback cbmsg)
-//{
-//	int ret = 0;
-//
-////	ret = udp_recvfrom(SOCKET* s, char* buf, char* ip, u_short port, int sendrecv);
-//	printf("hello \n");
-//}
-
 int tcp_server_start(u_short server_port)
 {
 	int i = 0;
@@ -326,11 +318,44 @@ int udp_client_start(char* ip, u_short port, char* send_buf = NULL)
 	udp_sendto(&sock, send_buf, ip, port);
 	return 0;
 }
+
+int cb_udp_server_start(cb_msg_callback cbmsg)
+{
+	int i = 0;
+	int ret;
+	char* recv_buf;
+	SOCKET sock;
+	recv_buf = (char*)malloc(512);
+	if(recv_buf == NULL)
+	{
+		fprintf(stdout, "malloc failed!\n");
+		return -1;
+	}
+	memset(recv_buf, 0, 512);
+	socket_init();
+	udp_socket(&sock);
+	udp_bind(&sock, 5060);
+	while(1)
+	{
+		ret = cbmsg(&sock, recv_buf, LOCAL_HOST, 5061);
+		if(ret == 0)
+		{
+			printf("udp client connect times = %d\n", i);
+			printf("udp receive buffer: %s\n", (char*)recv_buf);
+			memset(recv_buf, 0, 512);
+			i++;
+		}
+	}
+	return 0;
+}
 int main()
 {
+	cb_msg_callback cbmsg;
+	cbmsg = (cb_msg_callback)udp_recvfrom;
 //	tcp_server_start(5060);
 //	tcp_client_start("127.0.0.1", 5060);
-	udp_server_start(5060);
+//	udp_server_start(5060);
 //	udp_client_start("127.0.0.1", 5060);
+	cb_udp_server_start(cbmsg);
 	return 0;
 }

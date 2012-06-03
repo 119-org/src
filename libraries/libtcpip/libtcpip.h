@@ -65,10 +65,7 @@ int udp_server_start(u_short server_port);
 
 int get_addrinfo();
 
-typedef void (*cb_msg_callback) (SOCKET* s, int sendrecv);
-
-int set_cb_msg(cb_msg_callback cbmsg);
-
+typedef int (*cb_msg_callback)(SOCKET* s, char* buf, char* ip, u_short port);
 
 
 #ifdef __cplusplus
