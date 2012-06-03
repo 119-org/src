@@ -2,7 +2,7 @@
 CC = g++
 LD = ld
 
-CFLAGS += -D_LINUX_
+CFLAGS += -D_LINUX
 LDFLAGS := 
 
 LIB_SRCS = libtcpip.cpp
