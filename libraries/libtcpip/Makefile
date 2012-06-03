@@ -2,11 +2,11 @@
 CC = g++
 LD = ld
 
-CFLAGS += -DLINUX
+CFLAGS += -D_LINUX_
 LDFLAGS := 
 
-LIB_SRCS = libtcpip.h libtcpip.cpp
-EXE_SRCS = libtcpip.h libtcpip.cpp
+LIB_SRCS = libtcpip.cpp
+EXE_SRCS = 
 
 LIB_OBJS = $(patsubst %.cpp, %.o, $(LIB_SRCS))
 EXE_OBJS = $(patsubst %.cpp, %.o, $(EXE_SRCS))
