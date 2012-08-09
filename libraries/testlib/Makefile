@@ -5,7 +5,7 @@ LD = ld
 CFLAGS += -D_LINUX
 LDFLAGS := 
 
-LIB_SRCS = libtcpip.cpp
+LIB_SRCS = main.c
 EXE_SRCS = 
 
 LIB_OBJS = $(patsubst %.cpp, %.o, $(LIB_SRCS))
@@ -13,9 +13,9 @@ EXE_OBJS = $(patsubst %.cpp, %.o, $(EXE_SRCS))
 
 OBJS = $(LIB_OBJS) $(EXE_OBJS)
 
-TGT = test_libtcpip
-TGT_LIB_A = libtcpip.a
-TGT_LIB_SO = libtcpip.so
+TGT = test
+TGT_LIB_A =
+TGT_LIB_SO =
 
 all: $(TGT) $(TGT_LIB_A) $(TGT_LIB_SO)
 
