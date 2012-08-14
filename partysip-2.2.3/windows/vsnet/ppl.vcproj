@@ -1,136 +1,198 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="9.00"
 	Name="ppl"
-	SccProjectName=""
-	SccLocalPath="">
+	ProjectGUID="{AF0F6F1E-81BA-4ADE-91D2-3BAD43A9D35E}"
+	TargetFrameworkVersion="131072"
+	>
 	<Platforms>
 		<Platform
-			Name="Win32"/>
+			Name="Win32"
+		/>
 	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="Debug"
 			IntermediateDirectory="Debug"
 			ConfigurationType="2"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			CharacterSet="2">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName=".\.libs/ppl.tlb"
+				HeaderFileName=""
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="4"
-				AdditionalIncludeDirectories="..\..\partysip,..\..,..\..\..\osip\include,..\..\ppl\win32"
+				AdditionalIncludeDirectories="..\..\partysip;..\..;..\..\..\osip\include;..\..\ppl\win32;&quot;..\..\..\libraries\libosip2-3.6.0\include&quot;"
 				PreprocessorDefinitions="_WINDOWS;_USRDLL;PPL_EXPORTS;_DEBUG;WIN32;ENABLE_TRACE;OSIP_MT"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				UsePrecompiledHeader="2"
+				UsePrecompiledHeader="0"
 				ProgramDataBaseFileName="$(IntDir)/$(ProjectName).pdb"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				DebugInformationFormat="4"
-				CompileAs="0"/>
+				CompileAs="0"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1036"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="msvcrtd.lib Iphlpapi.lib Ws2_32.lib osipparser2.lib osip2.lib odbc32.lib odbccp32.lib"
 				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
-				AdditionalLibraryDirectories="Debug,..\..\..\osip\platform\vsnet\Debug"
-				IgnoreAllDefaultLibraries="TRUE"
-				GenerateDebugInformation="TRUE"
-				TargetMachine="1"/>
+				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="Debug;..\..\..\osip\platform\vsnet\Debug;&quot;..\..\..\libraries\libosip2-3.6.0\platform\vsnet\Debug DLL&quot;"
+				IgnoreAllDefaultLibraries="true"
+				GenerateDebugInformation="true"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+				TargetMachine="1"
+			/>
 			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
-				MkTypLibCompatible="TRUE"
-				SuppressStartupBanner="TRUE"
-				TargetEnvironment="1"
-				TypeLibraryName=".\.libs/ppl.tlb"
-				HeaderFileName=""/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1036"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="Release"
 			IntermediateDirectory="Release"
 			ConfigurationType="2"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			CharacterSet="2">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName=".\.libs/ppl.tlb"
+				HeaderFileName=""
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="..\..\partysip,..\..,..\..\..\osip\include,..\..\ppl\win32"
 				PreprocessorDefinitions="_WINDOWS;_USRDLL;PPL_EXPORTS;NDEBUG;WIN32;ENABLE_TRACE;OSIP_MT"
-				StringPooling="TRUE"
+				StringPooling="true"
 				RuntimeLibrary="2"
-				EnableFunctionLevelLinking="TRUE"
-				UsePrecompiledHeader="2"
+				EnableFunctionLevelLinking="true"
+				UsePrecompiledHeader="0"
 				ProgramDataBaseFileName="$(IntDir)/$(ProjectName).pdb"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
-				CompileAs="0"/>
+				SuppressStartupBanner="true"
+				CompileAs="0"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1036"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="msvcrt.lib Iphlpapi.lib Ws2_32.lib osipparser2.lib osip2.lib odbc32.lib odbccp32.lib"
 				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="Release,..\..\..\osip\platform\vsnet\Release"
-				IgnoreAllDefaultLibraries="TRUE"
-				TargetMachine="1"/>
+				IgnoreAllDefaultLibraries="true"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+				TargetMachine="1"
+			/>
 			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="TRUE"
-				SuppressStartupBanner="TRUE"
-				TargetEnvironment="1"
-				TypeLibraryName=".\.libs/ppl.tlb"
-				HeaderFileName=""/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="1036"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -138,78 +200,102 @@
 	<Files>
 		<Filter
 			Name="Source Files"
-			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
+			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+			>
 			<File
-				RelativePath="..\..\ppl\win32\ppldbm.c">
+				RelativePath="..\..\ppl\win32\ppldbm.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\ppl\win32\ppldns.c">
+				RelativePath="..\..\ppl\win32\ppldns.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\ppl\win32\ppldso.c">
+				RelativePath="..\..\ppl\win32\ppldso.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\ppl\win32\pplgetopt.c">
+				RelativePath="..\..\ppl\win32\pplgetopt.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\ppl\win32\pplinit.c">
+				RelativePath="..\..\ppl\win32\pplinit.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\ppl\win32\pplmd5.c">
+				RelativePath="..\..\ppl\win32\pplmd5.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\ppl\win32\pplpipe.c">
+				RelativePath="..\..\ppl\win32\pplpipe.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\ppl\win32\pplsocket.c">
+				RelativePath="..\..\ppl\win32\pplsocket.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\ppl\win32\ppltime.c">
+				RelativePath="..\..\ppl\win32\ppltime.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\ppl\win32\ppluinfo.c">
+				RelativePath="..\..\ppl\win32\ppluinfo.c"
+				>
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl">
+			Filter="h;hpp;hxx;hm;inl"
+			>
 			<File
-				RelativePath="..\..\ppl\win32\ppl\ppl.h">
+				RelativePath="..\..\ppl\win32\ppl\ppl.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\ppl\win32\ppl\ppl_dbm.h">
+				RelativePath="..\..\ppl\win32\ppl\ppl_dbm.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\ppl\win32\ppl\ppl_dns.h">
+				RelativePath="..\..\ppl\win32\ppl\ppl_dns.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\ppl\win32\ppl\ppl_dso.h">
+				RelativePath="..\..\ppl\win32\ppl\ppl_dso.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\ppl\win32\ppl\ppl_getopt.h">
+				RelativePath="..\..\ppl\win32\ppl\ppl_getopt.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\ppl\win32\ppl\ppl_init.h">
+				RelativePath="..\..\ppl\win32\ppl\ppl_init.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\ppl\win32\ppl\ppl_md5.h">
+				RelativePath="..\..\ppl\win32\ppl\ppl_md5.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\ppl\win32\ppl\ppl_pipe.h">
+				RelativePath="..\..\ppl\win32\ppl\ppl_pipe.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\ppl\win32\ppl\ppl_socket.h">
+				RelativePath="..\..\ppl\win32\ppl\ppl_socket.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\ppl\win32\ppl\ppl_time.h">
+				RelativePath="..\..\ppl\win32\ppl\ppl_time.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\ppl\win32\ppl\ppl_uinfo.h">
+				RelativePath="..\..\ppl\win32\ppl\ppl_uinfo.h"
+				>
 			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
-			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
+			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+			>
 		</Filter>
 	</Files>
 	<Globals>

@@ -1,133 +1,195 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="9.00"
 	Name="partysip"
-	SccProjectName=""
-	SccLocalPath="">
+	ProjectGUID="{7C4ACA99-48B3-4598-8861-9C4439D37937}"
+	TargetFrameworkVersion="131072"
+	>
 	<Platforms>
 		<Platform
-			Name="Win32"/>
+			Name="Win32"
+		/>
 	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="Release"
 			IntermediateDirectory="Release"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			CharacterSet="2">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TypeLibraryName=".\.libs/partysip.tlb"
+				HeaderFileName=""
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="..\..\partysip,..\..,..\..\..\osip\include,..\..\ppl\win32"
 				PreprocessorDefinitions="_CONSOLE;NDEBUG;WIN32;ENABLE_TRACE;OSIP_MT"
-				StringPooling="TRUE"
+				StringPooling="true"
 				RuntimeLibrary="2"
-				EnableFunctionLevelLinking="TRUE"
-				UsePrecompiledHeader="2"
+				EnableFunctionLevelLinking="true"
+				UsePrecompiledHeader="0"
 				ObjectFile=""
 				ProgramDataBaseFileName="$(IntDir)/$(ProjectName).pdb"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
-				CompileAs="0"/>
+				SuppressStartupBanner="true"
+				CompileAs="0"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1036"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="ppl.lib Ws2_32.lib msvcrt.lib osipparser2.lib osip2.lib odbc32.lib odbccp32.lib"
 				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="Release,..\..\..\osip\platform\vsnet\Release"
-				IgnoreAllDefaultLibraries="TRUE"
+				IgnoreAllDefaultLibraries="true"
 				SubSystem="1"
-				TargetMachine="1"/>
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+				TargetMachine="1"
+			/>
 			<Tool
-				Name="VCMIDLTool"
-				TypeLibraryName=".\.libs/partysip.tlb"
-				HeaderFileName=""/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="1036"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="Debug"
 			IntermediateDirectory="Debug"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			CharacterSet="2">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TypeLibraryName=".\.libs/partysip.tlb"
+				HeaderFileName=""
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/D /D "
 				Optimization="4"
-				AdditionalIncludeDirectories="..\..\partysip,..\..,..\..\..\osip\include,..\..\ppl\win32"
+				AdditionalIncludeDirectories="..\..\partysip;..\..;..\..\..\osip\include;..\..\ppl\win32;&quot;..\..\..\libraries\libosip2-3.6.0\include&quot;"
 				PreprocessorDefinitions="_CONSOLE;_DEBUG;WIN32;ENABLE_TRACE;OSIP_MT"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				UsePrecompiledHeader="2"
+				UsePrecompiledHeader="0"
 				ProgramDataBaseFileName="$(IntDir)/$(ProjectName).pdb"
 				BrowseInformation="1"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
+				SuppressStartupBanner="true"
 				DebugInformationFormat="4"
-				CompileAs="0"/>
+				CompileAs="0"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG"
+				Culture="1036"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="ppl.lib Ws2_32.lib msvcrtd.lib osipparser2.lib osip2.lib odbc32.lib odbccp32.lib"
 				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
-				AdditionalLibraryDirectories="Debug,..\..\..\osip\platform\vsnet\Debug"
-				IgnoreAllDefaultLibraries="TRUE"
-				GenerateDebugInformation="TRUE"
+				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="Debug;..\..\..\osip\platform\vsnet\Debug;&quot;..\..\..\libraries\libosip2-3.6.0\platform\vsnet\Debug DLL&quot;"
+				IgnoreAllDefaultLibraries="true"
+				GenerateDebugInformation="true"
 				SubSystem="1"
-				TargetMachine="1"/>
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+				TargetMachine="1"
+			/>
 			<Tool
-				Name="VCMIDLTool"
-				TypeLibraryName=".\.libs/partysip.tlb"
-				HeaderFileName=""/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1036"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -135,120 +197,158 @@
 	<Files>
 		<Filter
 			Name="Source Files"
-			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat">
+			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+			>
 			<File
-				RelativePath="..\..\src\imp.c">
+				RelativePath="..\..\src\imp.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\imp_plugin.c">
+				RelativePath="..\..\src\imp_plugin.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\main.c">
+				RelativePath="..\..\src\main.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\nt_svc.c">
+				RelativePath="..\..\src\nt_svc.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\ntservice.c">
+				RelativePath="..\..\src\ntservice.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\osip_msg.c">
+				RelativePath="..\..\src\osip_msg.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\psp_config.c">
+				RelativePath="..\..\src\psp_config.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\psp_core.c">
+				RelativePath="..\..\src\psp_core.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\psp_core2.c">
+				RelativePath="..\..\src\psp_core2.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\psp_core3.c">
+				RelativePath="..\..\src\psp_core3.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\psp_core4.c">
+				RelativePath="..\..\src\psp_core4.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\psp_core5.c">
+				RelativePath="..\..\src\psp_core5.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\psp_module.c">
+				RelativePath="..\..\src\psp_module.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\psp_nat.c">
+				RelativePath="..\..\src\psp_nat.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\psp_osip.c">
+				RelativePath="..\..\src\psp_osip.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\psp_plugin.c">
+				RelativePath="..\..\src\psp_plugin.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\psp_request.c">
+				RelativePath="..\..\src\psp_request.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\psp_resolv.c">
+				RelativePath="..\..\src\psp_resolv.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\psp_utils.c">
+				RelativePath="..\..\src\psp_utils.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\sfp.c">
+				RelativePath="..\..\src\sfp.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\sfp_branch.c">
+				RelativePath="..\..\src\sfp_branch.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\sfp_fsm.c">
+				RelativePath="..\..\src\sfp_fsm.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\sfp_fsm2.c">
+				RelativePath="..\..\src\sfp_fsm2.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\sfp_plugin.c">
+				RelativePath="..\..\src\sfp_plugin.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\tlp.c">
+				RelativePath="..\..\src\tlp.c"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\tlp_plugin.c">
+				RelativePath="..\..\src\tlp_plugin.c"
+				>
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl">
+			Filter="h;hpp;hxx;hm;inl"
+			>
 			<File
-				RelativePath="..\..\partysip\osip_msg.h">
+				RelativePath="..\..\partysip\osip_msg.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\partysip\partysip.h">
+				RelativePath="..\..\partysip\partysip.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\src\proxyfsm.h">
+				RelativePath="..\..\src\proxyfsm.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\partysip\psp_config.h">
+				RelativePath="..\..\partysip\psp_config.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\partysip\psp_macros.h">
+				RelativePath="..\..\partysip\psp_macros.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\partysip\psp_nat.h">
+				RelativePath="..\..\partysip\psp_nat.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\partysip\psp_plug.h">
+				RelativePath="..\..\partysip\psp_plug.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\partysip\psp_request.h">
+				RelativePath="..\..\partysip\psp_request.h"
+				>
 			</File>
 			<File
-				RelativePath="..\..\partysip\psp_utils.h">
+				RelativePath="..\..\partysip\psp_utils.h"
+				>
 			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
-			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
+			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
+			>
 		</Filter>
 	</Files>
 	<Globals>
