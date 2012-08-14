@@ -1,0 +1,142 @@
+partysip (2.2.3)
+	* forget to allow record-routing for SUBSCRIBE and NOTIFY.
+	* new option to reload regularly ip for server without fixed ip.
+	* Send 403 Forbidden for wrong login. (instead of 404)
+
+partysip (2.2.2)
+	* fix a bug when uncomplete aor is provided in registration.
+
+partysip (2.2.1)
+	* fix authentication for ACK. (credentials are a copy of INVITE ones)
+
+partysip (2.2.0)
+	* prepare core server to act as a presence server. (unfinished)
+	* new groups plugin to dispatch calls to groups of users.
+	* fix for macOSX.
+	* fix expires attribute in contact headers of 200ok for REGISTER
+	* Update to libosip2-2.2.X interface (binary support for SIP message)
+	
+partysip (2.1.2)
+	* Make User-Agent and Server header optionnal.
+	* Fix multicast compilation.
+	* Improve IPv6 support ("ipv6_enable = on").
+	
+partysip (2.1.1)
+        * improve configure.in file
+
+partysip (2.1.0)
+	* add new sequential routing mode. (instead of forking)
+	* remove the imp module.
+	* remove the uap module.
+	* fix some latency delays.
+	
+partysip (2.0.3)
+	* add Mac OS X support.
+	* improve configure.in for BSD and OSX.
+	
+partysip (2.0.2)
+	* SIPit13: forward ACK when they contains FQDNs.
+	
+partysip (2.0.1)
+	* fix gdbm support when its dbm interface is used.
+	
+partysip (0.6.0)
+	* change in API for plugin. (plugin_init has a new optionnal argument)
+	* filter can now apply to external or interal url only.
+	* patch for debian package and version management.
+	* fix auth.c when magicstring is not defined.
+	* fix BSD compilation issue.
+	* fix SRV record support.
+	* IPv6 support. (compile with -DHAVE_GETADDRINFO -DIPV6_SUPPORT)
+
+partysip (0.5.6)
+	* fix leak when cseq does not match request method for new request.
+	* fix broken pipe simulation on windows.
+	* fix memory leak when incoming transaction does not complete.
+	
+partysip (0.5.5)
+	* refuse to send CANCEL for non-INVITE transaction.
+	* fix insertion of route set in cancel request.
+	* improve loop detection and allow at least one spiral.
+	* fix bug when a CANCEL comes but no transactions has been found.
+	* fix bug when deleting branch with fallback address.
+	* memory leak and possible buffer overflow in the filter plugin.
+	* fix buffer overflow when dbm support is enabled.
+	* all IPs (serverip) are now autodetected on linux, sun, BSD and win32.
+	* fix a crash when a very late ACK come and the user is not registred.
+	* improve dbm detection. (mainly tested with db (db3))
+	* fix a bug after a SRV query special failure type.
+	* fix rpm and debian packaging.
+	* SIP masquerading for NAT support on all platforms. (require a static
+	  configuration on the NAT to forward RTP streams to UAs. Each UA have
+	  to use a different port.)
+	
+partysip (0.5.4)
+	* fix WIN32 compilation issue.
+	* remove "magicstring" usage. (replaced by a random md5 string)
+	* start ipv6 support with full getaddrinfo support.
+	* fix no answer when a the DNS resolution succeed.
+	* because relocation can happen, reload "plugin_release" when needed.
+	* html output for psp_users. (unfinished)
+	* memory leak related to ACK for 2xx!
+	* add optionnal support for dbm format. (for recovery of users locations)
+	* firewall support for several streams for one call-id.
+	
+partysip (0.5.3)
+	* add support for multicast.
+	* fix udp to support UAs behind port restricted cone and symetric NAT.
+	* new filter plugin usefull for defining dialing plans.
+	* fix support for several ip in "serverip" configuration.
+	* add support for NAT (linux only) **EXPERIMENTAL and UNFINISHED**.
+
+partysip (0.5.2)
+	* support for received and rport parameter.
+	* start support for non sip-url scheme inside partysip.
+	* fix handling of record-route headers when used with other proxies.
+	* switch to automake1.6 (should also work with automake1.5)
+
+partysip (0.5.1)
+	* new 'plugins' option in the config file. (load the set of given plugins)
+	* partysip can be started as a service. (WIN32)
+	* add cache feature for dns resolution. (ttl attribute)
+	* The port info in resolved entry is only valid for SRV records.
+	* plugin/auth/auth.c: fix segfault for registration from unknown users.
+	* Digest auth tested with MSN4.7 (w2000), Optipoint400 (siemens), linphone.
+
+partysip (0.5.0)
+	* fix record-route handling: ACK and strict router issue.
+	* race condition, socklen_t detection, update authentication API.
+	* fix "CANCEL" management.
+	* removal of the sless module.
+	* totally new sfp module management.
+
+partysip (0.4.7)
+	* fix expires management in rgstrar.c + expired registrations.
+	* update to libosip new MACROs (above 0.8.9)
+	* fix url comparison rules for matching a domain based on the port number.
+
+partysip (0.4.6)
+	* can now declare more than one local fqdn. (to avoid loop)
+	* use 'CFLAGS="-DOLD_NAMESER" ./configure' if NS_GET16 is missing.
+	* ppluinfo.c (x2): fix for messenger when Contact feild has no username.
+	* ppldns.c/main.c: automatic detection of localip.!
+	* pplcore5.c: fix timer for bad response forwarding.
+
+partysip (0.4.5)
+	* windows/BSD/Solaris/osf support.
+	* statefull mode
+	* record-routing mode.
+
+partysip (0.4.4)
+	* minor bug fixes.
+
+partysip (0.4.3)
+	* minor bug fixes.
+
+partysip (0.4.2)
+        * Initial release. 
+	* UDP support
+	* Digest Authentication (rfc2617) support. (need testing!)
+	* SIP Registrar behavior.
+	* SIP Redirect server mode.
+	* SIP Stateless server mode.

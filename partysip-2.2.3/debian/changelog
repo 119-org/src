@@ -1,0 +1,21 @@
+partysip (2.2.3-1)
+	* forget to allow record-routing for SUBSCRIBE and NOTIFY.
+	* new option to reload regularly ip for server without fixed ip.
+	* Send 403 Forbidden for wrong login. (instead of 404)
+
+partysip (2.2.2-1)
+	* fix a bug when uncomplete aor is provided in registration.
+
+partysip (2.2.1-1) unstable; urgency=low
+	* fix authentication for ACK. (credentials are a copy of INVITE ones)
+
+partysip (2.2.0-1) unstable; urgency=low
+
+        * prepare core server to act as a presence server. (unfinished)
+	* new groups plugin to dispatch calls to groups of users.
+	* fix for macOSX.
+	* fix expires attribute in contact headers of 200ok for REGISTER
+	* Update to libosip2-2.2.X interface (binary support for SIP message)
+	
+ -- Aymeric Moizard <jack@atosc.org>  Thu,  3 Feb 2005 12:27:17 +1100
+

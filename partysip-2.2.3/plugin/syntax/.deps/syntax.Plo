@@ -1,0 +1,358 @@
+syntax.lo: syntax.c ../../partysip/partysip.h ../../config.h \
+ ../../ppl/unix/ppl/ppl_time.h ../../ppl/unix/ppl/ppl.h \
+ /usr/include/stdio.h /usr/include/features.h /usr/include/bits/predefs.h \
+ /usr/include/sys/cdefs.h /usr/include/bits/wordsize.h \
+ /usr/include/gnu/stubs.h /usr/include/gnu/stubs-32.h \
+ /usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5.2/include/stddef.h \
+ /usr/include/bits/types.h /usr/include/bits/typesizes.h \
+ /usr/include/libio.h /usr/include/_G_config.h /usr/include/wchar.h \
+ /usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5.2/include/stdarg.h \
+ /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h \
+ /usr/include/time.h /usr/include/bits/time.h /usr/include/xlocale.h \
+ /usr/include/sys/time.h /usr/include/sys/select.h \
+ /usr/include/bits/select.h /usr/include/bits/sigset.h \
+ ../../ppl/unix/ppl/ppl_dso.h /usr/include/dlfcn.h \
+ /usr/include/bits/dlfcn.h ../../ppl/unix/ppl/ppl_socket.h \
+ /usr/include/sys/types.h /usr/include/endian.h \
+ /usr/include/bits/endian.h /usr/include/bits/byteswap.h \
+ /usr/include/sys/sysmacros.h /usr/include/bits/pthreadtypes.h \
+ /usr/include/sys/un.h /usr/include/bits/sockaddr.h /usr/include/string.h \
+ /usr/include/sys/socket.h /usr/include/sys/uio.h /usr/include/bits/uio.h \
+ /usr/include/bits/socket.h /usr/include/i386-linux-gnu/asm/socket.h \
+ /usr/include/asm-generic/socket.h \
+ /usr/include/i386-linux-gnu/asm/sockios.h \
+ /usr/include/asm-generic/sockios.h /usr/include/netinet/in.h \
+ /usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5.2/include/stdint.h \
+ /usr/include/stdint.h /usr/include/bits/wchar.h /usr/include/bits/in.h \
+ /usr/include/unistd.h /usr/include/bits/posix_opt.h \
+ /usr/include/bits/environments.h /usr/include/bits/confname.h \
+ /usr/include/getopt.h ../../ppl/unix/ppl/ppl_pipe.h \
+ /usr/local/include/osip2/osip.h \
+ /usr/local/include/osipparser2/osip_const.h \
+ /usr/local/include/osip2/osip_time.h \
+ /usr/local/include/osipparser2/osip_parser.h \
+ /usr/local/include/osipparser2/osip_message.h \
+ /usr/local/include/osipparser2/osip_headers.h \
+ /usr/local/include/osipparser2/osip_port.h /usr/include/stdlib.h \
+ /usr/include/bits/waitflags.h /usr/include/bits/waitstatus.h \
+ /usr/include/alloca.h /usr/local/include/osipparser2/osip_list.h \
+ /usr/local/include/osipparser2/osip_uri.h \
+ /usr/local/include/osipparser2/headers/osip_header.h \
+ /usr/local/include/osipparser2/headers/osip_accept.h \
+ /usr/local/include/osipparser2/headers/osip_content_type.h \
+ /usr/local/include/osipparser2/headers/osip_accept_encoding.h \
+ /usr/local/include/osipparser2/headers/osip_accept_language.h \
+ /usr/local/include/osipparser2/headers/osip_alert_info.h \
+ /usr/local/include/osipparser2/headers/osip_call_info.h \
+ /usr/local/include/osipparser2/headers/osip_allow.h \
+ /usr/local/include/osipparser2/headers/osip_content_length.h \
+ /usr/local/include/osipparser2/headers/osip_authentication_info.h \
+ /usr/local/include/osipparser2/headers/osip_authorization.h \
+ /usr/local/include/osipparser2/headers/osip_call_id.h \
+ /usr/local/include/osipparser2/headers/osip_contact.h \
+ /usr/local/include/osipparser2/headers/osip_from.h \
+ /usr/local/include/osipparser2/headers/osip_content_disposition.h \
+ /usr/local/include/osipparser2/headers/osip_content_encoding.h \
+ /usr/local/include/osipparser2/headers/osip_cseq.h \
+ /usr/local/include/osipparser2/headers/osip_error_info.h \
+ /usr/local/include/osipparser2/headers/osip_mime_version.h \
+ /usr/local/include/osipparser2/headers/osip_proxy_authenticate.h \
+ /usr/local/include/osipparser2/headers/osip_www_authenticate.h \
+ /usr/local/include/osipparser2/headers/osip_proxy_authentication_info.h \
+ /usr/local/include/osipparser2/headers/osip_proxy_authorization.h \
+ /usr/local/include/osipparser2/headers/osip_record_route.h \
+ /usr/local/include/osipparser2/headers/osip_route.h \
+ /usr/local/include/osipparser2/headers/osip_to.h \
+ /usr/local/include/osipparser2/headers/osip_via.h \
+ /usr/local/include/osipparser2/osip_body.h \
+ /usr/local/include/osip2/osip_fifo.h /usr/local/include/osip2/osip_mt.h \
+ /usr/include/errno.h /usr/include/bits/errno.h \
+ /usr/include/linux/errno.h /usr/include/i386-linux-gnu/asm/errno.h \
+ /usr/include/asm-generic/errno.h /usr/include/asm-generic/errno-base.h \
+ ../../partysip/psp_macros.h ../../ppl/unix/ppl/ppl.h \
+ ../../partysip/psp_request.h ../../ppl/unix/ppl/ppl_dns.h \
+ /usr/include/arpa/inet.h /usr/include/arpa/nameser.h \
+ /usr/include/sys/param.h \
+ /usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5.2/include-fixed/limits.h \
+ /usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5.2/include-fixed/syslimits.h \
+ /usr/include/limits.h /usr/include/bits/posix1_lim.h \
+ /usr/include/bits/local_lim.h /usr/include/linux/limits.h \
+ /usr/include/bits/posix2_lim.h /usr/include/linux/param.h \
+ /usr/include/i386-linux-gnu/asm/param.h /usr/include/asm-generic/param.h \
+ /usr/include/sys/bitypes.h /usr/include/arpa/nameser_compat.h \
+ /usr/include/resolv.h /usr/include/netdb.h /usr/include/rpc/netdb.h \
+ /usr/include/bits/netdb.h ../../partysip/psp_plug.h \
+ ../../partysip/psp_config.h ../../partysip/psp_nat.h \
+ /usr/local/include/osipparser2/sdp_message.h syntax.h
+
+../../partysip/partysip.h:
+
+../../config.h:
+
+../../ppl/unix/ppl/ppl_time.h:
+
+../../ppl/unix/ppl/ppl.h:
+
+/usr/include/stdio.h:
+
+/usr/include/features.h:
+
+/usr/include/bits/predefs.h:
+
+/usr/include/sys/cdefs.h:
+
+/usr/include/bits/wordsize.h:
+
+/usr/include/gnu/stubs.h:
+
+/usr/include/gnu/stubs-32.h:
+
+/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5.2/include/stddef.h:
+
+/usr/include/bits/types.h:
+
+/usr/include/bits/typesizes.h:
+
+/usr/include/libio.h:
+
+/usr/include/_G_config.h:
+
+/usr/include/wchar.h:
+
+/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5.2/include/stdarg.h:
+
+/usr/include/bits/stdio_lim.h:
+
+/usr/include/bits/sys_errlist.h:
+
+/usr/include/time.h:
+
+/usr/include/bits/time.h:
+
+/usr/include/xlocale.h:
+
+/usr/include/sys/time.h:
+
+/usr/include/sys/select.h:
+
+/usr/include/bits/select.h:
+
+/usr/include/bits/sigset.h:
+
+../../ppl/unix/ppl/ppl_dso.h:
+
+/usr/include/dlfcn.h:
+
+/usr/include/bits/dlfcn.h:
+
+../../ppl/unix/ppl/ppl_socket.h:
+
+/usr/include/sys/types.h:
+
+/usr/include/endian.h:
+
+/usr/include/bits/endian.h:
+
+/usr/include/bits/byteswap.h:
+
+/usr/include/sys/sysmacros.h:
+
+/usr/include/bits/pthreadtypes.h:
+
+/usr/include/sys/un.h:
+
+/usr/include/bits/sockaddr.h:
+
+/usr/include/string.h:
+
+/usr/include/sys/socket.h:
+
+/usr/include/sys/uio.h:
+
+/usr/include/bits/uio.h:
+
+/usr/include/bits/socket.h:
+
+/usr/include/i386-linux-gnu/asm/socket.h:
+
+/usr/include/asm-generic/socket.h:
+
+/usr/include/i386-linux-gnu/asm/sockios.h:
+
+/usr/include/asm-generic/sockios.h:
+
+/usr/include/netinet/in.h:
+
+/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5.2/include/stdint.h:
+
+/usr/include/stdint.h:
+
+/usr/include/bits/wchar.h:
+
+/usr/include/bits/in.h:
+
+/usr/include/unistd.h:
+
+/usr/include/bits/posix_opt.h:
+
+/usr/include/bits/environments.h:
+
+/usr/include/bits/confname.h:
+
+/usr/include/getopt.h:
+
+../../ppl/unix/ppl/ppl_pipe.h:
+
+/usr/local/include/osip2/osip.h:
+
+/usr/local/include/osipparser2/osip_const.h:
+
+/usr/local/include/osip2/osip_time.h:
+
+/usr/local/include/osipparser2/osip_parser.h:
+
+/usr/local/include/osipparser2/osip_message.h:
+
+/usr/local/include/osipparser2/osip_headers.h:
+
+/usr/local/include/osipparser2/osip_port.h:
+
+/usr/include/stdlib.h:
+
+/usr/include/bits/waitflags.h:
+
+/usr/include/bits/waitstatus.h:
+
+/usr/include/alloca.h:
+
+/usr/local/include/osipparser2/osip_list.h:
+
+/usr/local/include/osipparser2/osip_uri.h:
+
+/usr/local/include/osipparser2/headers/osip_header.h:
+
+/usr/local/include/osipparser2/headers/osip_accept.h:
+
+/usr/local/include/osipparser2/headers/osip_content_type.h:
+
+/usr/local/include/osipparser2/headers/osip_accept_encoding.h:
+
+/usr/local/include/osipparser2/headers/osip_accept_language.h:
+
+/usr/local/include/osipparser2/headers/osip_alert_info.h:
+
+/usr/local/include/osipparser2/headers/osip_call_info.h:
+
+/usr/local/include/osipparser2/headers/osip_allow.h:
+
+/usr/local/include/osipparser2/headers/osip_content_length.h:
+
+/usr/local/include/osipparser2/headers/osip_authentication_info.h:
+
+/usr/local/include/osipparser2/headers/osip_authorization.h:
+
+/usr/local/include/osipparser2/headers/osip_call_id.h:
+
+/usr/local/include/osipparser2/headers/osip_contact.h:
+
+/usr/local/include/osipparser2/headers/osip_from.h:
+
+/usr/local/include/osipparser2/headers/osip_content_disposition.h:
+
+/usr/local/include/osipparser2/headers/osip_content_encoding.h:
+
+/usr/local/include/osipparser2/headers/osip_cseq.h:
+
+/usr/local/include/osipparser2/headers/osip_error_info.h:
+
+/usr/local/include/osipparser2/headers/osip_mime_version.h:
+
+/usr/local/include/osipparser2/headers/osip_proxy_authenticate.h:
+
+/usr/local/include/osipparser2/headers/osip_www_authenticate.h:
+
+/usr/local/include/osipparser2/headers/osip_proxy_authentication_info.h:
+
+/usr/local/include/osipparser2/headers/osip_proxy_authorization.h:
+
+/usr/local/include/osipparser2/headers/osip_record_route.h:
+
+/usr/local/include/osipparser2/headers/osip_route.h:
+
+/usr/local/include/osipparser2/headers/osip_to.h:
+
+/usr/local/include/osipparser2/headers/osip_via.h:
+
+/usr/local/include/osipparser2/osip_body.h:
+
+/usr/local/include/osip2/osip_fifo.h:
+
+/usr/local/include/osip2/osip_mt.h:
+
+/usr/include/errno.h:
+
+/usr/include/bits/errno.h:
+
+/usr/include/linux/errno.h:
+
+/usr/include/i386-linux-gnu/asm/errno.h:
+
+/usr/include/asm-generic/errno.h:
+
+/usr/include/asm-generic/errno-base.h:
+
+../../partysip/psp_macros.h:
+
+../../ppl/unix/ppl/ppl.h:
+
+../../partysip/psp_request.h:
+
+../../ppl/unix/ppl/ppl_dns.h:
+
+/usr/include/arpa/inet.h:
+
+/usr/include/arpa/nameser.h:
+
+/usr/include/sys/param.h:
+
+/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5.2/include-fixed/limits.h:
+
+/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5.2/include-fixed/syslimits.h:
+
+/usr/include/limits.h:
+
+/usr/include/bits/posix1_lim.h:
+
+/usr/include/bits/local_lim.h:
+
+/usr/include/linux/limits.h:
+
+/usr/include/bits/posix2_lim.h:
+
+/usr/include/linux/param.h:
+
+/usr/include/i386-linux-gnu/asm/param.h:
+
+/usr/include/asm-generic/param.h:
+
+/usr/include/sys/bitypes.h:
+
+/usr/include/arpa/nameser_compat.h:
+
+/usr/include/resolv.h:
+
+/usr/include/netdb.h:
+
+/usr/include/rpc/netdb.h:
+
+/usr/include/bits/netdb.h:
+
+../../partysip/psp_plug.h:
+
+../../partysip/psp_config.h:
+
+../../partysip/psp_nat.h:
+
+/usr/local/include/osipparser2/sdp_message.h:
+
+syntax.h:

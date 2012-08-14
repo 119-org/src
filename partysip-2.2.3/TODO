@@ -1,0 +1,7 @@
+
+many things!
+ * support for TCP
+ * support for other authentication means.
+ * LDAP/SQL database access
+ * presence server.
+ * improve/rewrite the plugin interface?

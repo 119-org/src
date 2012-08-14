@@ -1,0 +1,46 @@
+#!/bin/sh
+# /etc/init.d/partysipd
+#
+# Written by Aymeric Moizard <jack@atosc.org>
+
+set -e
+
+# Exit if partysipd runs from /etc/inetd.conf
+if [ -f /usr/local/etc/partysip/partysip.conf ]; then
+   echo ""
+else
+    echo "Partysip seems to not be installed"
+    exit 0
+fi
+
+#POPTION="-d 6 -l /var/log/partysip.log"
+PDAEMON="/usr/local/bin/partysip $POPTION"
+PNAME=partysipd
+
+test -x $PDAEMON || exit 0
+
+case "$1" in
+  start)
+    echo -n "Starting The partysip SIP Proxy server: "
+    start-stop-daemon --start --background -m --pidfile /var/run/partysipd/partysipd.pid --exec $PDAEMON
+    echo $PNAME
+    ;;
+  stop)
+    echo -n "Stopping The partysip SIP Proxy server: "
+    start-stop-daemon --stop --pidfile /var/run/partysipd/partysipd.pid --oknodo --exec $PDAEMON
+    echo $PNAME
+      ;;
+  restart)
+    echo "Restarting The partysip SIP Proxy server: "
+    start-stop-daemon --stop --pidfile /var/run/partysipd/partysipd.pid --oknodo --exec $PDAEMON
+    start-stop-daemon --start --background -m --pidfile /var/run/partysipd/partysipd.pid --exec $PDAEMON
+    echo $PNAME
+    ;;
+  *)
+    echo "Usage: /etc/init.d/$PNAME {start|stop|restart}"
+    exit 1
+    ;;
+esac
+
+exit 0
+

@@ -1,0 +1,3 @@
+
+SUBDIRS = unix win32
+

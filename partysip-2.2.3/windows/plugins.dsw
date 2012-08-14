@@ -1,0 +1,188 @@
+Microsoft Developer Studio Workspace File, Format Version 6.00
+# WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
+
+###############################################################################
+
+Project: "partysip"=".\partysip.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name ppl
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "ppl"=".\ppl.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
+Project: "psp_auth"=".\psp_auth.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name partysip
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name ppl
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "psp_filter"=".\psp_filter.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name partysip
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name ppl
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "psp_ls_localdb"=".\psp_ls_localdb.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name partysip
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name ppl
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "psp_ls_sfull"=".\psp_ls_sfull.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name partysip
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name ppl
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "psp_ls_static"=".\psp_ls_static.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name partysip
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name ppl
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "psp_rgstrar"=".\psp_rgstrar.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name partysip
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name ppl
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "psp_syntax"=".\psp_syntax.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name partysip
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name ppl
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "psp_udp"=".\psp_udp.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+    Begin Project Dependency
+    Project_Dep_Name partysip
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name ppl
+    End Project Dependency
+}}}
+
+###############################################################################
+
+Global:
+
+Package=<5>
+{{{
+}}}
+
+Package=<3>
+{{{
+}}}
+
+###############################################################################
+

@@ -1,0 +1,50 @@
+INSTALL
+
+
+Usual compilation process:
+
+  tar -xvzf partysip-x.x.x.tar.gz
+  cd partysip-x.x.x/
+  ./configure --disable-debug --disable-trace
+  make
+  make install
+
+Unusual compilation process:
+
+  tar -xvzf partysip-x.x.x.tar.gz
+  mkdir build-lnx
+  cd build-lnx
+  ../partysip-x.x.x/configure
+  make
+  make install
+
+To add some INCLUDE directories and Pre-processor FLAGS:
+
+  tar -xvzf partysip-x.x.x.tar.gz
+  mkdir build-lnx
+  cd build-lnx
+  CFLAGS="-DSHOW_MESSAGE -I/usr/local/include" ../partysip-x.x.x/configure
+  make
+  make install
+
+To add some INCLUDE directories and Pre-processor CFLAGS:
+
+  tar -xvzf partysip-x.x.x.tar.gz
+  mkdir build-lnx
+  cd build-lnx
+  CFLAGS=-DSHOW_MESSAGE ../partysip-x.x.x/configure
+  make
+  make install
+
+
+To install in a specific directory:
+
+  tar -xvzf partysip-x.x.x.tar.gz
+  mkdir build-lnx
+  cd build-lnx
+  ../partysip-x.x.x/configure --prefix=/home/jack/local
+  make
+  make install
+
+
+For Windows, see README file in the ./windows directory.
