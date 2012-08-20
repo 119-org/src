@@ -1,0 +1,33 @@
+Source: partysip
+Priority: optional
+Maintainer: Paul Dwerryhouse <paul@dwerryhouse.com.au>
+Build-Depends: debhelper (>= 4.0.0)
+Standards-Version: 3.6.1
+
+Package: partysip
+Section: web
+Architecture: any
+Depends: libppl (= ${Source-Version}), ${shlibs:Depends}
+Description: A SIP proxy server.
+ PartySIP is a SIP proxy server.
+
+Package: partysip-dev
+Section: web
+Architecture: any
+Depends: partysip (= ${Source-Version})
+Description: Development files for PartySIP
+ Development files for PartySIP.
+
+Package: libppl-dev
+Section: libdev
+Architecture: any
+Depends: libppl (= ${Source-Version})
+Description: PartySIP lib
+ Library for PartySIP
+
+Package: libppl
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: PartySIP library headers
+ PartySIP library headers

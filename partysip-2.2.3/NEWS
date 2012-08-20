@@ -1,0 +1,14 @@
+22th Nov:
+
+partysip is stable and tested for the SIP side of the application. It
+does contains most required features for proxy and registrar. (SRV
+record... possiblity to route calls with plugins decisions.)
+
+The weakness of partysip is now concerning the interface with
+external applications. The plugin interface (currently very
+partially used) does not fit all needs. Plugins, by now, have
+to make a decision quickly and they have to provide an answer
+as soon as they give the decision. It's not great for accessing
+database or doing any blocking calls.
+
+May be a the plugin interfaces should be rewritten.

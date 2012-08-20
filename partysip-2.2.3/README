@@ -1,0 +1,103 @@
+Project     : partysip - a SIP proxy server and service provider.
+Email       : jack@atosc.org
+License     : LGPL for partysip.
+              LGPL for the ppl library.
+              GPL for all distributed plugins.
+Team        : WellX Telecom  <partysip@wellx.com>
+              Aymeric MOIZARD <jack@atosc.org>
+FAQ         : http://www.nongnu.org/partysip/partysip.html#faq
+Mailing list: <partysip-dev@nongnu.org>
+
+Last Change : Sat Feb 22 20:41:15 UTC 2003
+
+partysip is a modular SIP proxy server. This is a central point for managing
+a SIP network. Mainly SIP phones advertise their locations (sip urls like
+<sip:jack@atosc.org>) to partysip which is then able to route the calls.
+
+-----------------------------------------
+--------------   STATUS    --------------
+-----------------------------------------
+
+read the NEWS file.
+
+-----------------------------------------
+--------------   LICENSE   --------------
+-----------------------------------------
+
+The license chosen for partysip is the LGPL. This is mainly to allow
+the implementations of vendor's plugins. If you are modifying any
+files in the source tree, please inform the authors and make your
+changes publicly available as the license require to do so.
+
+The plugins provided in the source tree of partysip are all GPL.
+People are invited to choose the GPL for all new plugins as this
+is the most useful license for users.
+
+If the license does not fit your needs, write <jack@atosc.org>.
+
+-----------------------------------------
+-------------- DESCRIPTION --------------
+-----------------------------------------
+
+partysip is a modular application where functionalities and behaviors are
+defined in plugins. A set of proposed plugins for usual behaviors is included
+in the distribution. The filtering plugin will block requests based on a
+set of rules. The authentication plugin will be responsible of validating
+credentials found in requests. A plugin will be responsible for routing
+message properly when the request does already contain routing informations.
+Other plugins will generally be used to search for locations in a local or
+remote database or through a DNS resolution (SRV records).
+
+You don't have enough?
+
+The useful feature about partysip is that you can build plugins for any
+purpose:
+ * make accounting.
+ * remote control of your house.
+ * service redirection.
+
+-----------------------------------------
+--------------   PLUGINS   --------------
+-----------------------------------------
+
+Plugins are made optional. The set of pre-loaded plugins will entirely be up
+to the proxy administrator allowing him to adapt the proxy behavior to its
+need.
+
+By now, release 0.5.5 offers 9 plugins.
+ * A UDP plugin. Any plugins for other protocol can be implemented (TCP is
+   not yet provided).
+ * The filter plugin usefull for deefining dialing plan.
+ * An authentication plugin (rfc2617) exists for MD5. (Supported by nearly all
+   SIP phones).
+ * A rgstrar plugin offers the "SIP registrar" role. Entries can be stored in
+   the a local database and dbm file.
+ * A local database access plugin (location search) that use the stored
+   info about local user to route requests.
+ * other mandatory routing plugins.
+
+You can find link to other plugins at http://www.partysip.org.
+
+-----------------------------------------
+--------------CONTRIBUTIONS--------------
+-----------------------------------------
+
+WellX Telecom trusts that partysip can gain from being a free software.
+Anyone, individuals or company, wishing to be part of the team is
+encouraged to get in touch with us.
+
+No doubt about it, contributions are always welcomed.
+
+-----------------------------------------
+--------------   CONTACTS  --------------
+-----------------------------------------
+
+partysip is primarily developed by a French company: WellX Telecom.
+For any support or development about partysip, use <partysip@wellx.com>.
+For any information about WellX Telecom, use <info@wellx.com>.
+
+http://www.wellx.com/
+WellX Telecom
+7, Rue du parc de Clagny
+78000 Versailles
+

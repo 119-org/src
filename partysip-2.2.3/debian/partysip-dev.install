@@ -1,0 +1,3 @@
+usr/include/partysip/*
+usr/lib/partysip/lib*.a
+usr/lib/partysip/lib*.la

@@ -1,0 +1,505 @@
+dnl  ##  The partysip program is a modular SIP proxy server (SIP -rfc2543-)
+dnl  ##  Copyright (C) 2002  WellX Telecom   - <partysip@wellx.com>
+dnl  ##  Copyright (C) 2002  Aymeric MOIZARD - <jack@atosc.org>
+dnl  ##  
+dnl  ##  Partysip is free software; you can redistribute it and/or modify
+dnl  ##  it under the terms of the GNU Lesser General Public License as 
+dnl  ##  published by the Free Software Foundation; either version 2
+dnl  ##  of the License, or (at your option) any later version.
+dnl  ##  
+dnl  ##  Partysip is distributed in the hope that it will be useful,
+dnl  ##  but WITHOUT ANY WARRANTY; without even the implied warranty of
+dnl  ##  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+dnl  ##  GNU Lesser General Public License for more details.
+
+dnl  ##  You should have received a copy of the GNU Lesser General Public License
+dnl  ##  along with Foobar; if not, write to the Free Software
+dnl  ##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+dnl Process this file with autoconf to produce a configure script.
+AC_REVISION($Revision: 1.68 $)dnl
+AC_PREREQ(2.50)
+AC_INIT(partysip/partysip.h)
+
+dnl require at least autoconf v 2.00
+dnl AC_COPYRIGHT (COPYRIGHT-NOTICE)
+
+AC_MSG_NOTICE([partysip, The partysip SIP proxy server.])
+AC_MSG_NOTICE([Copyright (C) 2002,2003,2004   WellX Telecom   - <partysip@wellx.com>])
+AC_MSG_NOTICE([Copyright (C) 2002,2003,2004   Aymeric MOIZARD - <jack@atosc.org>])
+
+dnl *********************************************************************
+dnl Source packaging numbers
+PSP_MAJOR_VERSION=2
+PSP_MINOR_VERSION=2
+PSP_MICRO_VERSION=3
+PPL_MAJOR_VERSION=$PSP_MAJOR_VERSION
+PPL_MINOR_VERSION=$PSP_MINOR_VERSION
+PPL_MICRO_VERSION=$PSP_MICRO_VERSION
+
+dnl Library extension
+
+LIBPPL_SO_VERSION=`expr $PPL_MINOR_VERSION + $PPL_MAJOR_VERSION`:$PPL_MICRO_VERSION:$PPL_MINOR_VERSION
+
+PSP_VERSION=$PSP_MAJOR_VERSION.$PSP_MINOR_VERSION.$PSP_MICRO_VERSION
+dnl PPL_VERSION=$PPL_MAJOR_VERSION.$PPL_MINOR_VERSION.$PPL_MICRO_VERSION
+
+AC_SUBST(PSP_VERSION)
+AC_SUBST(LIBPPL_SO_VERSION)
+
+PACKAGE=partysip
+
+AC_MSG_RESULT([Configuring ${PACKAGE} ${PSP_VERSION}])
+OS=`uname|sed -e 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/'`
+AC_MSG_RESULT([Building Package on ${OS}])
+
+dnl *********************************************************************
+dnl Initialize automake stuff
+AC_CONFIG_AUX_DIR(scripts)
+AM_CONFIG_HEADER(config.h)
+AM_INIT_AUTOMAKE($PACKAGE, $PSP_VERSION)
+AM_ACLOCAL_INCLUDE(scripts)
+
+AC_CANONICAL_HOST
+
+AC_SUBST(ac_aux_dir)
+
+dnl Checks for programs.
+
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_INSTALL
+
+dnl Initialize libtool
+LT_AC_PROG_SED
+
+AC_LIBTOOL_DLOPEN
+AC_PROG_LIBTOOL
+
+
+dnl declare --enable-* args and collect ac_help strings
+
+AC_ARG_WITH(config-dir,
+  AC_HELP_STRING([--with-config-dir=DIR],[Set config file path (default: sysconfdir)]),
+  if test "x$with_config_dir" = xyes; then
+    SIP_CONFIG_DIR="$sysconfdir/partysip"
+  else
+    if test "x$with_config_dir" = xno; then
+      AC_MSG_ERROR(Config directory required)
+    else
+      SIP_CONFIG_DIR="$with_config_dir"
+    fi
+  fi,
+  SIP_CONFIG_DIR="$sysconfdir/partysip")
+
+AC_DEFINE_DIR(CONFIG_DIR, SIP_CONFIG_DIR, [Location of installed configuration files])
+AC_SUBST(CONFIG_DIR, $SIP_CONFIG_DIR)
+
+AC_ARG_ENABLE(debug,
+[  --enable-debug          turn on debugging. (yes)],
+enable_debug=$enableval,enable_debug="yes")
+
+AC_ARG_ENABLE(trace,
+[  --enable-trace          turn on trace. (yes)],
+enable_trace=$enableval,enable_trace="yes")
+
+AC_ARG_ENABLE(syslog,
+[  --enable-syslog         turn on syslog support.],
+enable_syslog=$enableval,enable_syslog="no")
+
+AC_ARG_ENABLE(mpatrol,
+[  --enable-mpatrol        turn on memory leak detection with patrol.],
+enable_mpatrol=$enableval,enable_mpatrol="no")
+
+AC_ARG_ENABLE(hoard,
+[  --enable-hoard          use hoard replacement for malloc and free.],
+enable_hoard=$enableval,enable_hoard="no")
+
+dnl support for semaphore.h (linux/sun...)
+AC_ARG_ENABLE(semaphore,
+[  --enable-semaphore      enable support for semaphore (semaphore.h)],
+enable_semaphore=$enableval,enable_semaphore="no")
+
+dnl support for sysV semaphore in sys/sem.h (BSD/linux...)
+AC_ARG_ENABLE(sysv,
+[  --enable-sysv           enable support for sysV semaphore (sys/sem.h).],
+enable_sysv=$enableval,enable_sysv="no")
+
+dnl support for linux-thread or posix thread (pthread.h)
+AC_ARG_ENABLE(autothread,
+[  --enable-autothread     enable autodetection of POSIX threads. (default=yes)],
+enable_autothread=$enableval,enable_autothread="yes")
+
+AC_ARG_ENABLE(sctp,
+[  --enable-sctp           compile with sctp support. (default no)],
+enable_sctp=$enableval,enable_sctp="no")
+
+AC_ARG_ENABLE(ntimer,
+[  --enable-ntimer         enable new timer facility. (default yes)],
+enable_ntimer=$enableval,enable_ntimer="yes")
+
+AC_ARG_ENABLE(forking,
+[  --enable-forking        enable forking mode. (default no)],
+enable_forking=$enableval,enable_forking="no")
+
+dnl compile with mt support
+if test "x$enable_autothread" = "xyes"; then
+  PPL_FLAGS="-DOSIP_MT"
+  PARTYSIP_FLAGS="-DOSIP_MT"
+  ACX_PTHREAD()
+  PPL_FLAGS="$PPL_FLAGS -D_REENTRANT -D_THREAD_SAFE -DXOPEN_SOURCE=500"
+  PARTYSIP_FLAGS="$PARTYSIP_FLAGS -D_REENTRANT -D_THREAD_SAFE -DXOPEN_SOURCE=500"
+else
+  PPL_FLAGS="-DOSIP_MT"
+  PARTYSIP_FLAGS="-DOSIP_MT"
+fi
+
+PPL_FLAGS="$PPL_FLAGS -DHAVE_GETADDRINFO"
+PARTYSIP_FLAGS="$PARTYSIP_FLAGS -DHAVE_GETADDRINFO"
+
+if test "x$enable_forking" = "xyes"; then
+  PARTYSIP_FLAGS="$PARTYSIP_FLAGS -DEXPERIMENTAL_FORK"
+  PPL_FLAGS="$PPL_FLAGS -DEXPERIMENTAL_FORK"
+fi
+
+if test "x$enable_ntimer" = "xyes"; then
+  PARTYSIP_FLAGS="$PARTYSIP_FLAGS -DNEW_TIMER"
+  PPL_FLAGS="$PPL_FLAGS -DNEW_TIMER"
+fi
+
+if test "x$enable_semaphore" = "xyes"; then
+  PARTYSIP_FLAGS="$PARTYSIP_FLAGS -DHAVE_SEMAPHORE_H"
+  PPL_FLAGS="$PPL_FLAGS -DHAVE_SEMAPHORE_H"
+  AC_CHECK_HEADERS(semaphore.h)
+elif test "x$enable_sysv" = "xyes"; then
+  PARTYSIP_FLAGS="$PARTYSIP_FLAGS -DHAVE_SYS_SEM_H"
+  PPL_FLAGS="$PPL_FLAGS -DHAVE_SYS_SEM_H"
+  AC_CHECK_HEADERS(sys/sem.h)
+else
+  AC_CHECK_HEADERS(semaphore.h)
+  AC_CHECK_HEADERS(sys/sem.h)
+fi
+
+case $OS in
+  linux*)
+     PARTYSIP_FLAGS="$PARTYSIP_FLAGS -pedantic"
+     PPL_FLAGS="$PPL_FLAGS -pedantic"
+     ;;
+  irix*)
+     ;;
+  hpux* | hp-ux*)
+     ;;
+  aix*)
+     ;;
+  osf*)
+     AC_CHECK_LIB(rt,sem_open,[PARTYSIP_LIB="$PARTYSIP_LIB -lrt"])
+     ;;
+  sunos*)
+     ;;
+  darwin*)
+     PARTYSIP_FLAGS="$PARTYSIP_FLAGS -pedantic"
+     PPL_FLAGS="$PPL_FLAGS -pedantic"
+     ;;
+  *)
+     ;;
+esac
+
+case $OS in
+  openbsd*)
+     ;;
+  *)
+     CHECK_INADDR_NONE
+     AC_CHECK_LIB(resolv,res_query,[PARTYSIP_LIB="$PARTYSIP_LIB -lresolv"])
+     AC_CHECK_LIB(resolv,res_query,[PPL_LIB="$PPL_LIB -lresolv"])
+     ;;
+esac
+
+PPL_FLAGS="$PPL_FLAGS -DUSE_TMP_BUFFER"
+PARTYSIP_FLAGS="$PARTYSIP_FLAGS -DUSE_TMP_BUFFER"
+
+if test "x$enable_debug" = "xyes"; then
+  PPL_FLAGS="$PPL_FLAGS -DENABLE_DEBUG -g"
+  PARTYSIP_FLAGS="$PARTYSIP_FLAGS -DDENABLE_DEBUG -g"
+  CFLAGS=`echo $CFLAGS | sed 's/-O.//'`
+fi
+
+if test "x$enable_trace" = "xyes"; then
+  PPL_FLAGS="$PPL_FLAGS -DENABLE_TRACE"
+  PARTYSIP_FLAGS="$PARTYSIP_FLAGS -DENABLE_TRACE"
+fi
+
+if test "x$enable_syslog" = "xyes"; then
+  PPL_FLAGS="$PPL_FLAGS -DENABLE_SYSLOG"
+  PARTYSIP_FLAGS="$PARTYSIP_FLAGS -DENABLE_SYSLOG"
+fi
+
+if test "x$enable_mpatrol" = "xyes"; then
+  PARTYSIP_FLAGS="$PARTYSIP_FLAGS -DENABLE_MPATROL"
+  PARTYSIP_LIB="$PARTYSIP_LIB -lmpatrolmt -lelf"
+  PPL_FLAGS="$PPL_FLAGS -DENABLE_MPATROL"
+  PPL_LIB="$PPL_LIB -lmpatrolmt -lelf"
+fi
+
+if test "x$enable_sctp" = "xyes"; then
+  dnl Be sure to add the include directory: lksctp-2_4_18-0_4_6/test/libc/include
+  PARTYSIP_FLAGS="$PARTYSIP_FLAGS -DENABLE_SCTP"
+fi
+
+if test "x$enable_hoard" = "xyes"; then
+    PPL_LIB="$PPL_LIB -lhoard"
+    PARTYSIP_LIB="$PARTYSIP_LIB -lhoard"
+fi
+
+AC_ARG_WITH(db,
+    [  --with-db={db,dbm,gdbm,ndbm,susedb1,susedb2,susedb3} use the selected database format [db]],
+    [
+        case "$withval" in
+        "" | y | ye | yes)
+	    AC_CHECK_HEADERS(db.h)
+	    AC_CHECK_LIB(db,__db_ndbm_open,[PPL_LIB="$PPL_LIB -ldb"],
+                 [AC_CHECK_HEADERS(gdbm-ndbm.h)
+                 AC_CHECK_HEADERS(dbm.h)
+                 AC_CHECK_LIB(dbm,dbm_open,[PPL_LIB="$PPL_LIB -ldbm"])])
+	  DB_STYLE=
+	  ;;
+        n | no)
+            AC_MSG_ERROR([*** You must supply an argument to the --with-db option.])
+          ;;
+        *) DB_STYLE="$withval"
+          ;;
+        esac
+    ]
+)
+if test "$DB_STYLE"; then
+    case "$DB_STYLE" in
+        db | dbm | gdbm | ndbm | susedb1 | susedb2 | susedb3 )  ;;
+        *)
+            ;;
+    esac
+fi
+
+case "$DB_STYLE" in
+    db)
+	AC_CHECK_HEADERS(db.h,[AC_CHECK_LIB(db,__db_ndbm_open,
+				[PPL_LIB="$PPL_LIB -ldb"])])
+    ;;
+    susedb3)
+	AC_CHECK_HEADERS(db3/db.h,[AC_CHECK_LIB(db,__db_ndbm_open,
+				[PPL_LIB="$PPL_LIB -ldb"])])
+    ;;
+    susedb2)
+	AC_CHECK_HEADERS(db2/db.h,[AC_CHECK_LIB(db,__db_ndbm_open,
+				[PPL_LIB="$PPL_LIB -ldb"])])
+    ;;
+    susedb1)
+	AC_CHECK_HEADERS(db1/db.h,[AC_CHECK_LIB(db,__db_ndbm_open,
+				[PPL_LIB="$PPL_LIB -ldb"])])
+    ;;
+    dbm)
+	AC_CHECK_HEADERS(dbm.h,[AC_CHECK_LIB(dbm,dbm_open,
+				[PPL_LIB="$PPL_LIB -ldbm"])])
+    ;;
+    gdbm)
+	AC_CHECK_HEADERS(gdbm-ndbm.h)
+dnl	AC_CHECK_HEADERS(gdbm.h)
+	AC_CHECK_LIB(gdbm,dbm_open,[PPL_LIB="$PPL_LIB -lgdbm"])
+    ;;
+    ndbm)
+	AC_CHECK_HEADERS(gdbm-ndbm.h)
+	AC_CHECK_HEADERS(ndbm.h)
+	AC_CHECK_LIB(ndbm,dbm_open,[PPL_LIB="$PPL_LIB -lndbm"])
+    ;;
+    *)
+    ;;        
+esac
+
+dnl Checks for libraries. (those one are needed for sun)
+AC_CHECK_LIB(posix4,sem_open,[PARTYSIP_LIB="$PARTYSIP_LIB -lposix4 -mt"])
+AC_CHECK_LIB(posix4,sem_open,[PPL_LIB="$PPL_LIB -lposix4 -mt"])
+AC_CHECK_LIB(nsl,nis_add,[PARTYSIP_LIB="$PARTYSIP_LIB -lnsl"])
+AC_CHECK_LIB(nsl,nis_add,[PPL_LIB="$PPL_LIB -lnsl"])
+AC_CHECK_LIB(socket,sendto,[PARTYSIP_LIB="$PARTYSIP_LIB -lsocket"])
+AC_CHECK_LIB(socket,sendto,[PPL_LIB="$PPL_LIB -lsocket"])
+AC_CHECK_LIB(dl,sendto,[PARTYSIP_LIB="$PARTYSIP_LIB -ldl"])
+AC_CHECK_LIB(dl,sendto,[PPL_LIB="$PPL_LIB -ldl"])
+
+AC_CACHE_CHECK([whether -Wall works], Wall_flag, [
+  saved_CPPFLAGS=$CPPFLAGS
+  CPPFLAGS="-Wall"
+  AC_TRY_COMPILE(, , Wall_flag=yes, Wall_flag=no)
+  CPPFLAGS=$saved_CPPFLAGS
+])
+
+if test "x$Wall_flag" = xyes; then
+  CPPFLAGS="$CPPFLAGS -Wall"
+fi
+
+AC_CACHE_CHECK([whether -Wcast-align works], Wcast_align_flag, [
+  saved_CPPFLAGS=$CPPFLAGS
+  CPPFLAGS="-Wcast-align"
+  AC_TRY_COMPILE(, , Wcast_align_flag=yes, Wcast_align_flag=no)
+  CPPFLAGS=$saved_CPPFLAGS
+])
+
+if test "x$Wcast_align_flag" = xyes; then
+  CPPFLAGS="$CPPFLAGS -Wcast-align"
+fi
+
+AC_CACHE_CHECK([whether -Wchar-subscripts works], Wchar_subscripts_flag, [
+  saved_CPPFLAGS=$CPPFLAGS
+  CPPFLAGS="-Wchar-subscripts"
+  AC_TRY_COMPILE(, , Wchar_subscripts_flag=yes, Wchar_subscripts_flag=no)
+  CPPFLAGS=$saved_CPPFLAGS
+])
+
+if test "x$Wchar_subscripts_flag" = xyes; then
+  CPPFLAGS="$CPPFLAGS -Wchar-subscripts"
+fi
+
+AC_CACHE_CHECK([whether -Wformat works], Wformat_flag, [
+  saved_CPPFLAGS=$CPPFLAGS
+  CPPFLAGS="-Wformat"
+  AC_TRY_COMPILE(, , Wformat_flag=yes, Wformat_flag=no)
+  CPPFLAGS=$saved_CPPFLAGS
+])
+
+if test "x$Wformat_flag" = xyes; then
+  CPPFLAGS="$CPPFLAGS -Wformat"
+fi
+
+AC_CACHE_CHECK([whether -Winline works], Winline_flag, [
+  saved_CPPFLAGS=$CPPFLAGS
+  CPPFLAGS="-Winline"
+  AC_TRY_COMPILE(, , Winline_flag=yes, Winline_flag=no)
+  CPPFLAGS=$saved_CPPFLAGS
+])
+
+if test "x$Winline_flag" = xyes; then
+  CPPFLAGS="$CPPFLAGS -Winline"
+fi
+
+AC_CACHE_CHECK([whether -Wmissing-declarations works], Wmissing_declarations_flag, [
+  saved_CPPFLAGS=$CPPFLAGS
+  CPPFLAGS="-Wmissing-declarations"
+  AC_TRY_COMPILE(, , Wmissing_declarations_flag=yes, Wmissing_declarations_flag=no)
+  CPPFLAGS=$saved_CPPFLAGS
+])
+
+if test "x$Wmissing_declarations_flag" = xyes; then
+  CPPFLAGS="$CPPFLAGS -Wmissing-declarations"
+fi
+
+AC_CACHE_CHECK([whether -Wmissing-prototypes works], Wmissing_prototypes_flag, [
+  saved_CPPFLAGS=$CPPFLAGS
+  CPPFLAGS="-Wmissing-prototypes"
+  AC_TRY_COMPILE(, , Wmissing_prototypes_flag=yes, Wmissing_prototypes_flag=no)
+  CPPFLAGS=$saved_CPPFLAGS
+])
+
+if test "x$Wmissing_prototypes_flag" = xyes; then
+  CPPFLAGS="$CPPFLAGS -Wmissing-prototypes"
+fi
+
+AC_CACHE_CHECK([whether -Wnested-externs works], Wnested_externs_flag, [
+  saved_CPPFLAGS=$CPPFLAGS
+  CPPFLAGS="-Wnested-externs"
+  AC_TRY_COMPILE(, , Wnested_externs_flag=yes, Wnested_externs_flag=no)
+  CPPFLAGS=$saved_CPPFLAGS
+])
+
+if test "x$Wnested_externs_flag" = xyes; then
+  CPPFLAGS="$CPPFLAGS -Wnested-externs"
+fi
+
+AC_CACHE_CHECK([whether -Wpointer-arith works], Wpointer_arith_flag, [
+  saved_CPPFLAGS=$CPPFLAGS
+  CPPFLAGS="-Wpointer-arith"
+  AC_TRY_COMPILE(, , Wpointer_arith_flag=yes, Wpointer_arith_flag=no)
+  CPPFLAGS=$saved_CPPFLAGS
+])
+
+if test "x$Wpointer_arith_flag" = xyes; then
+  CPPFLAGS="$CPPFLAGS -Wpointer-arith"
+fi
+
+AC_SUBST(PARTYSIP_FLAGS)
+AC_SUBST(PARTYSIP_LIB)
+AC_SUBST(PPL_FLAGS)
+AC_SUBST(PPL_LIB)
+AC_SUBST(ETCDIR)
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS(ctype.h)
+AC_CHECK_HEADERS(string.h)
+AC_CHECK_HEADERS(strings.h)
+AC_CHECK_HEADERS(stdio.h)
+AC_CHECK_HEADERS(stdlib.h)
+AC_CHECK_HEADERS(unistd.h)
+
+AC_CHECK_HEADERS(sys/unistd.h)
+AC_CHECK_HEADERS(stdarg.h)
+AC_CHECK_HEADERS(varargs.h)
+AC_CHECK_HEADERS(fcntl.h)
+AC_CHECK_HEADERS(sys/time.h)
+AC_CHECK_HEADERS(time.h)
+AC_CHECK_HEADERS(assert.h)
+AC_CHECK_HEADERS(signal.h)
+AC_CHECK_HEADERS(sys/signal.h)
+AC_CHECK_HEADERS(malloc.h)
+AC_CHECK_HEADERS(sys/socket.h)
+AC_CHECK_HEADERS(arpa/inet.h)
+AC_CHECK_HEADERS(netinet/in.h)
+AC_CHECK_HEADERS(netdb.h)
+AC_CHECK_HEADERS(sys/types.h)
+AC_CHECK_HEADERS(sys/un.h)
+AC_CHECK_HEADERS(dlfcn.h)
+AC_CHECK_HEADERS(dl.h)
+AC_CHECK_HEADERS(mach-o/dyld.h)
+AC_CHECK_HEADERS(stddef.h)
+AC_CHECK_HEADERS(stdlib.h)
+AC_CHECK_HEADERS(stdio.h)
+AC_CHECK_HEADERS(errno.h)
+AC_CHECK_HEADERS(arpa/nameser.h)
+AC_CHECK_HEADERS(sys/select.h)
+
+TYPE_SOCKLEN_T
+AC_CHECK_HEADERS(resolv8_compat.h)
+AC_CHECK_HEADERS([resolv.h], [], [],
+[#if HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#if HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#if HAVE_ARPA_NAMESER_H
+#include <arpa/nameser.h>
+#endif
+])
+
+
+AC_OUTPUT(Makefile \
+ppl/Makefile ppl/unix/Makefile ppl/unix/ppl/Makefile \
+ppl/win32/Makefile ppl/win32/ppl/Makefile \
+src/Makefile      tools/Makefile \
+plugin/Makefile \
+plugin/udp/Makefile        \
+plugin/syntax/Makefile     \
+plugin/filter/Makefile     \
+plugin/auth/Makefile       \
+plugin/rgstrar/Makefile    \
+plugin/ls_static/Makefile  \
+plugin/ls_sfull/Makefile   \
+plugin/ls_localdb/Makefile \
+plugin/groups/Makefile     \
+partysip/Makefile  \
+conf/Makefile     \
+doc/Makefile      \
+scripts/Makefile  \
+debian/Makefile	  \
+windows/Makefile  \
+windows/vsnet/Makefile  \
+src/partysip-config,
+chmod +rx src/partysip-config \
+)
+

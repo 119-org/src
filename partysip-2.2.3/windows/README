@@ -1,0 +1,35 @@
+
+Compilation process for windows:
+
+Step 1:
+
+Build osipparser2.dll and osip2.dll in multithreaded mode.
+
+I generally use those usefull flags:
+ "-DUSE_TMP_BUFFER, -DOSIP_MT -DSYSTEM_LOGGER_ENABLED".
+
+
+
+
+Step 2:
+
+*******    INSTALL THE MICROSOFT PLATFORM SDK    *****
+
+Versions of the SDK older than 2002 will not be enough!
+
+
+
+
+Step 3:
+
+* Open the workspace "plugins.dsw".
+* edit the correct include path for ALL workspace
+  $path_to_osip\,path_to_partysip\,path_to_partysip\ppl\win32  evrywhere should be ok!
+* edit the correct library path to find osipparser2.lib and osip2.lib 
+* Add osipparser.dll and osip2.dll in the library's path.
+* Build all (ppl, partysip and all plugins)
+* Edit and copy the file partysip.conf manually in the directory where
+  partysip.exe is build (./windows/.libs) 
+* Run inside the .libs directory "partysip.exe -d 6 -i"
+
+Report any failure in this process to <jack@atosc.org>.
