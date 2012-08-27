@@ -57,9 +57,10 @@ int tcp_socket(SOCKET* s)
 	return 0;
 }
 
-int tcp_bind(SOCKET* s, u_short port, char* ip = LOCAL_HOST)
+int tcp_bind(SOCKET* s, u_short port)
 {
 	struct sockaddr_in addr;
+	char* ip = LOCAL_HOST;
 	struct hostent* host = (struct hostent*)gethostbyname(ip);
 	char* localhost = inet_ntoa(*(struct in_addr*)*host->h_addr_list);
 	if(*s == NULL || port < 0 || port > 65535)
@@ -193,12 +194,8 @@ int udp_recvfrom(SOCKET* s, char* buf, char* ip, u_short port)
 	ret = recvfrom(*s, buf, UDP_MSG_MAX_LEN, 0, (struct sockaddr*)&addr, (socklen_t*)&addr_len);
 	if(ret == SOCKET_ERROR)
 	{
-		fprintf(stdout, "recvfrom failed: %d\n", WSAGetLastError());
-		if(WSAGetLastError() != WSAEMSGSIZE)
-		{
-			socket_close(s);
-			dbg_socket_error();
-		}
+		socket_close(s);
+		dbg_socket_error();
 	}
 	return 0;
 }
@@ -348,6 +345,7 @@ int cb_udp_server_start(cb_msg_callback cbmsg)
 	}
 	return 0;
 }
+#if 0
 int main()
 {
 	cb_msg_callback cbmsg;
@@ -359,3 +357,4 @@ int main()
 	cb_udp_server_start(cbmsg);
 	return 0;
 }
+#endif

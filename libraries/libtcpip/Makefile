@@ -6,7 +6,7 @@ CFLAGS += -D_LINUX
 LDFLAGS := 
 
 LIB_SRCS = libtcpip.cpp
-EXE_SRCS = 
+EXE_SRCS = main.cpp
 
 LIB_OBJS = $(patsubst %.cpp, %.o, $(LIB_SRCS))
 EXE_OBJS = $(patsubst %.cpp, %.o, $(EXE_SRCS))

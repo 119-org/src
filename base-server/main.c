@@ -3,13 +3,14 @@
 #include <stdlib.h>
 #include "libtcpip.h"
 
-struct srv_param_t {
+struct _srv_param_t {
 	SOCKET sock_s;
 	int listen_port;	
 	int max_client;
 	int timeout;
-};
+}srv_param_t;
 
+#if 0
 int srv_init()
 {
 	int ret;
@@ -19,26 +20,27 @@ int srv_init()
 	ret = tcp_bind(&sock, listen_port);
 	ret = tcp_listen(&sock, 100);
 }
-
 int srv_listen()
 {
 	
 }
+#endif
 
 int main(int argc, char* argv[])
 {
-	srv_param_t srv_conf;
+	int listen_port = 5060;
 	int ret;
 	SOCKET sock;
 	SOCKET sock_accept;
 	struct sockaddr_in client;
+	struct srv_param_t* srv_conf;
 	ret = socket_init();
 	ret = tcp_socket(&sock);
 	ret = tcp_bind(&sock, listen_port);
-	ret = tcp_listen(&sock, 100);
+	ret = tcp_listen(&sock);
 
+	printf("base-server: hello world\n");
 	for (;;) {
-
 		struct timeval tv;		/*超时时间*/
 		fd_set rfds;			/*读文件集*/
 

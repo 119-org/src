@@ -40,30 +40,30 @@ extern "C" {
 #define UDP_MSG_MAX_LEN		1460	//MTU
 #define TCP_MSG_MAX_LEN		1452
 
-int socket_init();
-void socket_close(SOCKET* s);
-int dbg_socket_error();
-int socket_shutdown();
+extern int socket_init();
+extern void socket_close(SOCKET* s);
+extern int dbg_socket_error();
+extern int socket_shutdown();
 
-int tcp_socket(SOCKET* s);
-int tcp_bind(SOCKET* s, u_short port, char* ip);
-int tcp_listen(SOCKET* s);
-int tcp_accept(SOCKET* s, struct sockaddr_in* preomte_addr, SOCKET* rs);
-int tcp_connect(SOCKET* s, char* ip, u_short port);
-int tcp_send(SOCKET* s, char* buf, u_long buf_len);
-int tcp_recv(SOCKET* s, char* buf, u_long buf_len);
-int tcp_server_start(u_short server_port);
-int tcp_client_start(char* ip, u_short port, char* send_buf);
+extern int tcp_socket(SOCKET* s);
+extern int tcp_bind(SOCKET* s, u_short port);
+extern int tcp_listen(SOCKET* s);
+extern int tcp_accept(SOCKET* s, struct sockaddr_in* preomte_addr, SOCKET* rs);
+extern int tcp_connect(SOCKET* s, char* ip, u_short port);
+extern int tcp_send(SOCKET* s, char* buf, u_long buf_len);
+extern int tcp_recv(SOCKET* s, char* buf, u_long buf_len);
+extern int tcp_server_start(u_short server_port);
+extern int tcp_client_start(char* ip, u_short port, char* send_buf);
 
 
-int udp_socket(SOCKET* s);
+extern int udp_socket(SOCKET* s);
 #define udp_bind	tcp_bind
-int udp_sendto(SOCKET* s, void* buf, u_long remote, u_short port);
-int udp_recvfrom(SOCKET* s, char* buf, char* ip, u_short port);
-int udp_client_start(char* ip, u_short port, char* send_buf);
-int udp_server_start(u_short server_port);
+extern int udp_sendto(SOCKET* s, void* buf, u_long remote, u_short port);
+extern int udp_recvfrom(SOCKET* s, char* buf, char* ip, u_short port);
+extern int udp_client_start(char* ip, u_short port, char* send_buf);
+extern int udp_server_start(u_short server_port);
 
-int get_addrinfo();
+extern int get_addrinfo();
 
 typedef int (*cb_msg_callback)(SOCKET* s, char* buf, char* ip, u_short port);
 
