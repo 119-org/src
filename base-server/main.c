@@ -39,6 +39,9 @@ int main(int argc, char* argv[])
 	ret = tcp_bind(&sock, listen_port);
 	ret = tcp_listen(&sock);
 
+	int len = 0;
+	char mem[100] = {0};
+
 	printf("base-server: hello world\n");
 	for (;;) {
 		struct timeval tv;		/*超时时间*/
@@ -57,9 +60,15 @@ int main(int argc, char* argv[])
 		switch (ret) {
 			case -1:
 			case 0:
+				break;
 			default:
+				printf("selset ret = %d\n", ret);
 				if (FD_ISSET(sock, &rfds)) {
 					tcp_accept(&sock, &client, &sock_accept);
+					printf("one tcp client comming, ip = \n");
+					len = read(sock_accept, mem, sizeof(mem));
+					printf("receive %d bytes: '%s'\n", len, mem);
+					//check thread/fork is idle?
 				}
 				break;
 		}
