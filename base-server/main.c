@@ -35,9 +35,13 @@ int main(int argc, char* argv[])
 	struct sockaddr_in client;
 	struct srv_param_t* srv_conf;
 	ret = socket_init();
+	if (ret < 0) printf("error\n");
 	ret = tcp_socket(&sock);
+	if (ret < 0) printf("error\n");
 	ret = tcp_bind(&sock, listen_port);
+	if (ret < 0) printf("error\n");
 	ret = tcp_listen(&sock);
+	if (ret < 0) printf("error\n");
 
 	int len = 0;
 	char mem[100] = {0};
@@ -66,8 +70,10 @@ int main(int argc, char* argv[])
 				if (FD_ISSET(sock, &rfds)) {
 					tcp_accept(&sock, &client, &sock_accept);
 					printf("one tcp client comming, ip = \n");
-					len = read(sock_accept, mem, sizeof(mem));
-					printf("receive %d bytes: '%s'\n", len, mem);
+					do {
+						len = read(sock_accept, mem, sizeof(mem));
+						printf("receive %d bytes: '%s'\n", len, mem);
+					} while (len > 0);
 					//check thread/fork is idle?
 				}
 				break;

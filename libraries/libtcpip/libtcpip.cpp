@@ -63,6 +63,7 @@ int tcp_bind(SOCKET* s, u_short port)
 	char* ip = LOCAL_HOST;
 	struct hostent* host = (struct hostent*)gethostbyname(ip);
 	char* localhost = inet_ntoa(*(struct in_addr*)*host->h_addr_list);
+	printf("localhost = %s", localhost);
 	if(*s == NULL || port < 0 || port > 65535)
 	{
 		fprintf(stdout, "Paraments error at tcp_bind()\n");
@@ -71,8 +72,8 @@ int tcp_bind(SOCKET* s, u_short port)
 
 
 	addr.sin_family = AF_INET;
-//	addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	addr.sin_addr.s_addr = inet_addr(localhost);
+	addr.sin_addr.s_addr = htonl(INADDR_ANY);
+//	addr.sin_addr.s_addr = inet_addr(localhost);
 	addr.sin_port = htons(port);
 //	bzero(&(addr.sin_zero), 8);
 	if(bind(*s, (struct sockaddr*)&addr, sizeof(struct sockaddr)) == SOCKET_ERROR)
