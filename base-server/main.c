@@ -1,15 +1,20 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
 #include "libtcpip.h"
 
-struct _srv_param_t {
+struct srv_param_t {
 	SOCKET sock_s;
 	int listen_port;	
 	int max_client;
 	int timeout;
-}srv_param_t;
+};
 
+struct thread_param_t {
+	pthread_t thread_id;	
+	SOCKET sock_accept;
+};
 #if 0
 int srv_init()
 {
@@ -25,7 +30,25 @@ int srv_listen()
 	
 }
 #endif
+int thread_num = 0;
+static void *thread_foo(void* arg)
+{
+	struct thread_param_t *param = (struct thread_param_t *)arg;
+	SOCKET sock_accept = param->sock_accept;
+	printf("sock_accept = %d\n", sock_accept);
+	int len =  0;
+	char mem[1024] = {0};
+	thread_num++;
+	printf("%d thread_foo: ", thread_num);
 
+	do {
+		len = read(sock_accept, mem, sizeof(mem));
+		printf("receive %d bytes: '%s'\n", len, mem);
+	} while (len < 0);
+
+	return;
+	
+}
 int main(int argc, char* argv[])
 {
 	int listen_port = 5060;
@@ -69,11 +92,14 @@ int main(int argc, char* argv[])
 				printf("selset ret = %d\n", ret);
 				if (FD_ISSET(sock, &rfds)) {
 					tcp_accept(&sock, &client, &sock_accept);
-					printf("one tcp client comming, ip = \n");
-					do {
-						len = read(sock_accept, mem, sizeof(mem));
-						printf("receive %d bytes: '%s'\n", len, mem);
-					} while (len > 0);
+
+					printf("one tcp client comming, ip =  sock_accept = %d\n", sock_accept);
+					pthread_t thread_id;
+					struct thread_param_t *thread_arg = NULL;
+					thread_arg = (struct thread_param_t*)malloc(sizeof(struct thread_param_t));
+					memset(thread_arg, 0, sizeof(struct thread_param_t));
+					thread_arg->sock_accept = sock_accept; 
+					ret = pthread_create(&thread_id, NULL, thread_foo, (void*)thread_arg);
 					//check thread/fork is idle?
 				}
 				break;

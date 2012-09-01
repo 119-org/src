@@ -16,6 +16,6 @@ TARGET = base-server
 RM = rm -f 
 OBJS = main.o
 all:$(OBJS)
-	$(CC) -o $(TARGET) $(OBJS) $(LIB_TCPIP)
+	$(CC) -o $(TARGET) $(OBJS) $(LIB_TCPIP) $(LIBS)
 clean:
 	$(RM) $(TARGET) $(OBJS)
