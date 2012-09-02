@@ -4,6 +4,11 @@
 #include <pthread.h>
 #include "libtcpip.h"
 
+//Normal, thread increases if more than 10 connects per thread;
+//therefore, every thread increases connect when threads number reach to MAX_THREAD
+#define	MAX_THREAD_NUM			20
+#define NORMAL_CONNECTS_PER_THREAD	10
+
 struct srv_param_t {
 	SOCKET sock_s;
 	int listen_port;	
@@ -15,21 +20,49 @@ struct thread_param_t {
 	pthread_t thread_id;	
 	SOCKET sock_accept;
 };
-#if 0
-int srv_init()
+
+struct thread_ctl_t {
+	pthread_t thread_id;
+	pthread_mutex_t thread_lock;
+	
+};
+
+pthread_mutex_t thread_lock = PTHREAD_MUTEX_INITIALIZER;
+
+static void thread_init()
+{
+	int i;
+	pthread_t id;
+	struct thread_ctl_t* thread_list;
+	thread_list = (struct thread_ctl_t*)malloc(sizeof(struct thread_ctl_t) * MAX_THREAD_NUM);
+	memset(thread_list, 0, sizeof(*thread_list) * MAX_THREAD_NUM);
+
+	for (i = 0; i < MAX_THREAD_NUM; i++) {
+		pthread_mutex_init(thread_list[i].thread_lock, NULL);
+		pthread_mutex_lock(&thread_list[i].thread_lock);
+		ret = pthread_create(&id, NULL, thread_foo, (void*)thread_list[i]);
+		pthread_mutex_unlock(&thread_list[i].thread_lock);
+		thread_list[i].thread_id = id;
+
+	}
+
+
+
+}
+static void thread_add(struct thread_ctl_t* ctl)
 {
 	int ret;
-	SOCKET sock;
-	ret = socket_init();
-	ret = tcp_socket(&sock);
-	ret = tcp_bind(&sock, listen_port);
-	ret = tcp_listen(&sock, 100);
-}
-int srv_listen()
-{
+	pthread_t id;
+	pthread_mutex_lock(&ctl->thread_lock);
+	ret = pthread_create(&id, NULL, thread_foo, (void*)&ctl);
+	pthread_mutex_unlock(&ctl->thread_lock);
+
+	ctl->thread_id = id;
 	
 }
-#endif
+static void thread_del()
+{
+}
 int thread_num = 0;
 static void *thread_foo(void* arg)
 {
@@ -49,23 +82,31 @@ static void *thread_foo(void* arg)
 	return;
 	
 }
-int main(int argc, char* argv[])
+
+struct tcp_server_t {
+	int listen_port;
+	SOCKET sock;
+	SOCKET sock_accept;
+	};
+
+int network_init(SOCKET* sock)
 {
 	int listen_port = 5060;
+
+	ret = socket_init();
+	ret = tcp_socket(&sock);
+	ret = tcp_bind(&sock, listen_port);
+	ret = tcp_listen(&sock);
+}
+
+int main(int argc, char* argv[])
+{
 	int ret;
 	SOCKET sock;
 	SOCKET sock_accept;
 	struct sockaddr_in client;
-	struct srv_param_t* srv_conf;
-	ret = socket_init();
-	if (ret < 0) printf("error\n");
-	ret = tcp_socket(&sock);
-	if (ret < 0) printf("error\n");
-	ret = tcp_bind(&sock, listen_port);
-	if (ret < 0) printf("error\n");
-	ret = tcp_listen(&sock);
-	if (ret < 0) printf("error\n");
-
+	
+	network_init(&sock);
 	int len = 0;
 	char mem[100] = {0};
 
