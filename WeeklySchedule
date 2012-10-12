@@ -13,3 +13,14 @@ u   Cannot run in ubuntu due incorrect configure.
 2. SIP Client
 n   We use linphone-3.5.2, the core of sip and media part, except the GTK UI.
 u   Change the GTK UI to Qt, and design Qt UI.
+u   base functions:
+    1. p2p talk
+    2. 呼叫落地电话？
+    3. 二次拨号？
+    4. g729/g711/ilbc/speex
+    5. tls
+    6. transfer call
+    7. multi-call
+    8. 能检测正常掉线
+    9. 能播放通话中各种事件的铃音
+    10. 能指定特定的音频设备作为输入输出设备
