@@ -1,0 +1,15 @@
+SIP Project Update:
+
+1. SIP Server
+n   We use open source code partysip-2.2.3, to reduce time and difficulty.
+u   Familiar with the framework, and prepare to optimize and extend functions.
+u   Write a document about framework of partysip.
+u   Add code for supporting database, and research mysql API.
+u   support for TCP
+u   support for other authentication means.
+u   LDAP/SQL database access
+u   Cannot run in ubuntu due incorrect configure.
+
+2. SIP Client
+n   We use linphone-3.5.2, the core of sip and media part, except the GTK UI.
+u   Change the GTK UI to Qt, and design Qt UI.
