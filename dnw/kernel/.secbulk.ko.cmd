@@ -1,1 +1,0 @@
-cmd_/home/gongzhifeng/workspace/github/src/dnw/kernel/secbulk.ko := ld -r -m elf_i386 -T /usr/src/linux-headers-3.2.0-33-generic-pae/scripts/module-common.lds --build-id  -o /home/gongzhifeng/workspace/github/src/dnw/kernel/secbulk.ko /home/gongzhifeng/workspace/github/src/dnw/kernel/secbulk.o /home/gongzhifeng/workspace/github/src/dnw/kernel/secbulk.mod.o
