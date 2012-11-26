@@ -1,0 +1,43 @@
+1.首先解压缩文件：
+# tar xvf dnw_for_linux.tar.gz
+另：在ubuntu下右键解压也很方便
+2.然后切换到下面的目录，编译usb驱动模块：
+# cd dnw_for_linux/secbulk
+# make -C /lib/modules/2.6.33.6-147.fc13.i686/build/ M=/home/libing/dnw_for_linux/secbulk/ modules
+
+
+注意：相应路径要替换成你机器的路径。/lib/modules/2.6.32-33-generic/build/目录中“2.6.32-33-generic”是当前启动内核版本，如果你是多内核要注意了（不确定可以终端uname -r命令查看内核版本）。
+
+
+当然了也可以在文件夹下新建一文档，copy指令，然后保存，以可执行程序的方式运行之。
+        
+	3.编译完成后，会生成secbulk.ko文件：
+# ls
+	Makefile       Module.symvers  secbulk.ko     secbulk.mod.o
+	modules.order  secbulk.c       secbulk.mod.c  secbulk.o
+
+
+	4.加载模块到Linux内核：
+# sudo insmod ./secbulk.ko        （注意要在root权限下）
+# dmesg        (查看是否加载成功）
+	secbulk:secbulk loaded
+	
+	
+	usbcore: registered new interface driver secbulk        （看到这样两行就说明成功了）
+	
+	
+	5.下面开始编译dnw工具
+# cd ../dnw
+# gcc -o dnw dnw.c
+	
+	
+	(编译完成，会看到dnw可执行文件）
+	
+	
+	6.将文件copy到/usr/local/bin目录
+# sudo cp dnw /usr/local/bin
+	
+
+	(这样就可以在shell下面直接使用dnw命令了）
+
+	)))
