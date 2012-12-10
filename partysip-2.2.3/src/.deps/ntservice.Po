@@ -1,1 +1,0 @@
-ntservice.o: ntservice.c
