@@ -1,0 +1,83 @@
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/!svn/ver/14/trunk/live_usb_camera_on_linux
+END
+zk_v4l2_x264_source.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/13/trunk/live_usb_camera_on_linux/zk_v4l2_x264_source.cpp
+END
+sender.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/12/trunk/live_usb_camera_on_linux/sender.cpp
+END
+vcompress.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/12/trunk/live_usb_camera_on_linux/vcompress.cpp
+END
+v4l2_example_1.c
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/14/trunk/live_usb_camera_on_linux/v4l2_example_1.c
+END
+capture.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/13/trunk/live_usb_camera_on_linux/capture.cpp
+END
+sender.h
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/12/trunk/live_usb_camera_on_linux/sender.h
+END
+server.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/13/trunk/live_usb_camera_on_linux/server.cpp
+END
+video_sender.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/12/trunk/live_usb_camera_on_linux/video_sender.cpp
+END
+vcompress.h
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/12/trunk/live_usb_camera_on_linux/vcompress.h
+END
+capture.h
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/12/trunk/live_usb_camera_on_linux/capture.h
+END
+types.h
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/12/trunk/live_usb_camera_on_linux/types.h
+END
+README
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/12/trunk/live_usb_camera_on_linux/README
+END
+Makefile
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/12/trunk/live_usb_camera_on_linux/Makefile
+END
