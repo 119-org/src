@@ -14,7 +14,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 **********/
 // "liveMedia"
-// Copyright (c) 1996-2012 Live Networks, Inc.  All rights reserved.
+// Copyright (c) 1996-2013 Live Networks, Inc.  All rights reserved.
 // A WAV audio file source
 // Implementation
 
@@ -113,7 +113,6 @@ WAVAudioFileSource::WAVAudioFileSource(UsageEnvironment& env, FILE* fid)
   // http://www.ringthis.com/dev/wave_format.htm
   // http://www.lightlink.com/tjweber/StripWav/Canon.html
   // http://www.onicos.com/staff/iz/formats/wav.html
-  // http://www.wotsit.org/list.asp?al=W
 
   Boolean success = False; // until we learn otherwise
   do {
