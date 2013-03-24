@@ -25,7 +25,6 @@ all: $(TGT)
 
 
 %.o:%.c
-#$(OBJS): $(SRC)
 	@echo ""
 	@echo "compiling $@ ..."
 	$(CC) -c $(CFLAGS) $< -o $@
@@ -46,5 +45,5 @@ $(TGT_UNIT_TEST): $(OBJS_UNIT_TEST)
 	$(CC) -o $@ $^ $(TGT_LIB_A) $(LDFLAGS)
 
 clean:
-	rm $(OBJS)
-	rm $(TGT)
+	rm -f $(OBJS)
+	rm -f $(TGT)
