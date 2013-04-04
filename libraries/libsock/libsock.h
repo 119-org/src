@@ -2,19 +2,22 @@
 #define _LIBSOCKET_H_
 
 #include <stdint.h>
+#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 extern int sock_init();
+extern int sock_close(int fd);
 extern int sock_tcp_server(const char *ip, uint16_t port);
 extern int sock_tcp_accept(int fd, char *host, size_t host_len, uint16_t *port);
 extern int sock_tcp_connect(const char *ip, uint16_t port);
 extern int sock_tcp_send(int fd, const void *buf, size_t buf_len);
 extern int sock_tcp_recv(int fd, void *buf, size_t buf_len, char *host, size_t host_len, uint16_t *port);
+extern int sock_tcp_noblock(int fd);
 
-extern int sock_udp_server(const char *ip, uint16_t port);
+extern int sock_udp_host(const char *ip, uint16_t port);
 extern int sock_udp_send(int fd, const void* buf, size_t buf_len, char* host, uint16_t port);
 extern int sock_udp_send_on_recv(int fd, const void *sbuf, size_t sbuf_len, void *rbuf, size_t rbuf_len, char* host, size_t host_len, uint16_t *port);
 extern int sock_udp_recv(int fd, void *buf, size_t buf_len, char *host, size_t host_len, uint16_t *port);

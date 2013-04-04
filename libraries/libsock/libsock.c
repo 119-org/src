@@ -16,6 +16,11 @@
 
 #define LISTEN_MAX_BACKLOG	128
 
+int sock_close(int fd)
+{
+    return close(fd);
+}
+
 int sock_create(int type)
 {
     if (type != SOCK_DGRAM && type != SOCK_STREAM) {
@@ -195,7 +200,7 @@ int sock_tcp_server(const char *ip, uint16_t port)
             perror("bind failed");
             continue;
         }
-        if (0 == listen(fd, LISTEN_MAX_BACKLOG)) {
+        if (0 == listen(fd, SOMAXCONN)) {
             break;
         }
         close(fd);
@@ -213,6 +218,14 @@ int sock_tcp_server(const char *ip, uint16_t port)
 #endif
     freeaddrinfo(result);
     return fd;
+}
+
+int sock_tcp_noblock(int fd)
+{
+    if (-1 == fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK)) {
+        perror("fcntl");
+        return -1;
+    }
 }
 
 int sock_tcp_connect(const char *ip, uint16_t port)
@@ -324,9 +337,9 @@ int sock_tcp_accept(int sfd, char *host, size_t host_len, uint16_t *port)
     return fd;
 }
 
-int sock_udp_server(const char *ip, uint16_t port)
+int sock_udp_host(const char *ip, uint16_t port)
 {
-    if (port < 1024 || port > 65535) {
+    if (port < 1024) {
         printf("socket port should be 1024 ~ 65535\n");
         return -1;
     }
@@ -388,26 +401,31 @@ int sock_udp_server(const char *ip, uint16_t port)
 
 int sock_tcp_send(int fd, const void *buf, size_t buf_len)
 {
-    ssize_t bytes;
+    ssize_t nwrite;
 
     if (fd < 0 || buf == NULL || buf_len == 0) {
         printf("ip addr or port is invalid!\n");
         return -1;
     }
 
-    bytes = send(fd, buf, buf_len, 0);
-    if (bytes == -1)  {
-        printf("send: %s\n", gai_strerror(bytes));
+    nwrite = send(fd, buf, buf_len, 0);
+    if (nwrite == -1)  {
+        printf("send: %s\n", gai_strerror(nwrite));
         return -1;
     }
-    return bytes;
+    if (nwrite != buf_len) {
+        printf("send data len is not equal buf len!\n");
+        return -1;
+    }
+    return nwrite;
 }
 
 int sock_tcp_recv(int fd, void *buf, size_t buf_len, char *host, size_t host_len, uint16_t *port)
 {
     int ret;
+    int finished = 0;
     char str_port[NI_MAXSERV];
-    ssize_t bytes;
+    ssize_t nread;
     struct sockaddr_storage client;
     socklen_t stor_addrlen = sizeof(struct sockaddr_storage);
 
@@ -419,17 +437,30 @@ int sock_tcp_recv(int fd, void *buf, size_t buf_len, char *host, size_t host_len
     memset(buf, 0, buf_len);
     memset(host, 0, host_len);
 
-    //FIXME: can not get port of client info after called more than once
-    bytes = recvfrom(fd, buf, buf_len, 0, (struct sockaddr*)&client, &stor_addrlen);
-    if (bytes ==  -1) {
-        printf("recvform: %s\n", strerror(errno));
-        close(fd);
-        return -1;
+    while (!finished) {
+        //FIXME: can not get port of client info after called more than once
+        nread = recvfrom(fd, buf, buf_len, 0, (struct sockaddr*)&client, &stor_addrlen);
+        if (nread == 0) {//peer close normal
+            finished = 1;
+            continue;
+        } else if (nread == -1) {
+            if (errno != EAGAIN) {//buf has already no data
+                printf("recvform: %s\n", strerror(errno));
+            }
+            break;
+        }
+        if (nread == buf_len) {
+            printf("there are data still not receive!\n");
+            finished = 0;
+        } else {
+            printf("data receive finished!\n");
+            finished = 0;
+        }
     }
 
     if (host == NULL || host_len == 0 || port == NULL) {
         printf("no need to show host info\n");
-        return bytes;
+        return nread;
     }
 
     client.ss_family = AF_INET;
@@ -472,7 +503,7 @@ int sock_tcp_recv(int fd, void *buf, size_t buf_len, char *host, size_t host_len
     strncpy(host, he->h_name, host_len);
 #endif
     printf("host = %s, port = %u\n", host, *port);
-    return bytes;
+    return nread;
 }
 
 int sock_udp_send(int fd, const void* buf, size_t buf_len, char* ip, uint16_t port)
@@ -481,27 +512,30 @@ int sock_udp_send(int fd, const void* buf, size_t buf_len, char* ip, uint16_t po
         printf("udp send paraments is invalid!\n");
         return -1;
     }
-    int ret = 0;
-    int bytes;
+    int nwrite;
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = inet_addr(ip);
     addr.sin_port = htons(port);
 
-    bytes = sendto(fd, buf, buf_len, 0, (struct sockaddr*)&addr, sizeof(addr));
-    if(bytes == -1) {
-        printf("sendto: %s\n", gai_strerror(bytes));
+    nwrite = sendto(fd, buf, buf_len, 0, (struct sockaddr*)&addr, sizeof(addr));
+    if(nwrite == -1) {
+        printf("sendto: %s\n", gai_strerror(nwrite));
         close(fd);
         return -1;
     }
-    return bytes;
+    if (nwrite != buf_len) {
+        printf("send data len is not equal buf len!\n");
+        return -1;
+    }
+    return nwrite;
 }
 
 int sock_udp_recv(int fd, void *buf, size_t buf_len, char *host, size_t host_len, uint16_t *port)
 {
     int ret;
     char str_port[NI_MAXSERV];
-    ssize_t bytes;
+    ssize_t nread;
     struct sockaddr_storage client;
     socklen_t stor_addrlen = sizeof(struct sockaddr_storage);
 
@@ -513,8 +547,8 @@ int sock_udp_recv(int fd, void *buf, size_t buf_len, char *host, size_t host_len
     memset(buf, 0, buf_len);
     memset(host, 0, host_len);
 
-    bytes = recvfrom(fd, buf, buf_len, 0, (struct sockaddr*)&client, &stor_addrlen);
-    if (bytes ==  -1) {
+    nread = recvfrom(fd, buf, buf_len, 0, (struct sockaddr*)&client, &stor_addrlen);
+    if (nread ==  -1) {
         printf("recvfrom: %s\n", strerror(errno));
         close(fd);
         return -1;
@@ -522,7 +556,7 @@ int sock_udp_recv(int fd, void *buf, size_t buf_len, char *host, size_t host_len
 
     if (host == NULL || host_len == 0 || port == NULL) {
         printf("no need to show host info\n");
-        return bytes;
+        return nread;
     }
     ret = getnameinfo((struct sockaddr*)&client, sizeof(struct sockaddr_storage), host, host_len, str_port, sizeof(str_port), 0);
     if (ret != 0) {
@@ -562,7 +596,7 @@ int sock_udp_recv(int fd, void *buf, size_t buf_len, char *host, size_t host_len
     strncpy(host, he->h_name, host_len);
 #endif
     printf("host = %s, port = %u\n", host, *port);
-    return bytes;
+    return nread;
 }
 
 int sock_udp_send_on_recv(int fd, const void *send_buf, size_t sbuf_len, void *recv_buf, size_t rbuf_len, char* host, size_t host_len, uint16_t *port)
@@ -605,3 +639,4 @@ int sock_udp_send_on_recv(int fd, const void *send_buf, size_t sbuf_len, void *r
 
     return nwrite;
 }
+
