@@ -1,4 +1,22 @@
-SIP Project Update:
+
+1. log lib
+2. memory pool lib
+  n 无锁单线程done
+3. thread pool lib
+  n done，未对线程优先级做处理
+
+4. remote process call lib
+
+5. tcp over udp tunnel lib
+
+
+6. gozfree github blog
+
+7. RTSP Server
+
+
+
+XXX. SIP Project 无限推迟
 
 1. SIP Server
 n   We use open source code partysip-2.2.3, to reduce time and difficulty.
@@ -25,4 +43,3 @@ u   base functions:
     9. 能播放通话中各种事件的铃音
     10. 能指定特定的音频设备作为输入输出设备
 
-3. RTSP Server
