@@ -92,7 +92,7 @@ static void make_request(int major,int rw, struct buffer_head * bh)
 
 /* WRITEA/READA is special case - it is not really needed, so if the */
 /* buffer is locked, we just forget about it, else it's a normal read */
-	if (rw_ahead = (rw == READA || rw == WRITEA)) {
+	if ((rw_ahead = (rw == READA || rw == WRITEA))) {
 		if (bh->b_lock)
 			return;
 		if (rw == READA)

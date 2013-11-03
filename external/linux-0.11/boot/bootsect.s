@@ -42,8 +42,8 @@ ENDSEG   = SYSSEG + SYSSIZE		! where to stop loading
 !		0x301 - first partition on first drive etc
 ROOT_DEV = 0x306
 
-entry start
-start:
+entry _start
+_start:
 	mov	ax,#BOOTSEG
 	mov	ds,ax
 	mov	ax,#INITSEG
