@@ -35,6 +35,12 @@ int udp_send(int fd, const char* ip, uint16_t port, const void* buf, uint32_t le
     sa.sin_family = AF_INET;
     sa.sin_addr.s_addr = inet_addr(ip);
     sa.sin_port = htons(port);
+#if 0
+    if (-1 == connect(fd, (struct sockaddr*)&sa, sizeof(sa))) {
+        perror("connect");
+        return -1;
+    }
+#endif
     ret = sendto(fd, buf, len, 0, (struct sockaddr*)&sa, sizeof(sa));
     if (ret == -1) {
         close(fd);
@@ -46,7 +52,7 @@ void *keep_alive(void *args)
 {
     int fd = *(int *)args;
     while (1) {
-        stun_keep_alive(fd);
+//        stun_keep_alive(fd);
         sleep(30);
     }
     return NULL;
@@ -59,12 +65,18 @@ void *send_msg(void *args)
     char *ip = tmp->ip;
     uint16_t port = tmp->port;
     char buf[1024] = {0};
-    int ret;
+    int ret, i;
     while (1) {
         memset(buf, 0, sizeof(buf));
         printf("send msg> ");
         scanf("%s", buf);
-        ret = udp_send(fd, ip, port, buf, strlen(buf));
+        if (port == 0) {
+            for (i = 1025; i < 65535; i++) {
+                ret = udp_send(fd, ip, i, buf, strlen(buf));
+            }
+        } else {
+            ret = udp_send(fd, ip, port, buf, strlen(buf));
+        }
         if (ret == -1) {
             printf("errno = %d: %s\n", errno, strerror(errno));
         }
@@ -72,15 +84,43 @@ void *send_msg(void *args)
     return NULL;
 }
 
+int skt_get_remote_addr(struct sockaddr_in *si, char *ip, int fd)
+{
+    socklen_t len = sizeof(si);
+    if (-1 == getpeername(fd, (struct sockaddr *)&si, &len)) {
+        perror("getpeername");
+        return -1;
+    }
+    strcpy(ip, inet_ntoa(si->sin_addr));
+    return 0;
+}
 void recv_msg(int fd)
 {
     int ret;
+    char str_ip[64];
     char buf[1024] = {0};
+#if 0
     ret = recv(fd, buf, sizeof(buf), 0);
     if (ret == -1) {
         printf("%s:%d: errno = %d: %s\n", __func__, __LINE__, errno, strerror(errno));
     }
-    printf("\nrecv msg> %s\n", buf);
+#endif
+    struct sockaddr_in si, si2;
+    socklen_t si_len = sizeof(si);
+    memset(&si, 0, sizeof(si));
+    memset(&si2, 0, sizeof(si));
+
+    ret = recvfrom(fd, buf, sizeof(buf), 0, (struct sockaddr *)&si, &si_len);
+    if (ret == -1) {
+        printf("%s:%d: errno = %d: %s\n", __func__, __LINE__, errno, strerror(errno));
+    }
+
+
+    if (-1 == getsockname(fd, (struct sockaddr *)&si2, &si_len)) {
+        perror("getsockname failed!\n");
+    }
+
+    printf("\nrecv from ip = %s port = %d to ip = %s port = %d msg > %s\n", inet_ntoa(si.sin_addr), ntohs(si.sin_port), inet_ntoa(si2.sin_addr), ntohs(si2.sin_port), buf);
 }
 
 
@@ -90,6 +130,8 @@ int test(const char *local_ip, uint16_t local_port)
     int ret;
     int epfd, fd;
     struct in_addr sa;
+    struct sockaddr_in si;
+    socklen_t si_len;
     struct epoll_event event;
     struct epoll_event evbuf[MAX_EPOLL_EVENT];
     StunAddress4 mapped;
@@ -107,6 +149,13 @@ int test(const char *local_ip, uint16_t local_port)
         printf("stun open socket failed!\n");
         return -1;
     }
+
+    memset(&si, 0, sizeof(si));
+    if (-1 == getsockname(fd, (struct sockaddr *)&si, &si_len)) {
+        perror("getsockname failed!\n");
+    }
+    printf("ip = %s port = %d\n", inet_ntoa(si.sin_addr), ntohs(si.sin_port));
+
 
     stun_nat_type();
 
