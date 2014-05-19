@@ -196,7 +196,7 @@ int skt_get_addr_by_fd(struct skt_addr *addr, int fd)
         return -1;
     }
 
-    addr->ip = inet_ntoa(si.sin_addr);
+    addr->ip = si.sin_addr.s_addr;
     addr->port = ntohs(si.sin_port);
 
     return 0;
@@ -276,6 +276,7 @@ int skt_getaddrinfo(skt_addr_list_t **al, const char *domain, const char *port)
 
     return 0;
 }
+
 int skt_gethostbyname(skt_addr_list_t **al, const char *name)
 {
     skt_addr_list_t *ap, *an;
@@ -441,6 +442,44 @@ int skt_send(int fd, void *buf, size_t len)
     return (len - left);
 }
 
+int skt_sendto(int fd, const char *ip, uint16_t port, const void *buf, size_t len)
+{
+    int ret = 0;
+    ssize_t n;
+    uint8_t *p;
+    size_t left;
+    int err;
+    struct sockaddr_in sa;
+
+    sa.sin_family = AF_INET;
+    sa.sin_addr.s_addr = inet_addr(ip);
+    sa.sin_port = htons(port);
+
+    p = (uint8_t *)buf;
+    left = len;
+    while (left > 0) {
+        n = sendto(fd, p, left, 0, (struct sockaddr*)&sa, sizeof(sa));
+        if (n > 0) {
+            p += n;
+            left -= n;
+            continue;
+        } else if (n == 0) {
+            fprintf(stderr, "peer has closed\n");
+            perror("sendto");
+            break;
+        }
+        err = errno;
+        if (err == EINTR) {
+            continue;
+        }
+        if (err == EAGAIN || err == EWOULDBLOCK) {
+            perror("sendto");
+            return EAGAIN;
+        }
+    }
+
+    return (len - left);
+}
 int skt_recv(int fd, void *buf, size_t len)
 {
     int n;
@@ -462,3 +501,31 @@ int skt_recv(int fd, void *buf, size_t len)
     return n;
 }
 
+int skt_recvfrom(int fd, uint32_t *ip, uint16_t *port, void *buf, size_t len)
+{
+    int n;
+    struct sockaddr_in si;
+    socklen_t si_len = sizeof(si);
+
+    memset(&si, 0, sizeof(si));
+
+    do {
+        n = recvfrom(fd, buf, len, 0, (struct sockaddr *)&si, &si_len);
+        if (n == -1) {
+            perror("recvfrom");
+            return -1;
+        } else if (n == 0) {
+            fprintf(stderr, "peer has closed\n");
+            return -1;
+        }
+        if (errno == EINTR)
+            continue;
+        if (errno == EAGAIN)
+            break;
+    } while (0);
+
+    *ip = si.sin_addr.s_addr;
+    *port = ntohs(si.sin_port);
+
+    return n;
+}

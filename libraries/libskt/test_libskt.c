@@ -20,6 +20,10 @@
 #define EPOLL_MAX_NEVENT	4096
 #define RECV_BUFLEN		409600
 
+typedef struct skt_conn {
+    int fd;
+
+} skt_conn_t;
 typedef struct epop {
     struct epoll_event *events;
     int nevents;

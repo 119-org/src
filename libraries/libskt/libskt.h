@@ -25,19 +25,14 @@ typedef struct skt_addr_list {
     struct skt_addr_list *next;
 } skt_addr_list_t;
 
-typedef struct skt_conn {
-    int fd;
-    int error;
-
-} skt_conn_t;
-
 int skt_tcp_conn(const char *host, uint16_t port);
 int skt_tcp_bind_listen(const char *host, uint16_t port);
 int skt_udp_bind(const char *host, uint16_t port);
-skt_conn_t *skt_get_conn(int fd);
 
 int skt_send(int fd, void *buf, size_t len);
+int skt_sendto(int fd, const char *ip, uint16_t port, const void *buf, size_t len);
 int skt_recv(int fd, void *buf, size_t len);
+int skt_recvfrom(int fd, uint32_t *ip, uint16_t *port, void *buf, size_t len);
 
 uint32_t skt_addr_pton(const char *ip);
 int skt_addr_ntop(char *str, uint32_t ip);

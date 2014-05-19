@@ -16,6 +16,11 @@
 
 #define EPOLL_MAX_NEVENT	4096
 
+typedef struct skt_conn {
+    int fd;
+
+} skt_conn_t;
+
 static struct epoll_event *event_list;
 static int		   epfd;
 static int		   maxevents;
