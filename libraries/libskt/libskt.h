@@ -8,51 +8,50 @@
 extern "C" {
 #endif
 
-enum SKT_ERR_CODE {
-    SKT_ERR_PARAMS,
-
-};
+#define MAX_ADDR_STRING (65)
 
 typedef struct skt_addr {
     uint32_t ip;
     uint16_t port;
 } skt_addr_t;
 
+typedef struct skt_saddr {
+    char ip[MAX_ADDR_STRING];
+    uint16_t port;
+};
+
 typedef struct skt_addr_list {
     skt_addr_t addr;
     struct skt_addr_list *next;
 } skt_addr_list_t;
 
-typedef struct epop {
-    struct epoll_event *events;
-    int nevents;
-    int epfd;  //for epoll
-    int sfd;  //for listen socket
-    int (*on_recv)(int fd);
-    int (*on_send)(int fd);
-} epop_t;
+typedef struct skt_conn {
+    int fd;
+    int error;
 
-extern int skt_init();
-extern void skt_deinit(int fd);
+} skt_conn_t;
 
-extern int skt_tcp_conn(const char *host, uint16_t port);
-extern int skt_tcp_bind_listen(uint16_t port);
-extern int skt_udp_bind_listen(uint16_t port);
-extern int skt_tcp_srv(uint16_t port);
-extern int skt_tcp_cli(const char *host, uint16_t port);
+int skt_tcp_conn(const char *host, uint16_t port);
+int skt_tcp_bind_listen(const char *host, uint16_t port);
+int skt_udp_bind(const char *host, uint16_t port);
+skt_conn_t *skt_get_conn(int fd);
 
-extern int skt_udp_srv(const char *host, uint16_t port);
-extern int skt_send(int fd, void *buf, size_t len);
-extern int skt_recv(int fd, void *buf, size_t len);
+int skt_send(int fd, void *buf, size_t len);
+int skt_recv(int fd, void *buf, size_t len);
 
-extern int skt_set_noblk(int fd);
-extern int skt_clr_noblk(int fd);
+uint32_t skt_addr_pton(const char *ip);
+int skt_addr_ntop(char *str, uint32_t ip);
 
-extern int skt_domain_to_addr(const char *domain, uint16_t port, skt_addr_list_t **list);
-extern int skt_get_addr_by_fd(int fd, skt_addr_t addr);
-extern int sock_get_host_list(char ip_list[][64], int list_size);
-extern int sock_get_remote_addr(int fd, char *ip);
-extern int sock_get_host_list_byname(char ip_list[][64], const char *byname, int list_size);
+int skt_set_noblk(int fd, int enable);
+int skt_set_reuse(int fd, int enable);
+int skt_set_tcp_keepalive(int fd, int enable);
+int skt_set_buflen(int fd, int len);
+
+int skt_get_local_list(struct skt_addr_list **list, int loopback);
+int skt_gethostbyname(struct skt_addr_list **list, const char *name);
+int skt_getaddrinfo(skt_addr_list_t **list, const char *domain, const char *port);
+int skt_get_addr_by_fd(struct skt_addr *addr, int fd);
+int skt_get_remote_addr(struct skt_addr *addr, int fd);
 
 
 #ifdef __cplusplus
