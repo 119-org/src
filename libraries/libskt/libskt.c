@@ -92,29 +92,20 @@ int skt_udp_bind(const char *host, uint16_t port)
     return fd;
 }
 
-#if 0
-int skt_accept()
+int skt_accept(int fd, uint32_t *ip, uint16_t *port)
 {
-    do {
-        afd = accept(epop->sfd, (struct sockaddr*)&client, &addrlen);
-        if (afd == -1) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                            break;
-                        } else {
-                            perror("accept");
-                        }
-                    }
-                    fprintf(stderr, "new connect is incoming: %s:%d\n", inet_ntoa(client.sin_addr), client.sin_port);
-
-                    if (-1 == fcntl(afd, F_SETFL, fcntl(afd, F_GETFL) | O_NONBLOCK)) {
-                        perror("fcntl");
-                        break;
-                    }
-
-    } while (1);
-
+    struct sockaddr_in si;
+    socklen_t len = sizeof(si);
+    int afd = accept(fd, (struct sockaddr *)&si, len);
+    if (afd == -1) {
+        perror("accept");
+    } else {
+        *ip = si.sin_addr.s_addr;
+        *port = ntohs(si.sin_port);
+    }
+    return afd;
 }
-#endif
+
 int skt_get_local_list(skt_addr_list_t **al, int loopback)
 {
     struct ifaddrs * ifs = NULL;

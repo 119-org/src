@@ -16,7 +16,6 @@
 
 #include "libskt.h"
 
-#define IP_LIST		2
 #define EPOLL_MAX_NEVENT	4096
 #define RECV_BUFLEN		409600
 

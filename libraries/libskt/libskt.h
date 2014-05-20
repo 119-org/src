@@ -15,11 +15,6 @@ typedef struct skt_addr {
     uint16_t port;
 } skt_addr_t;
 
-typedef struct skt_saddr {
-    char ip[MAX_ADDR_STRING];
-    uint16_t port;
-};
-
 typedef struct skt_addr_list {
     skt_addr_t addr;
     struct skt_addr_list *next;
@@ -27,6 +22,7 @@ typedef struct skt_addr_list {
 
 int skt_tcp_conn(const char *host, uint16_t port);
 int skt_tcp_bind_listen(const char *host, uint16_t port);
+int skt_accept(int fd, uint32_t *ip, uint16_t *port);
 int skt_udp_bind(const char *host, uint16_t port);
 
 int skt_send(int fd, void *buf, size_t len);
