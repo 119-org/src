@@ -9,7 +9,15 @@ extern "C" {
 #endif
 
 struct event {
+    void *base;
 
+};
+
+struct eventop {
+    void *(*init)();
+    int (*add)(struct event *ev, int fd, short events);
+    int (*del)(struct event *ev, int fd, short events);
+    int (*dispatch)(struct event *ev, struct timeval *tv);
 };
 
 

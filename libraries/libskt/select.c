@@ -8,6 +8,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include "event.h"
+
+#define CALLOC(type, ptr) \
+    ptr = (type)calloc(1, sizeof(type));
 
 struct selectop {
     int event_fds;		/* Highest fd in fd set */
@@ -21,7 +25,13 @@ struct selectop {
 
 static void *select_init()
 {
-
+    struct selectop *sop;
+    sop = (struct selectop *)calloc(1, sizeof(struct selectop));
+    if (!sop) {
+        fprintf(stderr, "malloc selectop failed!\n");
+        return NULL;
+    }
+    return sop;
 }
 
 static int select_add()
@@ -38,3 +48,11 @@ static int select_dispatch()
 {
 
 }
+
+const struct eventop selectops = {
+	select_init,
+	select_add,
+	select_del,
+	select_dispatch,
+};
+
