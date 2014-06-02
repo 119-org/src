@@ -34,7 +34,7 @@ static void *select_init()
     return sop;
 }
 
-static int select_add(struct event *e, int fd, short events)
+static int select_add(struct event_base *e, int fd, short events)
 {
     struct selectop *sop = e->base;
     FD_ZERO(sop->ev_rfds);
@@ -52,7 +52,7 @@ static int select_del()
 
 }
 
-static int select_dispatch(struct event *e)
+static int select_dispatch(struct event_base *e)
 {
     int n, nfds;
     fd_set rfds, wfds, efds;

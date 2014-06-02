@@ -20,8 +20,23 @@ struct pollop {
 };
 
 
-static void *poll_init();
-static int poll_add();
-static int poll_del();
-static int poll_dispatch();
+static void *poll_init()
+{
+
+}
+static int poll_add()
+{
+
+    return 0;
+}
+static int poll_del()
+{
+
+    return 0;
+}
+static int poll_dispatch()
+{
+
+    return 0;
+}
 

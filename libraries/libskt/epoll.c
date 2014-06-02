@@ -6,157 +6,129 @@
 #include <ifaddrs.h>
 #include <netdb.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/epoll.h>
 #include <arpa/inet.h>
-
-#include "libskt.h"
+#include "event.h"
 
 #define EPOLL_MAX_NEVENT	4096
 
-typedef struct skt_conn {
-    int fd;
+struct epollop {
+    int epfd;
+    int nevents;
+    struct epoll_event *events;
+};
 
-} skt_conn_t;
-
-static struct epoll_event *event_list;
-static int		   epfd;
-static int		   maxevents;
-
-static int epoll_init(struct skt_conn *c);
-static int epoll_process(void *args);
-static void epoll_deinit(struct skt_conn *c);
-
-static int epoll_init(struct skt_conn *c)
+static void *epoll_init()
 {
-    epfd = epoll_create(1);
-    if (-1 == epfd) {
+    int fd;
+    struct epollop *epop;
+    fd = epoll_create(1);
+    if (-1 == fd) {
         perror("epoll_create");
         return -1;
     }
-    event_list = (struct epoll_event *)malloc(EPOLL_MAX_NEVENT);
-    if (event_list == NULL) {
-        fprintf(stderr, "malloc epoll_event failed!\n");
+    fprintf(stderr, "%s:%d fd = %d\n", __func__, __LINE__, fd);
+    epop = (struct epollop *)calloc(1, sizeof(struct epollop));
+    if (!epop) {
+        fprintf(stderr, "malloc epollop failed!\n");
+        return NULL;
+    }
+    epop->epfd = fd;
+    epop->events = (struct epoll_event *)calloc(EPOLL_MAX_NEVENT, sizeof(struct epoll_event));
+    if (NULL == epop->events) {
+        fprintf(stderr, "malloc epoll event failed!\n");
+        return NULL;
+    }
+    epop->nevents = EPOLL_MAX_NEVENT;
+
+    return epop;
+}
+
+static int epoll_add(struct event_base *e, int fd, short events)
+{
+    struct epoll_event epev;
+    struct epollop *epop = e->base;
+
+    memset(&epev, 0, sizeof(epev));
+    epev.data.fd = fd;
+    epev.events = EPOLLIN | EPOLLET;
+    fprintf(stderr, "%s:%d fd = %d\n", __func__, __LINE__, fd);
+    if (epoll_ctl(epop->epfd, EPOLL_CTL_ADD, fd, &epev) == -1) {
+        perror("epoll_ctl");
         return -1;
     }
-    maxevents = EPOLL_MAX_NEVENT;
+    return 0;
+
+}
+
+static int epoll_del(struct event_base *e)
+{
 
     return 0;
 }
 
-static int epoll_process(void *args)
-{
-#if 0
-    int i, events;
-    uint32_t revents;
-    intptr_t instance;
-    struct skt_conn *c;
-    events = epoll_wait(epfd, event_list, maxevents, -1);
+#define MAX_SECONDS_IN_MSEC_LONG \
+	(((LONG_MAX) - 999) / 1000)
 
-    if (events == -1) {
+static int epoll_dispatch(struct event_base *e, struct timeval *tv)
+{
+    struct epollop *epop = e->base;
+    struct epoll_event *events = epop->events;
+    int i, n;
+    int timeout = -1;
+
+    if (tv != NULL) {
+        if (tv->tv_usec > 1000000 || tv->tv_sec > MAX_SECONDS_IN_MSEC_LONG)
+            timeout = -1;
+        else
+            timeout = (tv->tv_sec * 1000) + ((tv->tv_usec + 999) / 1000);
+    } else {
+        timeout = -1;
+    }
+    fprintf(stderr, "%s:%d fd = %d\n", __func__, __LINE__, epop->epfd);
+    n = epoll_wait(epop->epfd, events, epop->nevents, timeout); 
+    if (-1 == n) {
         perror("epoll_wait");
         return -1;
     }
-    if (events == 0) {
-        fprintf(stderr, "epoll_wait() returned no events");
+    if (0 == n) {
+        fprintf(stderr, "epoll_wait() returned no events\n");
         return -1;
     }
+    for (i = 0; i < n; i++) {
+        int what = events[i].events;
+        short flags = 0;
 
-    for (i = 0; i < events; i++) {
-#if 0
-        c = event_list[i].data.ptr;
-        instance = (uintptr_t) c & 1;
-        c = (struct skt_conn *) ((uintptr_t) c & (uintptr_t) ~1);
-        rev = c->read;
-        if (c->fd == -1 || rev->instance != instance) {
+        if (what & (EPOLLHUP|EPOLLERR)) {
+            flags = EV_READ | EV_WRITE;
+        } else {
+            if (what & EPOLLIN)
+                flags |= EV_READ;
+            if (what & EPOLLOUT)
+                flags |= EV_WRITE;
+            if (what & EPOLLRDHUP)
+                flags |= EV_CLOSED;
+        }
+        if (!flags)
             continue;
-        }
-#endif
-        revents = event_list[i].events;
-
-        if (revents & (EPOLLERR | EPOLLHUP)) {
-            fprintf(stderr, "epoll_wait() error on fd:%d ev:%04XD\n", c->fd, revents);
-        }
-
-
-        if ((revents & (EPOLLERR|EPOLLHUP))
-             && (revents & (EPOLLIN|EPOLLOUT)) == 0)
-        {
-            /*
-             * if the error events were returned without EPOLLIN or EPOLLOUT,
-             * then add these flags to handle the events at least in one
-             * active handler
-             */
-
-            revents |= EPOLLIN|EPOLLOUT;
-        }
-
-        if ((revents & EPOLLIN) && rev->active) {
-
-#if (NGX_HAVE_EPOLLRDHUP)
-            if (revents & EPOLLRDHUP) {
-                rev->pending_eof = 1;
-            }
-#endif
-
-            if ((flags & NGX_POST_THREAD_EVENTS) && !rev->accept) {
-                rev->posted_ready = 1;
-
-            } else {
-                rev->ready = 1;
-            }
-
-            if (flags & NGX_POST_EVENTS) {
-                queue = (ngx_event_t **) (rev->accept ?
-                               &ngx_posted_accept_events : &ngx_posted_events);
-
-                ngx_locked_post_event(rev, queue);
-
-            } else {
-                rev->handler(rev);
-            }
-        }
-
-        wev = c->write;
-
-        if ((revents & EPOLLOUT) && wev->active) {
-
-            if (c->fd == -1 || wev->instance != instance) {
-
-                /*
-                 * the stale event from a file descriptor
-                 * that was just closed in this iteration
-                 */
-
-                ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
-                               "epoll: stale event %p", c);
-                continue;
-            }
-
-            if (flags & NGX_POST_THREAD_EVENTS) {
-                wev->posted_ready = 1;
-
-            } else {
-                wev->ready = 1;
-            }
-
-            if (flags & NGX_POST_EVENTS) {
-                ngx_locked_post_event(wev, &ngx_posted_events);
-
-            } else {
-                wev->handler(wev);
-            }
-        }
+        event_handle(e, events[i].data.fd, flags);
     }
 
-#endif
-    return 0;
 }
 
-static void epoll_deinit(struct skt_conn *c)
+static void epoll_deinit()
 {
 
 }
+
+const struct eventop epollops = {
+	epoll_init,
+	epoll_add,
+	epoll_del,
+	epoll_dispatch,
+};
 
