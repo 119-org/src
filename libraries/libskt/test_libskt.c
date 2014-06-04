@@ -35,7 +35,7 @@ int tcp_client(const char *host, uint16_t port)
     }
 }
 
-void handle(int fd, short flags, void *arg)
+void handle(void *arg)
 {
     printf("xxxx\n");
 
@@ -53,7 +53,12 @@ int tcp_server(uint16_t port)
     skt_set_noblk(fd, 1);
     eb = event_init();
     fprintf(stderr, "%s:%d fd = %d , %p\n", __func__, __LINE__, fd, handle);
-    event_add(eb, NULL, fd, 0, handle, NULL);
+
+    struct event *ev = (struct event *)calloc(1, sizeof(struct event));
+    ev->evcb.ev_in = handle;
+    ev->evcb.ev_out = NULL;
+    ev->evcb.ev_err = NULL;
+    event_add(eb, NULL, fd, (void *)ev);
     event_dispatch(eb, 0);
 
     return 0;

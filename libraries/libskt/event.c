@@ -2,15 +2,13 @@
 #include <stdlib.h>
 #include "event.h"
 
-extern const struct eventop selectops;
-extern const struct eventop epollops;
+extern const struct event_ops selectops;
+extern const struct event_ops epollops;
 
-static const struct eventop *eventops[] = {
+static const struct event_ops *eventops[] = {
 //    &selectops,
     &epollops,
 };
-
-typedef void (event_cb)(int fd, short flags, void *args);
 
 struct event_base *event_init()
 {
@@ -31,21 +29,16 @@ struct event_base *event_init()
     return e;
 }
 
-int event_add(struct event_base *eb, const struct timeval *tv, int fd, short flags, event_cb *cb, void *arg, struct eventcb *evcb)
+int event_add(struct event_base *eb, const struct timeval *tv, int fd, void *ptr)
 {
-    struct event *ev = calloc(1, sizeof(struct event));
+    struct event *ev = (struct event *)ptr;
     if (NULL == ev) {
         return -1;
     }
     ev->evbase = eb;
     ev->evfd = fd;
-    ev->evcb.cb = cb;
-    ev->evcb.arg = arg;
-    ev->evcb.flags = flags;
 
-    fprintf(stderr, "%s:%d fd = %d , %p\n", __func__, __LINE__, fd, ev->evcb.cb);
-    list_add(&ev->entry, &eb->head);
-    eb->evop->add(eb, fd, flags, evcb);
+    eb->evop->add(eb, fd, &ev->evcb);
     return 0;
 }
 
@@ -55,11 +48,11 @@ int event_del(struct event *ev)
     return 0;
 }
 
-int event_dispatch(struct event_base *eb, int flags) 
+int event_dispatch(struct event_base *eb, int flags)
 {
     int ret;
     int done = 0;
-    const struct eventop *evop = eb->evop;
+    const struct event_ops *evop = eb->evop;
     while (!done) {
         ret = evop->dispatch(eb, NULL);
         if (ret == -1) {
@@ -68,14 +61,4 @@ int event_dispatch(struct event_base *eb, int flags)
     }
 
     return 0;
-}
-
-
-void event_handle(struct event_base *eb, int fd, short flags)
-{
-    struct event *ev;
-    fprintf(stderr, "%s:%d fd = %d , %p\n", __func__, __LINE__, fd, ev->evcb.cb);
-    if (ev->evcb.cb) {
-        ev->evcb.cb(fd, flags, ev->evcb.arg);
-    }
 }

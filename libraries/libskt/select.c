@@ -63,7 +63,7 @@ static int select_dispatch(struct event_base *e)
 
 }
 
-const struct eventop selectops = {
+const struct event_ops selectops = {
 	select_init,
 	select_add,
 	select_del,

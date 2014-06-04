@@ -11,36 +11,32 @@ extern "C" {
 
 struct event_base;
 
-struct eventop {
+struct event_cbs {
+    void (*ev_in)(void *);
+    void (*ev_out)(void *);
+    void (*ev_err)(void *);
+};
+
+struct event_ops {
     void *(*init)();
-    int (*add)(struct event_base *eb, int fd, short events, void *ptr, struct eventcb *evcb);
+    int (*add)(struct event_base *eb, int fd, struct event_cbs *evcb);
     int (*del)(struct event_base *eb, int fd, short events);
     int (*dispatch)(struct event_base *eb, struct timeval *tv);
 };
 
-struct eventcb {
-    void (*event_in)(void *);
-    void (*event_out)(void *);
-    void (*event_err)(void *);
-};
-
-
 struct event_base {
     void *base;
-    const struct eventop *evop;
+    const struct event_ops *evop;
     struct list_head head;
 };
 
-struct event_callback {
-    void (*cb)(int fd, short flags, void *args);
-    void *arg;
-    short flags;
-};
+
+
 
 struct event {
     struct event_base *evbase;
     int evfd;
-    struct event_callback evcb;
+    struct event_cbs evcb;
     struct list_head entry;
 };
 
@@ -54,6 +50,11 @@ enum event_flags {
     EV_FINALIZE = 1<<6,
     EV_CLOSED   = 1<<7,
 };
+
+struct event_base *event_init();
+int event_add(struct event_base *eb, const struct timeval *tv, int fd, void *ptr);
+int event_del(struct event *ev);
+int event_dispatch(struct event_base *eb, int flags);
 
 #ifdef __cplusplus
 }
