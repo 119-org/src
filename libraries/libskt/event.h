@@ -13,9 +13,15 @@ struct event_base;
 
 struct eventop {
     void *(*init)();
-    int (*add)(struct event_base *eb, int fd, short events);
+    int (*add)(struct event_base *eb, int fd, short events, void *ptr, struct eventcb *evcb);
     int (*del)(struct event_base *eb, int fd, short events);
     int (*dispatch)(struct event_base *eb, struct timeval *tv);
+};
+
+struct eventcb {
+    void (*event_in)(void *);
+    void (*event_out)(void *);
+    void (*event_err)(void *);
 };
 
 

@@ -52,7 +52,7 @@ int tcp_server(uint16_t port)
     }
     skt_set_noblk(fd, 1);
     eb = event_init();
-    fprintf(stderr, "%s:%d fd = %d\n", __func__, __LINE__, fd);
+    fprintf(stderr, "%s:%d fd = %d , %p\n", __func__, __LINE__, fd, handle);
     event_add(eb, NULL, fd, 0, handle, NULL);
     event_dispatch(eb, 0);
 

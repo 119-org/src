@@ -48,10 +48,21 @@ static void *epoll_init()
     return epop;
 }
 
-static int epoll_add(struct event_base *e, int fd, short events)
+struct epoll_event_entry {
+    int fd;
+    struct epoll_event epev;
+    struct eventcb *evcb;
+};
+
+static int epoll_add(struct event_base *e, int fd, short events, struct eventcb *evcb)
 {
     struct epoll_event epev;
     struct epollop *epop = e->base;
+    struct epoll_event_entry *ee = (struct epoll_event_entry *)calloc(1, sizeof(struct epoll_event_entry));
+    ee->fd = fd;
+    ee->epev.events = 0;
+    ee->epev.data.ptr = ee;
+    ee->evcb = 
 
     memset(&epev, 0, sizeof(epev));
     epev.data.fd = fd;

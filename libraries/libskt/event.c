@@ -31,7 +31,7 @@ struct event_base *event_init()
     return e;
 }
 
-int event_add(struct event_base *eb, const struct timeval *tv, int fd, short flags, event_cb *cb, void *arg)
+int event_add(struct event_base *eb, const struct timeval *tv, int fd, short flags, event_cb *cb, void *arg, struct eventcb *evcb)
 {
     struct event *ev = calloc(1, sizeof(struct event));
     if (NULL == ev) {
@@ -43,8 +43,9 @@ int event_add(struct event_base *eb, const struct timeval *tv, int fd, short fla
     ev->evcb.arg = arg;
     ev->evcb.flags = flags;
 
+    fprintf(stderr, "%s:%d fd = %d , %p\n", __func__, __LINE__, fd, ev->evcb.cb);
     list_add(&ev->entry, &eb->head);
-    eb->evop->add(eb, fd, flags);
+    eb->evop->add(eb, fd, flags, evcb);
     return 0;
 }
 
@@ -73,7 +74,7 @@ int event_dispatch(struct event_base *eb, int flags)
 void event_handle(struct event_base *eb, int fd, short flags)
 {
     struct event *ev;
-    fprintf(stderr, "%s:%d fd = %d\n", __func__, __LINE__, fd);
+    fprintf(stderr, "%s:%d fd = %d , %p\n", __func__, __LINE__, fd, ev->evcb.cb);
     if (ev->evcb.cb) {
         ev->evcb.cb(fd, flags, ev->evcb.arg);
     }
