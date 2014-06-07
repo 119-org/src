@@ -96,9 +96,16 @@ int skt_accept(int fd, uint32_t *ip, uint16_t *port)
 {
     struct sockaddr_in si;
     socklen_t len = sizeof(si);
-    int afd = accept(fd, (struct sockaddr *)&si, len);
+    int afd = accept(fd, (struct sockaddr *)&si, &len);
     if (afd == -1) {
-        perror("accept");
+        if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
+            /* We have processed all incoming connections. */
+            perror("accept");
+            return -1;
+        } else {
+            perror("accept");
+            return -1;
+        }
     } else {
         *ip = si.sin_addr.s_addr;
         *port = ntohs(si.sin_port);
@@ -435,7 +442,6 @@ int skt_send(int fd, void *buf, size_t len)
 
 int skt_sendto(int fd, const char *ip, uint16_t port, const void *buf, size_t len)
 {
-    int ret = 0;
     ssize_t n;
     uint8_t *p;
     size_t left;

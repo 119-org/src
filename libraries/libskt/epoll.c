@@ -15,76 +15,71 @@
 #include "event.h"
 
 #define EPOLL_MAX_NEVENT	4096
+#define MAX_SECONDS_IN_MSEC_LONG \
+	(((LONG_MAX) - 999) / 1000)
 
-struct epollop {
+struct epoll_ctx {
     int epfd;
     int nevents;
     struct epoll_event *events;
 };
 
-struct epoll_event_entry {
-    int fd;
-    struct epoll_event epev;
-    struct event_cbs *evcb;
-};
 static void *epoll_init()
 {
     int fd;
-    struct epollop *epop;
+    struct epoll_ctx *ec;
     fd = epoll_create(1);
     if (-1 == fd) {
-        perror("epoll_create");
+        err("errno=%d %s\n", errno, strerror(errno));
         return NULL;
     }
-    fprintf(stderr, "%s:%d fd = %d\n", __func__, __LINE__, fd);
-    epop = (struct epollop *)calloc(1, sizeof(struct epollop));
-    if (!epop) {
-        fprintf(stderr, "malloc epollop failed!\n");
+    ec = (struct epoll_ctx *)calloc(1, sizeof(struct epoll_ctx));
+    if (!ec) {
+        err("malloc epoll_ctx failed!\n");
         return NULL;
     }
-    epop->epfd = fd;
-    epop->events = (struct epoll_event *)calloc(EPOLL_MAX_NEVENT, sizeof(struct epoll_event));
-    if (NULL == epop->events) {
-        fprintf(stderr, "malloc epoll event failed!\n");
+    ec->epfd = fd;
+    ec->nevents = EPOLL_MAX_NEVENT;
+    ec->events = (struct epoll_event *)calloc(EPOLL_MAX_NEVENT, sizeof(struct epoll_event));
+    if (!ec->events) {
+        err("malloc epoll_event failed!\n");
         return NULL;
     }
-    epop->nevents = EPOLL_MAX_NEVENT;
-
-    return epop;
+    return ec;
 }
 
-
-static int epoll_add(struct event_base *e, int fd, struct event_cbs *evcb)
+static int epoll_add(struct event_base *eb, struct event *e)
 {
+    struct epoll_ctx *ec = eb->base;
     struct epoll_event epev;
-    struct epollop *epop = e->base;
-    struct epoll_event_entry *ee = (struct epoll_event_entry *)calloc(1, sizeof(struct epoll_event_entry));
-    ee->fd = fd;
-    ee->epev.events = 0;
-    ee->epev.data.ptr = (void *)ee;
-    ee->evcb = evcb;
-    epev.events = EPOLLIN;//XXX
-    epev.data.ptr = (void *)ee;
+    memset(&epev, 0, sizeof(epev));
+    if (e->flags & EVENT_READ)
+        epev.events |= EPOLLIN;
+    if (e->flags & EVENT_WRITE)
+        epev.events |= EPOLLOUT;
+    epev.events |= EPOLLET;
+    epev.data.ptr = (void *)e;
 
-    if (-1 == epoll_ctl(epop->epfd, EPOLL_CTL_ADD, fd, &epev)) {
+    if (-1 == epoll_ctl(ec->epfd, EPOLL_CTL_ADD, e->evfd, &epev)) {
+        err("errno=%d %s\n", errno, strerror(errno));
+        return -1;
+    }
+    return 0;
+}
+
+static int epoll_del(struct event_base *eb, struct event *e)
+{
+    struct epoll_ctx *ec = eb->base;
+    if (-1 == epoll_ctl(ec->epfd, EPOLL_CTL_DEL, e->evfd, NULL)) {
         perror("epoll_ctl");
         return -1;
     }
     return 0;
 }
 
-static int epoll_del(struct event_base *e, int fd, short events)
+static int epoll_dispatch(struct event_base *eb, struct timeval *tv)
 {
-
-    return 0;
-}
-
-#define MAX_SECONDS_IN_MSEC_LONG \
-	(((LONG_MAX) - 999) / 1000)
-
-static int epoll_dispatch(struct event_base *e, struct timeval *tv)
-{
-    struct epollop *epop = e->base;
+    struct epoll_ctx *epop = eb->base;
     struct epoll_event *events = epop->events;
     int i, n;
     int timeout = -1;
@@ -99,25 +94,25 @@ static int epoll_dispatch(struct event_base *e, struct timeval *tv)
     }
     n = epoll_wait(epop->epfd, events, epop->nevents, timeout); 
     if (-1 == n) {
-        perror("epoll_wait");
+        err("errno=%d %s\n", errno, strerror(errno));
         return -1;
     }
     if (0 == n) {
-        fprintf(stderr, "epoll_wait() returned no events\n");
+        err("epoll_wait() returned no events\n");
         return -1;
     }
     for (i = 0; i < n; i++) {
         int what = events[i].events;
-        struct epoll_event_entry *ee = (struct epoll_event_entry *)events[i].data.ptr;
+        struct event *e = (struct event *)events[i].data.ptr;
 
         if (what & (EPOLLHUP|EPOLLERR)) {
         } else {
             if (what & EPOLLIN)
-                ee->evcb->ev_in((void *)ee);
+                e->evcb->ev_in((void *)e->evcb->args);
             if (what & EPOLLOUT)
-                ee->evcb->ev_out(ee);
+                e->evcb->ev_out((void *)e->evcb->args);
             if (what & EPOLLRDHUP)
-                ee->evcb->ev_err(ee);
+                e->evcb->ev_err((void *)e->evcb->args);
         }
     }
     return 0;

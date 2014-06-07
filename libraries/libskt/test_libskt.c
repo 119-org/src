@@ -15,6 +15,11 @@
 #include "libskt.h"
 #include "event.h"
 
+struct conn {
+    int fd;
+
+};
+
 int tcp_client(const char *host, uint16_t port)
 {
     int fd;
@@ -35,31 +40,61 @@ int tcp_client(const char *host, uint16_t port)
     }
 }
 
-void handle(void *arg)
+void recv_msg(void *arg)
 {
-    printf("xxxx\n");
+    int fd = *(int *)arg;
+    char buf[100];
+    skt_recv(fd, buf, 100);
+    printf("recv buf = %s\n", buf);
 
+}
+
+void handle_new_conn(void *arg)
+{
+    struct conn *c = (struct conn *)arg;
+    int fd;
+    uint32_t ip;
+    uint16_t port;
+    fd = skt_accept(c->fd, &ip, &port);
+    if (fd == -1) {
+        err("errno=%d %s\n", errno, strerror(errno));
+        return;
+    };
+    struct event_cbs *evcb = (struct event_cbs *)calloc(1, sizeof(struct event_cbs));
+    evcb->ev_in = recv_msg;
+    evcb->ev_out = NULL;
+    evcb->ev_err = NULL;
+    struct event *e = event_create(fd, EVENT_READ, evcb, (void *)&fd);
+    if (-1 == event_add(e)) {
+        err("event_add failed!\n");
+    }
 }
 
 int tcp_server(uint16_t port)
 {
     int fd;
-    struct event_base *eb;
+    int ret;
+    struct conn *c = (struct conn *)calloc(1, sizeof(struct conn));
 
     fd = skt_tcp_bind_listen(NULL, port);
     if (fd == -1) {
         return -1;
     }
-    skt_set_noblk(fd, 1);
-    eb = event_init();
-    fprintf(stderr, "%s:%d fd = %d , %p\n", __func__, __LINE__, fd, handle);
+    c->fd = fd;
+    ret = event_init();
+    if (ret == -1) {
+        return -1;
+    }
 
-    struct event *ev = (struct event *)calloc(1, sizeof(struct event));
-    ev->evcb.ev_in = handle;
-    ev->evcb.ev_out = NULL;
-    ev->evcb.ev_err = NULL;
-    event_add(eb, NULL, fd, (void *)ev);
-    event_dispatch(eb, 0);
+    struct event_cbs *evcb = (struct event_cbs *)calloc(1, sizeof(struct event_cbs));
+    evcb->ev_in = handle_new_conn;
+    evcb->ev_out = NULL;
+    evcb->ev_err = NULL;
+    struct event *e = event_create(fd, EVENT_READ, evcb, (void *)c);
+    if (-1 == event_add(e)) {
+        err("event_add failed!\n");
+    }
+    event_dispatch();
 
     return 0;
 }
