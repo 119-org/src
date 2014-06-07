@@ -2,7 +2,7 @@
 CC	= gcc
 LD	= ld
 
-INCLUDE = -I../libutils
+INCLUDE = -I.
 CFLAGS	= -g -Wall -fPIC
 CFLAGS	+= $(INCLUDE)
 LDFLAGS	= -lpthread

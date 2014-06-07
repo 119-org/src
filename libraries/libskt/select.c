@@ -10,57 +10,95 @@
 #include <errno.h>
 #include "event.h"
 
-#define CALLOC(type, ptr) \
-    ptr = (type)calloc(1, sizeof(type));
-#define MALLOC(type, ptr) \
-    ptr = (type)malloc(sizeof(type));
+#define SELECT_MAX_FD	1024
 
-struct selectop {
-    int fds;		/* Highest fd in fd set */
-    int fdsz;
-    fd_set *ev_rfds;
-    fd_set *ev_wfds;
-    fd_set *ev_efds;
+struct select_ctx {
+    int nfds;		/* Highest fd in fd set */
+    fd_set *rfds;
+    fd_set *wfds;
+    fd_set *efds;
 };
 
 static void *select_init()
 {
-    struct selectop *sop;
-    sop = (struct selectop *)calloc(1, sizeof(struct selectop));
-    if (!sop) {
-        fprintf(stderr, "malloc selectop failed!\n");
+    struct select_ctx *sc;
+    sc = (struct select_ctx *)calloc(1, sizeof(struct select_ctx));
+    if (!sc) {
+        err("malloc select_ctx failed!\n");
         return NULL;
     }
-    return sop;
+    fd_set *rfds = (fd_set *)calloc(1, sizeof(rfds));
+    fd_set *wfds = (fd_set *)calloc(1, sizeof(fd_set));
+    fd_set *efds = (fd_set *)calloc(1, sizeof(fd_set));
+    if (!rfds || !wfds || !efds) {
+        err("malloc fd_set failed!\n");
+        return NULL;
+    }
+    sc->rfds = rfds;
+    sc->wfds = wfds;
+    sc->efds = efds;
+
+    return sc;
 }
 
-static int select_add(struct event_base *e, int fd, short events)
+static int select_add(struct event_base *eb, struct event *e)
 {
-    struct selectop *sop = e->base;
-    FD_ZERO(sop->ev_rfds);
-    FD_ZERO(sop->ev_wfds);
-    FD_ZERO(sop->ev_efds);
+    struct select_ctx *sc = eb->base;
 
-    FD_SET(fd, sop->ev_rfds);
-    FD_SET(fd, sop->ev_wfds);
-    FD_SET(fd, sop->ev_efds);
+    FD_ZERO(sc->rfds);
+    FD_ZERO(sc->wfds);
+    FD_ZERO(sc->efds);
+
+    if (sc->nfds < e->evfd) {
+        sc->nfds = e->evfd;
+    }
+
+    if (e->flags & EVENT_READ)
+        FD_SET(e->evfd, sc->rfds);
+    if (e->flags & EVENT_WRITE)
+        FD_SET(e->evfd, sc->wfds);
+    if (e->flags & EVENT_EXCEPT)
+        FD_SET(e->evfd, sc->efds);
     return 0;
 }
 
-static int select_del()
+static int select_del(struct event_base *eb, struct event *e)
 {
-
+    struct select_ctx *sc = eb->base;
+    if (sc->rfds)
+        FD_CLR(e->evfd, sc->rfds);
+    if (sc->wfds)
+        FD_CLR(e->evfd, sc->wfds);
+    if (sc->efds)
+        FD_CLR(e->evfd, sc->efds);
+    return 0;
 }
 
-static int select_dispatch(struct event_base *e)
+static int select_dispatch(struct event_base *eb, struct timeval *tv)
 {
-    int n, nfds;
-    fd_set rfds, wfds, efds;
-    struct selectop *sop = e->base;
-    nfds = sop->fds;
+    int i, n;
+    int flags;
+    struct select_ctx *sc = eb->base;
 
-    n = select(nfds, sop->ev_rfds, sop->ev_wfds, sop->ev_efds, NULL);
+    n = select(sc->nfds, sc->rfds, sc->wfds, sc->efds, tv);
+    if (-1 == n) {
+        err("errno=%d %s\n", errno, strerror(errno));
+        return -1;
+    }
+    if (0 == n) {
+        err("select timeout\n");
+        return 0;
+    }
+    for (i = 0; i < sc->nfds; i++) {
+        if (FD_ISSET(i, sc->rfds))
+            flags |= EVENT_READ;
+        if (FD_ISSET(i, sc->wfds))
+            flags |= EVENT_WRITE;
+        if (FD_ISSET(i, sc->efds))
+            flags |= EVENT_EXCEPT;
+    }
 
+    return 0;
 }
 
 const struct event_ops selectops = {
@@ -69,4 +107,3 @@ const struct event_ops selectops = {
 	select_del,
 	select_dispatch,
 };
-

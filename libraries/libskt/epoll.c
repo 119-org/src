@@ -57,6 +57,8 @@ static int epoll_add(struct event_base *eb, struct event *e)
         epev.events |= EPOLLIN;
     if (e->flags & EVENT_WRITE)
         epev.events |= EPOLLOUT;
+    if (e->flags & EVENT_ERROR)
+        epev.events |= EPOLLERR;
     epev.events |= EPOLLET;
     epev.data.ptr = (void *)e;
 
@@ -98,8 +100,8 @@ static int epoll_dispatch(struct event_base *eb, struct timeval *tv)
         return -1;
     }
     if (0 == n) {
-        err("epoll_wait() returned no events\n");
-        return -1;
+        err("epoll_wait timeout\n");
+        return 0;
     }
     for (i = 0; i < n; i++) {
         int what = events[i].events;
@@ -124,4 +126,3 @@ const struct event_ops epollops = {
 	epoll_del,
 	epoll_dispatch,
 };
-

@@ -47,6 +47,8 @@ enum event_flags {
     EVENT_ET       = 1<<5,
     EVENT_FINALIZE = 1<<6,
     EVENT_CLOSED   = 1<<7,
+    EVENT_ERROR    = 1<<8,
+    EVENT_EXCEPT   = 1<<9,
 };
 
 int event_init();
