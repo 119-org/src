@@ -40,7 +40,7 @@ static void *poll_init()
     return pc;
 }
 
-static int poll_add(struct event_base *eb, struct event *e)
+static int poll_add(struct event_base *eb, struct skt_ev *e)
 {
     struct poll_ctx *pc = eb->base;
 
@@ -55,7 +55,7 @@ static int poll_add(struct event_base *eb, struct event *e)
 
     return 0;
 }
-static int poll_del(struct event_base *eb, struct event *e)
+static int poll_del(struct event_base *eb, struct skt_ev *e)
 {
 //    struct poll_ctx *pc = eb->base;
 

@@ -48,7 +48,7 @@ static void *epoll_init()
     return ec;
 }
 
-static int epoll_add(struct event_base *eb, struct event *e)
+static int epoll_add(struct event_base *eb, struct skt_ev *e)
 {
     struct epoll_ctx *ec = eb->base;
     struct epoll_event epev;
@@ -69,7 +69,7 @@ static int epoll_add(struct event_base *eb, struct event *e)
     return 0;
 }
 
-static int epoll_del(struct event_base *eb, struct event *e)
+static int epoll_del(struct event_base *eb, struct skt_ev *e)
 {
     struct epoll_ctx *ec = eb->base;
     if (-1 == epoll_ctl(ec->epfd, EPOLL_CTL_DEL, e->evfd, NULL)) {
@@ -105,7 +105,7 @@ static int epoll_dispatch(struct event_base *eb, struct timeval *tv)
     }
     for (i = 0; i < n; i++) {
         int what = events[i].events;
-        struct event *e = (struct event *)events[i].data.ptr;
+        struct skt_ev *e = (struct skt_ev *)events[i].data.ptr;
 
         if (what & (EPOLLHUP|EPOLLERR)) {
         } else {

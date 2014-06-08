@@ -13,7 +13,7 @@
 #include <errno.h>
 #include <sys/epoll.h>
 #include "libskt.h"
-#include "event.h"
+#include "debug.h"
 
 struct conn {
     int fd;
@@ -60,12 +60,12 @@ void handle_new_conn(void *arg)
         err("errno=%d %s\n", errno, strerror(errno));
         return;
     };
-    struct event_cbs *evcb = (struct event_cbs *)calloc(1, sizeof(struct event_cbs));
+    struct skt_ev_cbs *evcb = (struct skt_ev_cbs *)calloc(1, sizeof(struct skt_ev_cbs));
     evcb->ev_in = recv_msg;
     evcb->ev_out = NULL;
     evcb->ev_err = NULL;
-    struct event *e = event_create(fd, EVENT_READ, evcb, (void *)&fd);
-    if (-1 == event_add(e)) {
+    struct skt_ev *e = skt_ev_create(fd, EVENT_READ, evcb, (void *)&fd);
+    if (-1 == skt_ev_add(e)) {
         err("event_add failed!\n");
     }
 }
@@ -81,20 +81,20 @@ int tcp_server(uint16_t port)
         return -1;
     }
     c->fd = fd;
-    ret = event_init();
+    ret = skt_ev_init();
     if (ret == -1) {
         return -1;
     }
 
-    struct event_cbs *evcb = (struct event_cbs *)calloc(1, sizeof(struct event_cbs));
+    struct skt_ev_cbs *evcb = (struct skt_ev_cbs *)calloc(1, sizeof(struct skt_ev_cbs));
     evcb->ev_in = handle_new_conn;
     evcb->ev_out = NULL;
     evcb->ev_err = NULL;
-    struct event *e = event_create(fd, EVENT_READ, evcb, (void *)c);
-    if (-1 == event_add(e)) {
+    struct skt_ev *e = skt_ev_create(fd, EVENT_READ, evcb, (void *)c);
+    if (-1 == skt_ev_add(e)) {
         err("event_add failed!\n");
     }
-    event_dispatch();
+    skt_ev_dispatch();
 
     return 0;
 }

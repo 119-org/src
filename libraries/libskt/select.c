@@ -41,7 +41,7 @@ static void *select_init()
     return sc;
 }
 
-static int select_add(struct event_base *eb, struct event *e)
+static int select_add(struct event_base *eb, struct skt_ev *e)
 {
     struct select_ctx *sc = eb->base;
 
@@ -62,7 +62,7 @@ static int select_add(struct event_base *eb, struct event *e)
     return 0;
 }
 
-static int select_del(struct event_base *eb, struct event *e)
+static int select_del(struct event_base *eb, struct skt_ev *e)
 {
     struct select_ctx *sc = eb->base;
     if (sc->rfds)

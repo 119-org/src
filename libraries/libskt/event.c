@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include "libskt.h"
 #include "event.h"
 
 extern const struct event_ops selectops;
+extern const struct event_ops pollops;
 extern const struct event_ops epollops;
 
 static const struct event_ops *eventops[] = {
@@ -13,7 +15,7 @@ static const struct event_ops *eventops[] = {
 
 static struct event_base *g_evbase = NULL;
 
-int event_init()
+int skt_ev_init()
 {
     int i;
     struct event_base *eb = (struct event_base *)calloc(1, sizeof(struct event_base));
@@ -32,14 +34,13 @@ int event_init()
     return 0;
 }
 
-struct event *event_create(int fd, int flags, struct event_cbs *evcb, void *args)
+struct skt_ev *skt_ev_create(int fd, int flags, struct skt_ev_cbs *evcb, void *args)
 {
-    struct event *e = (struct event *)calloc(1, sizeof(struct event));
+    struct skt_ev *e = (struct skt_ev *)calloc(1, sizeof(struct skt_ev));
     if (!e) {
-        err("malloc event failed!\n");
+        err("malloc skt_ev failed!\n");
         return NULL;
     }
-    e->evbase = g_evbase;
     e->evfd = fd;
     e->flags = flags;
     e->evcb = evcb;
@@ -48,7 +49,7 @@ struct event *event_create(int fd, int flags, struct event_cbs *evcb, void *args
     return e;
 }
 
-void event_destroy(struct event *e)
+void skt_ev_destroy(struct skt_ev *e)
 {
     if (!e)
         return;
@@ -57,7 +58,7 @@ void event_destroy(struct event *e)
     free(e);
 }
 
-int event_add(struct event *e)
+int skt_ev_add(struct skt_ev *e)
 {
     struct event_base *eb = g_evbase;
     if (!e || !eb) {
@@ -68,7 +69,7 @@ int event_add(struct event *e)
     return 0;
 }
 
-int event_del(struct event *e)
+int skt_ev_del(struct skt_ev *e)
 {
     struct event_base *eb = g_evbase;
     if (!e || !eb) {
@@ -79,7 +80,7 @@ int event_del(struct event *e)
     return 0;
 }
 
-int event_dispatch()
+int skt_ev_dispatch()
 {
     struct event_base *eb = g_evbase;
     const struct event_ops *evop = eb->evop;
