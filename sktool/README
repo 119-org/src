@@ -1,0 +1,5 @@
+1. how to build qt project
+
+$ qmake -project
+$ qmake
+$ make
