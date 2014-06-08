@@ -1,14 +1,11 @@
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/select.h>
-#include <sys/queue.h>
-#include <unistd.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <errno.h>
+#include <sys/select.h>
 #include "event.h"
+#include "debug.h"
 
 #define SELECT_MAX_FD	1024
 
@@ -102,8 +99,8 @@ static int select_dispatch(struct event_base *eb, struct timeval *tv)
 }
 
 const struct event_ops selectops = {
-	select_init,
-	select_add,
-	select_del,
-	select_dispatch,
+    select_init,
+    select_add,
+    select_del,
+    select_dispatch,
 };

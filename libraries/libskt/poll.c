@@ -1,14 +1,12 @@
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/queue.h>
-#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
 #include <unistd.h>
 #include <errno.h>
+#include <poll.h>
 #include "event.h"
+#include "debug.h"
 
 #define POLL_MAX_FD	1024
 #define MAX_SECONDS_IN_MSEC_LONG \

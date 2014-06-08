@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "libskt.h"
-#include "debug.h"
 
 #ifdef __cplusplus
 extern "C" {

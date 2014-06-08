@@ -3,16 +3,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include <ifaddrs.h>
-#include <netdb.h>
-#include <fcntl.h>
 #include <limits.h>
-#include <net/if.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
 #include <sys/epoll.h>
-#include <arpa/inet.h>
 #include "event.h"
+#include "debug.h"
 
 #define EPOLL_MAX_NEVENT	4096
 #define MAX_SECONDS_IN_MSEC_LONG \
