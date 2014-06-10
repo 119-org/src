@@ -3,4 +3,4 @@
 qmake -project
 qmake
 make clean
-make
+make -j4

@@ -1,16 +1,28 @@
 #ifndef SKTOOL_H
 #define SKTOOL_H
 
-#include <QWidget>
+#include <QtGui>
+#include "server.h"
+#include "client.h"
 
-class Sktool : public QWidget
+class Sktool : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    Sktool(QWidget *parent = 0);
+    Sktool();
+
+    void show();
 
 private slots:
+
+private:
+    ServerWidget *serverWidget;
+    ClientWidget *clientWidget;
+
+    QMainWindow m_wnd;
+    QMenu *fileMenu;
+    QMenu *helpMenu;
 
 };
 
