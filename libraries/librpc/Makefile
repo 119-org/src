@@ -6,12 +6,16 @@ CFLAGS	:= -g -Wall
 LDFLAGS	:= -levent
 LDFLAGS	+= -lprotobuf
 
-LIBRPC_A	= librpc.a
-LIBRPC_SO	= librpc.so
+LIBRPC_CALLER_A		= librpc_caller.a
+LIBRPC_CALLER_SO	= librpc_caller.so
+LIBRPC_CALLEE_A		= librpc_callee.a
+LIBRPC_CALLEE_SO	= librpc_callee.so
+TEST_CLIENT		= test_client
+TEST_SERVER 		= test_server
 
 .PHONY: all clean
 
-all: proto $(LIBRPC_A)
+all: proto $(LIBRPC_A) $(LIBRPC_CALLER_A) $(LIBRPC_CALLEE_A) $(TEST_CLIENT)
 
 %.o:%.cc
 	$(CC) -c $(CFLAGS) $< -o $@
@@ -22,8 +26,14 @@ librpc.pb.o: librpc.pb.cc
 proto: librpc.proto
 	protoc --cpp_out=. librpc.proto
 
-$(LIBRPC_A): librpc.pb.o rpc_client.o
+$(LIBRPC_CALLER_A): librpc.pb.o rpc_client.o librpc_caller.o
 	$(AR) rcs $@ $^
+
+$(LIBRPC_CALLEE_A): librpc.pb.o rpc_client.o librpc_callee.o
+	$(AR) rcs $@ $^
+
+$(TEST_CLIENT): test_client.o $(LIBRPC_CALLER_A)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
 	rm -rf *.o *.a *pb*
