@@ -15,7 +15,7 @@ TEST_SERVER 		= test_server
 
 .PHONY: all clean
 
-all: proto $(LIBRPC_A) $(LIBRPC_CALLER_A) $(LIBRPC_CALLEE_A) $(TEST_CLIENT)
+all: proto $(LIBRPC_A) $(LIBRPC_CALLER_A) $(LIBRPC_CALLEE_A) $(TEST_CLIENT) $(TEST_SERVER)
 
 %.o:%.cc
 	$(CC) -c $(CFLAGS) $< -o $@
@@ -29,10 +29,13 @@ proto: librpc.proto
 $(LIBRPC_CALLER_A): librpc.pb.o rpc_client.o librpc_caller.o
 	$(AR) rcs $@ $^
 
-$(LIBRPC_CALLEE_A): librpc.pb.o rpc_client.o librpc_callee.o
+$(LIBRPC_CALLEE_A): librpc.pb.o rpc_server.o librpc_callee.o
 	$(AR) rcs $@ $^
 
 $(TEST_CLIENT): test_client.o $(LIBRPC_CALLER_A)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+$(TEST_SERVER): test_server.o $(LIBRPC_CALLEE_A)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:

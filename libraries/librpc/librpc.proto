@@ -1,35 +1,35 @@
 package librpc;
 
-enum rpc_cmd {
+enum rpc_req_cmd {
     HELLO = 1;
-    TEST = 2;
+    CALC = 2;
 }
 
-enum reply_type {
+enum rpc_rep_errno {
     SUCCESS = 0;
     ERROR = 1;
     NOEXIST = 2;
 }
 
 message hello_req {
-    required uint32 uint32_arg = 1;
-    optional string string_arg = 2;
-
+    required rpc_req_cmd cmd = 1;
+    required uint32 uint32_arg = 2;
+    optional string string_arg = 3;
 }
 
 message hello_rep {
-    required reply_type type = 1;
-    optional uint32 uint32arg = 2;
-    optional string stringarg = 3;
+    required rpc_rep_errno type = 1;
+    optional uint32 uint32_arg = 2;
+    optional string string_arg = 3;
 }
 
 message rpc_req {
-    required rpc_cmd cmd = 1;
+    required rpc_req_cmd cmd = 1;
     optional uint32 uint32_arg = 2;
     optional string string_arg = 3;
 }
 
 message rpc_rep {
-    required reply_type type = 1;
-    optional uint32 arg1 = 2;
+    required rpc_rep_errno rpcerrno = 1;
+    optional bytes rpcstrerr = 2;
 }
