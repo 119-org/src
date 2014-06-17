@@ -107,6 +107,9 @@ static int rpc_srv_parse(struct rpc_srv *r, const char *buf, int len)
     case librpc::HELLO:
         rpc_hello(r, &reqbuf, &repbuf);
         break;
+    case librpc::CALC:
+        rpc_calc(r, &reqbuf, &repbuf);
+        break;
     default:
         fprintf(stderr, "can't find cmd!\n");
         rpc_reply_error(r);

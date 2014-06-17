@@ -1,5 +1,6 @@
 package librpc;
 
+//below is base templet
 enum rpc_req_cmd {
     HELLO = 1;
     CALC = 2;
@@ -11,6 +12,18 @@ enum rpc_rep_errno {
     NOEXIST = 2;
 }
 
+message rpc_req {
+    required rpc_req_cmd cmd = 1;
+}
+
+message rpc_rep {
+    required rpc_rep_errno rpcerrno = 1;
+    optional bytes rpcstrerr = 2;
+}
+
+//add your request and reply message as follows:
+
+//hello rpc
 message hello_req {
     required rpc_req_cmd cmd = 1;
     required uint32 uint32_arg = 2;
@@ -23,11 +36,22 @@ message hello_rep {
     optional string string_arg = 3;
 }
 
-message rpc_req {
-    required rpc_req_cmd cmd = 1;
+//calc rpc
+enum calc_cmd {
+    ADD = 1;
+    SUB = 2;
+    MUL = 3;
+    DIV = 4;
 }
 
-message rpc_rep {
-    required rpc_rep_errno rpcerrno = 1;
-    optional bytes rpcstrerr = 2;
+message calc_req {
+    required rpc_req_cmd cmd = 1;
+    required calc_cmd opcode = 2;
+    required int32 arg1 = 3;
+    optional int32 arg2 = 4;
+}
+
+message calc_rep {
+    required rpc_rep_errno type = 1;
+    required int32 value = 2;
 }

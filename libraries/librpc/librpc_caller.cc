@@ -4,7 +4,7 @@
 
 #include "librpc.h"
 #include "librpc.pb.h"
-#include "librpc_callee.h"
+#include "librpc_caller.h"
 #include "rpc_client.h"
 
 using namespace std;
@@ -42,6 +42,39 @@ int rpc_call_hello(struct rpc *r, void *args)
 
     return 0;
 }
+
+int rpc_call_calc(struct rpc *r, void *args)
+{
+    string wbuf, rbuf;
+    librpc::calc_req req;
+    librpc::calc_rep rep;
+    struct calc_args *ca = (struct calc_args *)args;
+    req.set_cmd(librpc::CALC);
+    req.set_opcode(static_cast< ::librpc::calc_cmd >(ca->opcode));
+    req.set_arg1(ca->arg1);
+    req.set_arg2(ca->arg2);
+
+    if (!req.SerializeToString(&wbuf)) {
+        fprintf(stderr, "serialize to string failed!\n");
+        return -1;
+    }
+
+    cout << "request:>>>>>>>>\n" << req.DebugString() << ">>>>>>>>>>>>>>>\n" << endl;
+
+    if (rpc_xfer(r, wbuf, &rbuf)) {
+        fprintf(stderr, "rpc transfer failed!\n");
+        return -1;
+    }
+
+    if (false == rep.ParseFromString(rbuf)) {
+        fprintf(stderr, "parse from string failed!\n");
+        return -1;
+    }
+    cout << "reply:<<<<<<<<\n" << rep.DebugString() << "<<<<<<<<<<<<<<<\n" << endl;
+
+    return 0;
+}
+
 
 #ifdef __cplusplus
 }
