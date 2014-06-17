@@ -17,11 +17,9 @@ using namespace std;
 
 #define RECV_BUFLEN	4096
 
+static struct rpc_handler *g_handle_table = NULL;
+static int g_handle_table_size = 0;
 
-struct rpc_handler {
-    int cmd;
-    rpc_callee *rc;
-};
 
 static int rpc_srv_parse(struct rpc_srv *r, const char *buf, int len);
 
@@ -94,6 +92,7 @@ int rpc_reply_error(struct rpc_srv *r)
 
 static int rpc_srv_parse(struct rpc_srv *r, const char *buf, int len)
 {
+    int i;
     string reqbuf(buf, len);
     string repbuf;
     librpc::rpc_req req;
@@ -103,24 +102,18 @@ static int rpc_srv_parse(struct rpc_srv *r, const char *buf, int len)
         fprintf(stderr, "parse message failed!\n");
         return rpc_reply_error(r);
     }
-    switch (req.cmd()) {
-    case librpc::HELLO:
-        rpc_hello(r, &reqbuf, &repbuf);
-        break;
-    case librpc::CALC:
-        rpc_calc(r, &reqbuf, &repbuf);
-        break;
-    default:
-        fprintf(stderr, "can't find cmd!\n");
-        rpc_reply_error(r);
-        break;
+    for (i = 0; i < g_handle_table_size; i++) {
+        if (req.cmd() == g_handle_table[i].cmd) {
+            g_handle_table[i].rc(r, &reqbuf, &repbuf);
+            break;
+        }
     }
 
     bufferevent_write(r->evbuf, repbuf.data(), repbuf.length());
     return 0;
 }
 
-struct rpc_srv *rpc_srv_init(const char *ip, uint16_t port)
+struct rpc_srv *rpc_srv_init(const struct rpc_handler *rh, const char *ip, uint16_t port)
 {
     struct rpc_srv *r;
     struct sockaddr_in si;
@@ -148,6 +141,7 @@ struct rpc_srv *rpc_srv_init(const char *ip, uint16_t port)
         fprintf(stderr, "Could not create a listener!\n");
         goto err;
     }
+
     return r;
 
 err:
@@ -155,13 +149,10 @@ err:
     return NULL;
 }
 
-int rpc_srv_add(int cmd, rpc_callee *rc)
+int rpc_srv_set_handler(struct rpc_handler *rh, int size)
 {
-    struct rpc_handler *rh = (struct rpc_handler *)calloc(1, sizeof(struct rpc_handler));
-    if (!rh) {
-        fprintf(stderr, "malloc rpc handler failed!\n");
-        return -1;
-    }
+    g_handle_table = rh;
+    g_handle_table_size = size;
 
     return 0;
 }

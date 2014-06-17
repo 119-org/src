@@ -17,6 +17,7 @@ struct rpc {
 struct rpc *rpc_new(const char *ip, uint16_t port);
 void rpc_free(struct rpc *r);
 
+/**************************************************/
 
 //rpc server apis
 struct rpc_srv {
@@ -26,10 +27,15 @@ struct rpc_srv {
     struct event_base *evbase;
     struct bufferevent *evbuf;
 };
-typedef int (rpc_callee)(struct rpc_srv *r, void *req, void *rep);
+typedef int (*rpc_callee)(struct rpc_srv *r, void *req, void *rep);
 
-struct rpc_srv *rpc_srv_init(const char *ip, uint16_t port);
-int rpc_srv_add(int cmd, rpc_callee *rc);
+struct rpc_handler {
+    int cmd;
+    rpc_callee rc;
+};
+
+struct rpc_srv *rpc_srv_init(const struct rpc_handler *rh, const char *ip, uint16_t port);
+int rpc_srv_set_handler(struct rpc_handler *rh, int size);
 int rpc_srv_dispatch(struct rpc_srv *r);
 
 #ifdef __cplusplus
