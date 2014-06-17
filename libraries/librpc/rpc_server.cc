@@ -60,20 +60,11 @@ static void on_event(struct bufferevent *bev, short events, void *arg)
     bufferevent_free(bev);
 }
 
-static void signal_cb(evutil_socket_t sig, short events, void *arg)
-{
-    struct event_base *base = (struct event_base *)arg;
-    struct timeval delay = { 0, 0 };
-
-    fprintf(stderr, "\nexit\n");
-    event_base_loopexit(base, &delay);
-}
 static void on_accept(struct evconnlistener *listener, evutil_socket_t fd,
             struct sockaddr *sa, int socklen, void *arg)
 {
     struct rpc_srv *r = (struct rpc_srv *)arg;
     r->fd = fd;
-    fprintf(stderr, "%s xxxx", __func__);
 
     r->evbuf = bufferevent_socket_new(r->evbase, r->fd, BEV_OPT_CLOSE_ON_FREE);
     if (!r->evbuf) {
@@ -103,28 +94,23 @@ int rpc_reply_error(struct rpc_srv *r)
 
 static int rpc_srv_parse(struct rpc_srv *r, const char *buf, int len)
 {
-    string strbuf(buf, len);
+    string reqbuf(buf, len);
     string repbuf;
     librpc::rpc_req req;
     librpc::rpc_rep rep;
 
-    if (!req.ParseFromString(strbuf)) {
+    if (!req.ParseFromString(reqbuf)) {
         fprintf(stderr, "parse message failed!\n");
         return rpc_reply_error(r);
     }
     switch (req.cmd()) {
     case librpc::HELLO:
-        rpc_hello(r, &req, &rep);
+        rpc_hello(r, &reqbuf, &repbuf);
         break;
     default:
         fprintf(stderr, "can't find cmd!\n");
         rpc_reply_error(r);
         break;
-    }
-
-    if (!rep.SerializeToString(&repbuf)) {
-        fprintf(stderr, "serialize reply buffer failed!\n");
-        return -1;
     }
 
     bufferevent_write(r->evbuf, repbuf.data(), repbuf.length());
@@ -136,9 +122,8 @@ struct rpc_srv *rpc_srv_init(const char *ip, uint16_t port)
     struct rpc_srv *r;
     struct sockaddr_in si;
     struct evconnlistener *listener;
-    struct event *signal_event;
 
-    r = (struct rpc_srv *)calloc(1, sizeof(struct rpc));
+    r = (struct rpc_srv *)calloc(1, sizeof(struct rpc_srv));
     if (!r) {
         fprintf(stderr, "malloc rpc failed!\n");
         return NULL;
@@ -160,13 +145,8 @@ struct rpc_srv *rpc_srv_init(const char *ip, uint16_t port)
         fprintf(stderr, "Could not create a listener!\n");
         goto err;
     }
-
-    signal_event = evsignal_new(r->evbase, SIGINT, signal_cb, (void *)r->evbase);
-    if (!signal_event || event_add(signal_event, NULL) < 0) {
-        fprintf(stderr, "Could not create/add a signal event!\n");
-        goto err;
-    }
     return r;
+
 err:
     free(r);
     return NULL;

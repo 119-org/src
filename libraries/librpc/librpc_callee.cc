@@ -13,18 +13,24 @@ extern "C" {
 
 int rpc_hello(struct rpc_srv *r, void *q, void *p)
 {
-    string wbuf, rbuf;
-    librpc::hello_req *req = static_cast <librpc::hello_req *>(q);
-    librpc::hello_rep *rep = static_cast <librpc::hello_rep *>(p);
-    fprintf(stderr, "string_arg = %s", req->string_arg().c_str());
-    fprintf(stderr, "uint32_arg = %d", req->uint32_arg());
-    rep->set_uint32_arg(4321);
-    rep->set_string_arg("world");
+    string *reqbuf = static_cast <string *>(q);
+    string *repbuf = static_cast <string *>(p);
+    librpc::hello_req req;
+    librpc::hello_rep rep;
+    if (!req.ParseFromString(*reqbuf)) {
+        fprintf(stderr, "parse message failed!\n");
+        return -1;
+    }
+    cout << "request:>>>>>>>>\n" << req.DebugString() << ">>>>>>>>>>>>>>>\n" << endl;
 
-    if (!rep->SerializeToString(&wbuf)) {
+    rep.set_type(librpc::SUCCESS);
+    rep.set_uint32_arg(4321);
+    rep.set_string_arg("world");
+    if (!rep.SerializeToString(repbuf)) {
         fprintf(stderr, "serialize to string failed!\n");
         return -1;
     }
+    cout << "reply:<<<<<<<<\n" << rep.DebugString() << "<<<<<<<<<<<<<<<\n" << endl;
 
     return 0;
 }
