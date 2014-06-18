@@ -1,0 +1,14 @@
+Streaming Media Service
+
+------------     --------------      --------------     ----------
+|          |====>|            |=====>|            |====>|        |
+|  source  |     |  filter 1  | .... |  filter n  |     |  sink  |
+|          |<----|            |<-----|            |<----|        |
+------------     --------------      --------------     ----------
+
+source: usbcam_dev/media_file/stream input
+filter: rtp/xxp media protocol
+sink: player/relay server/stream output
+
+==> data channel
+<-- ctrl channel
