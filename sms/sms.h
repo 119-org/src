@@ -5,19 +5,7 @@
 extern "C" {
 #endif
 
-#define HOST	"192.168.1.100"
-#define RTSP_PORT 1234
-
 struct sms {
-    int socket;
-
-};
-
-struct source {
-
-};
-
-struct sink {
 
 };
 

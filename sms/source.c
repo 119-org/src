@@ -12,26 +12,25 @@
 #include <sys/epoll.h>
 #include <arpa/inet.h>
 
-#include "libskt/libskt.h"
-#include "sms.h"
+#include "debug.h"
+#include "source.h"
 
-struct source {
 
-};
-
-struct sms g_sms;
-
-int source_init()
+struct source_ctx *source_init()
 {
-    return 0;
+    struct source_ctx *sc = (struct source_ctx *)calloc(1, sizeof(struct source_ctx));
+    if (!sc) {
+        err("malloc source context failed!\n");
+        return NULL;
+    }
+
+    return sc;
 }
 
 
-
-int main(int argc, char **argv)
+void source_deinit(struct source_ctx *sc)
 {
-    source_init();
-    sms_loop();
-
-    return 0;
+    if (sc)
+        free(sc);
+    return;
 }

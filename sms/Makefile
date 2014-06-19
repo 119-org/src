@@ -2,36 +2,39 @@
 CC	= gcc
 LD	= ld
 
-CFLAGS	:= -g -Wall -O0
+CFLAGS_SDL	= `pkg-config --cflags sdl`
+LDFLAGS_SDL	= `pkg-config --libs sdl`
+
+CFLAGS	:= -g -Wall
 CFLAGS	+= -I../libraries
+CFLAGS	+= $(CFLAGS_SDL)
 
 LDFLAGS	:=
-LDFLAGS	+= ../libraries/libskt/libskt.a
-LDFLAGS	+= ../libraries/libmempool/libmempool.a
-LDFLAGS	+= ../libraries/libthreadpool/libthreadpool.a
+#LDFLAGS	+= ../libraries/libskt/libskt.a
+#LDFLAGS	+= ../libraries/libmempool/libmempool.a
+#LDFLAGS	+= ../libraries/libthreadpool/libthreadpool.a
 LDFLAGS	+= -lpthread
+LDFLAGS	+= $(LDFLAGS_SDL)
 
 .PHONY : all clean
 
-TGT	:= sms source sink
+TGT	:= sms
 
-SRC	= $(wildcard *.c)
-OBJS	= $(patsubst %.c,%.o,$(SRC))
+SOURCE_OBJS	= source.o
+SOURCE_OBJS	+= v4l.o
+
+SINK_OBJS	= sink.o
+SINK_OBJS	+= sdl.o
+
+OBJS	= $(SOURCE_OBJS) $(SINK_OBJS) sms.o
 
 all: $(TGT)
 
 %.o:%.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
-sms:	sms.o
-	$(CC) -o $@ $^ $(LDFLAGS)
-
-source:	source.o
-	$(CC) -o $@ $^ $(LDFLAGS)
-
-sink:	sink.o
+sms: $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
-	rm -f $(OBJS)
-	rm -f $(TGT)
+	rm -f $(OBJS) $(TGT)
