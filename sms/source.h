@@ -21,6 +21,7 @@ struct source {
     int priv_size;
 };
 
+struct source_ctx *source_init(const char *input);
 
 #ifdef __cplusplus
 }
