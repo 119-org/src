@@ -44,11 +44,11 @@ static void sdl_close(struct sink_ctx *c)
     return 0;
 }
 
-struct sink sdl_sink = {
-    .name = "v4l",
-    .sink_open = sdl_open,
-    .sink_read = sdl_read,
-    .sink_write = sdl_write,
-    .sink_close = sdl_close,
+struct sink snk_sdl_module = {
+    .name = "sdl",
+    .open = sdl_open,
+    .read = sdl_read,
+    .write = sdl_write,
+    .close = sdl_close,
     .priv_size = sizeof(struct sdl_ctx),
 };

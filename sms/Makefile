@@ -26,7 +26,7 @@ SOURCE_OBJS	+= v4l.o
 SINK_OBJS	= sink.o
 SINK_OBJS	+= sdl.o
 
-OBJS	= $(SOURCE_OBJS) $(SINK_OBJS) sms.o
+OBJS	= $(SOURCE_OBJS) $(SINK_OBJS) sms.o common.o
 
 all: $(TGT)
 

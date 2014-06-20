@@ -11,6 +11,7 @@
 #include <sys/mman.h>
 #include <linux/videodev2.h>
 #include "source.h"
+#include "debug.h"
 
 #define MAX_V4L_BUF	4
 #define MAX_V4L_DEV		4
@@ -39,16 +40,18 @@ static int v4l_set_format(struct v4l_ctx *vc)
     struct v4l2_format fmt;
     struct v4l2_pix_format *pix = &fmt.fmt.pix;
 
+    dbg("fd = %d\n", vc->fd);
+    fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     if (-1 == ioctl(vc->fd, VIDIOC_G_FMT, &fmt)) {
         perror("ioctl(VIDIOC_G_FMT)");
         goto fail;
     }
-    fprintf(stderr, "pix.width: %d\n"
-                    "pix.height: %d\n"
-                    "pix.pixelformat: %d\n",
-                    pix->width,
-                    pix->height,
-                    pix->pixelformat);
+    dbg("pix.width: %d\n"
+        "pix.height: %d\n"
+        "pix.pixelformat: %d\n",
+        pix->width,
+        pix->height,
+        pix->pixelformat);
 
     if (-1 == ioctl(vc->fd, VIDIOC_S_FMT, &fmt)) {
         perror("ioctl(VIDIOC_S_FMT)");
@@ -56,6 +59,7 @@ static int v4l_set_format(struct v4l_ctx *vc)
     }
 
 fail:
+    dbg("fd = %d\n", vc->fd);
     close(vc->fd);
     return -1;
 }
@@ -71,6 +75,7 @@ static int v4l_req_buf(struct v4l_ctx *vc)
     req.count = MAX_V4L_REQBUF_CNT;
     req.memory = V4L2_MEMORY_MMAP;
 //request buffer
+    dbg("fd = %d\n", vc->fd);
     if (-1 == ioctl(vc->fd, VIDIOC_REQBUFS, &req)) {
         perror("ioctl(VIDIOC_REQBUFS)");
         goto fail;
@@ -115,6 +120,7 @@ static int v4l_req_buf(struct v4l_ctx *vc)
     return 0;
 fail:
     close(vc->fd);
+    dbg("fd = %d\n", vc->fd);
     return -1;
 }
 
@@ -147,27 +153,25 @@ static int v4l_buf_dequeue(struct v4l_ctx *vc, struct v4l_frame *vf)
     return buf.index;
 }
 
-static int v4l_open(struct source_ctx *sc, const char *url)
+static int v4l_open(struct source_ctx *sc, const char *dev)
 {
     int i, fd;
     int valid = 4;
     char device[13];
     struct v4l_ctx *vc = sc->priv;
 
-    for (i = 0; i < valid; i++) {
-        sprintf(device, "%s%d", "/dev/video", i);
-        fd = open(device, O_RDWR | O_NONBLOCK, 0);
-        if (fd == -1) {
-            fprintf(stderr, "open %s failed!\n", device);
-            continue;
-        }
-        break;
-    }
-    if (i == valid) {
-        perror("open video device");
+    fd = open(dev, O_RDWR | O_NONBLOCK, 0);
+    if (fd == -1) {
+        perror("open");
+        err("open %s failed!\n", dev);
         return -1;
     }
+    dbg("open %s success.\n", dev);
     vc->fd = fd;
+    dbg("fd = %d\n", vc->fd);
+
+    v4l_set_format(vc);
+    v4l_req_buf(vc);
     return 0;
 }
 
@@ -201,11 +205,11 @@ static void v4l_close(struct source_ctx *sc)
     close(vc->fd);
 }
 
-struct source v4l_source = {
+struct source src_v4l_module = {
     .name = "v4l",
-    .source_open = v4l_open,
-    .source_read = v4l_read,
-    .source_write = v4l_write,
-    .source_close = v4l_close,
+    .open = v4l_open,
+    .read = v4l_read,
+    .write = v4l_write,
+    .close = v4l_close,
     .priv_size = sizeof(struct v4l_ctx),
 };

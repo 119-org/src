@@ -3,47 +3,76 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include <ifaddrs.h>
-#include <netdb.h>
-#include <fcntl.h>
-#include <net/if.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <sys/epoll.h>
-#include <arpa/inet.h>
+#include <assert.h>
 
 #include "debug.h"
+#include "common.h"
 #include "source.h"
 
-// url = rtsp://192.168.1.1:8554/1.264
-// name = rtsp
-// split = 192.168.1.1:8554/1.264
-struct url {
-    char name[32];
-    char *split;
-};
+#define REGISTER_SOURCE(x) { \
+    extern struct source src_##x##_module; \
+    source_register(&src_##x##_module, sizeof(src_##x##_module)); }
 
-struct url *parse_url(const char *input, int len)
+static struct source *first_source = NULL;
+
+static int source_register(struct source *src, int size)
 {
-    struct url *u = (struct url *)calloc(1, sizeof(struct url));
-    char *p;
-    do {
-        p = strchr(input, ':');
-    } while (1);
+    struct source **p;
+    if (size < sizeof(struct source)) {
+        struct source *temp = (struct source *)calloc(1, sizeof(struct source));
+        memcpy(temp, src, size);
+        src = temp;
+    }
+    p = &first_source;
+    while (*p != NULL) p = &(*p)->next;
+    *p = src;
+    src->next = NULL;
+    return 0;
+}
 
+int source_register_all()
+{
+    static int registered;
+    if (registered)
+        return -1;
+    registered = 1;
+
+    REGISTER_SOURCE(v4l);
+//    REGISTER_SOURCE(file);
+//    REGISTER_SOURCE(rtsp);
+
+    return 0;
 }
 
 struct source_ctx *source_init(const char *input)
 {
+    struct url *u;
+    struct source *p;
+
+    u = (struct url *)calloc(1, sizeof(struct url));
+    parse_url(u, input);
+
+    for (p = first_source; p != NULL; p = p->next) {
+        if (!strcmp(u->head, p->name))
+            break;
+    }
+    if (p == NULL) {
+        err("%s protocol is not support!\n", u->head);
+        return NULL;
+    }
+    dbg("use %s source module\n", p->name);
+
     struct source_ctx *sc = (struct source_ctx *)calloc(1, sizeof(struct source_ctx));
     if (!sc) {
         err("malloc source context failed!\n");
         return NULL;
     }
+    sc->url = u;
+    sc->ops = p;
+    sc->priv = calloc(1, p->priv_size);
 
     return sc;
 }
-
 
 void source_deinit(struct source_ctx *sc)
 {

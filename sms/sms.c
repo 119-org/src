@@ -18,9 +18,29 @@
 static char input[MAX_INPUT_LEN];
 static char output[MAX_OUTPUT_LEN];
 
-
-int sms_init()
+int source_open(struct source_ctx *src)
 {
+    if (-1 == src->ops->open(src, src->url->body)) {
+        err("source open failed!\n");
+        return -1;
+    }
+    return 0;
+}
+
+int sink_open(struct sink_ctx *snk)
+{
+    if (-1 == snk->ops->open(snk)) {
+        err("sink open failed!\n");
+        return -1;
+    }
+    return 0;
+}
+
+int sms_init(struct source_ctx *src, struct sink_ctx *snk)
+{
+    source_open(src);
+    sink_open(snk);
+
     return 0;
 }
 
@@ -45,9 +65,10 @@ void usage(void)
     printf("Usage:\n"
            "Required option:\n"
            "-i <input>\n"
-           "--input <inputfile>\n"
+           "--input <source>\n"
            "-o <output>\n"
-           "--output <outputfile>\n"
+           "--output <sink>\n"
+           "$ ./sms -i v4l://dev/video0 -o sdl://player\n"
            );
     exit(-1);
 }
@@ -76,11 +97,9 @@ int main(int argc, char **argv)
             break;
         case 'i':
             strcpy(input, optarg);
-            printf("input: %s\n", input);
             break;
         case 'o':
             strcpy(output, optarg);
-            printf("output: %s\n", output);
             break;
         case '?':
             break;
@@ -89,9 +108,15 @@ int main(int argc, char **argv)
             break;
         }
     }
-    struct source_ctx *sc = source_init(input);
+    printf("output: %s\n", output);
+    printf("input: %s\n", input);
+    source_register_all();
+    sink_register_all();
 
-    sms_init();
+    struct source_ctx *src = source_init(input);
+    struct sink_ctx *snk = sink_init(output);
+
+    sms_init(src, snk);
     sms_loop();
 
     return 0;
