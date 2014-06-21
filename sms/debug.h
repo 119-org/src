@@ -15,6 +15,9 @@
 #define err(arg...) \
     print_func_line("ERR", ##arg);
 
+#define warn(arg...) \
+    print_func_line("WARN", ##arg);
+
 #define info(arg...) \
     print_func_line("INFO", ##arg);
 

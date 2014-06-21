@@ -10,6 +10,7 @@
 #include "debug.h"
 #include "source.h"
 #include "sink.h"
+#include "common.h"
 #include "sms.h"
 
 #define MAX_INPUT_LEN	128
@@ -18,28 +19,21 @@
 static char input[MAX_INPUT_LEN];
 static char output[MAX_OUTPUT_LEN];
 
-int source_open(struct source_ctx *src)
-{
-    if (-1 == src->ops->open(src, src->url->body)) {
-        err("source open failed!\n");
-        return -1;
-    }
-    return 0;
-}
-
-int sink_open(struct sink_ctx *snk)
-{
-    if (-1 == snk->ops->open(snk)) {
-        err("sink open failed!\n");
-        return -1;
-    }
-    return 0;
-}
-
 int sms_init(struct source_ctx *src, struct sink_ctx *snk)
 {
     source_open(src);
     sink_open(snk);
+    struct frame f;
+    int len;
+
+    while (1) {
+        len = source_read(src, &f, sizeof(f));
+        if (len == -1) {
+            continue;
+        }
+        sink_write(snk, &f, sizeof(f));
+        source_write(src, &f, sizeof(f));
+    }
 
     return 0;
 }

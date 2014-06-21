@@ -6,6 +6,7 @@ CFLAGS_SDL	= `pkg-config --cflags sdl`
 LDFLAGS_SDL	= `pkg-config --libs sdl`
 
 CFLAGS	:= -g -Wall
+#CFLAGS	+= -Werror -Wcast-align
 CFLAGS	+= -I../libraries
 CFLAGS	+= $(CFLAGS_SDL)
 

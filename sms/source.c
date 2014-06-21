@@ -46,32 +46,50 @@ int source_register_all()
 
 struct source_ctx *source_init(const char *input)
 {
-    struct url *u;
     struct source *p;
-
-    u = (struct url *)calloc(1, sizeof(struct url));
-    parse_url(u, input);
-
-    for (p = first_source; p != NULL; p = p->next) {
-        if (!strcmp(u->head, p->name))
-            break;
-    }
-    if (p == NULL) {
-        err("%s protocol is not support!\n", u->head);
-        return NULL;
-    }
-    dbg("use %s source module\n", p->name);
-
     struct source_ctx *sc = (struct source_ctx *)calloc(1, sizeof(struct source_ctx));
     if (!sc) {
         err("malloc source context failed!\n");
         return NULL;
     }
-    sc->url = u;
+    parse_url(&sc->url, input);
+
+    for (p = first_source; p != NULL; p = p->next) {
+        if (!strcmp(sc->url.head, p->name))
+            break;
+    }
+    if (p == NULL) {
+        err("%s protocol is not support!\n", sc->url.head);
+        return NULL;
+    }
+    dbg("use %s source module\n", p->name);
+
     sc->ops = p;
     sc->priv = calloc(1, p->priv_size);
-
+    if (!sc->priv) {
+        err("malloc source priv failed!\n");
+        return NULL;
+    }
     return sc;
+}
+
+int source_open(struct source_ctx *src)
+{
+    if (-1 == src->ops->open(src, src->url.body)) {
+        err("source open failed!\n");
+        return -1;
+    }
+    return 0;
+}
+
+int source_read(struct source_ctx *src, void *buf, int len)
+{
+    return src->ops->read(src, buf, len);
+}
+
+int source_write(struct source_ctx *src, void *buf, int len)
+{
+    return src->ops->write(src, buf, len);
 }
 
 void source_deinit(struct source_ctx *sc)

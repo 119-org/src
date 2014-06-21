@@ -15,18 +15,18 @@
 
 static struct sink *first_sink = NULL;
 
-static int sink_register(struct sink *src, int size)
+static int sink_register(struct sink *snk, int size)
 {
     struct sink **p;
     if (size < sizeof(struct sink)) {
         struct sink *temp = (struct sink *)calloc(1, sizeof(struct sink));
-        memcpy(temp, src, size);
-        src = temp;
+        memcpy(temp, snk, size);
+        snk= temp;
     }
     p = &first_sink;
     while (*p != NULL) p = &(*p)->next;
-    *p = src;
-    src->next = NULL;
+    *p = snk;
+    snk->next = NULL;
     return 0;
 }
 
@@ -46,32 +46,50 @@ int sink_register_all()
 
 struct sink_ctx *sink_init(const char *input)
 {
-    struct url *u;
     struct sink *p;
-
-    u = (struct url *)calloc(1, sizeof(struct url));
-    parse_url(u, input);
-
-    for (p = first_sink; p != NULL; p = p->next) {
-        if (!strcmp(u->head, p->name))
-            break;
-    }
-    if (p == NULL) {
-        err("%s protocol is not support!\n", u->head);
-        return NULL;
-    }
-    dbg("use %s sink module\n", p->name);
-
     struct sink_ctx *sc = (struct sink_ctx *)calloc(1, sizeof(struct sink_ctx));
     if (!sc) {
         err("malloc sink context failed!\n");
         return NULL;
     }
-    sc->url = u;
+    parse_url(&sc->url, input);
+
+    for (p = first_sink; p != NULL; p = p->next) {
+        if (!strcmp(sc->url.head, p->name))
+            break;
+    }
+    if (p == NULL) {
+        err("%s protocol is not support!\n", sc->url.head);
+        return NULL;
+    }
+    dbg("use %s sink module\n", p->name);
+
     sc->ops = p;
     sc->priv = calloc(1, p->priv_size);
-
+    if (!sc->priv) {
+        err("malloc source priv failed!\n");
+        return NULL;
+    }
     return sc;
+}
+
+int sink_open(struct sink_ctx *snk)
+{
+    if (-1 == snk->ops->open(snk)) {
+        err("sink open failed!\n");
+        return -1;
+    }
+    return 0;
+}
+
+int sink_read(struct sink_ctx *snk, void *buf, int len)
+{
+    return snk->ops->read(snk, buf, len);
+}
+
+int sink_write(struct sink_ctx *snk, void *buf, int len)
+{
+    return snk->ops->write(snk, buf, len);
 }
 
 void sink_deinit(struct sink_ctx *sc)

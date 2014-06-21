@@ -18,6 +18,13 @@ struct url {
 
 int parse_url(struct url *u, const char *input);
 
+struct frame {
+    void *addr;
+    int len;
+    int index;
+};
+
+
 #ifdef __cplusplus
 }
 #endif
