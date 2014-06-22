@@ -15,6 +15,7 @@
 #include "libskt.h"
 
 #define LISTEN_MAX_BACKLOG	128
+#define MTU	(1500 - 42 - 100)
 
 int skt_tcp_conn(const char *host, uint16_t port)
 {
@@ -405,124 +406,134 @@ int skt_set_buflen(int fd, int size)
 int skt_send(int fd, void *buf, size_t len)
 {
     ssize_t n;
-    uint8_t *p;
-    size_t left;
-    int err;
+    void *p = buf;
+    size_t left = len;
+    size_t step = MTU;
 
     if (buf == NULL || len == 0) {
         fprintf(stderr, "%s paraments invalid!\n", __func__);
         return -1;
     }
 
-    p = (uint8_t *)buf;
-    left = len;
     while (left > 0) {
-        n = send(fd, p, left, 0);
+        if (left < step)
+            step = left;
+        n = send(fd, p, step, 0);
         if (n > 0) {
             p += n;
             left -= n;
             continue;
         } else if (n == 0) {
-            fprintf(stderr, "peer has closed\n");
             perror("send");
             break;
         }
-        err = errno;
-        if (err == EINTR) {
+        if (errno == EINTR || errno == EAGAIN) {
+            perror("send");
             continue;
         }
-        if (err == EAGAIN || err == EWOULDBLOCK) {
-            perror("send");
-            return EAGAIN;
-        }
+        return -1;
     }
-
     return (len - left);
 }
 
 int skt_sendto(int fd, const char *ip, uint16_t port, const void *buf, size_t len)
 {
     ssize_t n;
-    uint8_t *p;
-    size_t left;
-    int err;
+    void *p = buf;
+    size_t left = len;
+    size_t step = MTU;
     struct sockaddr_in sa;
 
+    if (buf == NULL || len == 0) {
+        fprintf(stderr, "%s paraments invalid!\n", __func__);
+        return -1;
+    }
     sa.sin_family = AF_INET;
     sa.sin_addr.s_addr = inet_addr(ip);
     sa.sin_port = htons(port);
 
-    p = (uint8_t *)buf;
-    left = len;
     while (left > 0) {
-        n = sendto(fd, p, left, 0, (struct sockaddr*)&sa, sizeof(sa));
+        if (left < step)
+            step = left;
+        n = sendto(fd, p, step, 0, (struct sockaddr*)&sa, sizeof(sa));
         if (n > 0) {
             p += n;
             left -= n;
             continue;
         } else if (n == 0) {
-            fprintf(stderr, "peer has closed\n");
             perror("sendto");
             break;
         }
-        err = errno;
-        if (err == EINTR) {
+        if (errno == EINTR || errno == EAGAIN) {
+            perror("sendto");
             continue;
         }
-        if (err == EAGAIN || err == EWOULDBLOCK) {
-            perror("sendto");
-            return EAGAIN;
-        }
+        return -1;
     }
-
     return (len - left);
 }
+
 int skt_recv(int fd, void *buf, size_t len)
 {
     int n;
-    do {
-        n = recv(fd, buf, len, 0);
-        if (n == -1) {
-            perror("recv");
-            return -1;
-        } else if (n == 0) {
-            fprintf(stderr, "peer has closed\n");
-            return -1;
-        }
-        if (errno == EINTR)
+    void *p = buf;
+    size_t left = len;
+    size_t step = MTU;
+    if (buf == NULL || len == 0) {
+        fprintf(stderr, "%s paraments invalid!\n", __func__);
+        return -1;
+    }
+    while (left > 0) {
+        if (left < step)
+            step = left;
+        n = recv(fd, p, step, 0);
+        if (n > 0) {
+            p += n;
+            left -= n;
             continue;
-        if (errno == EAGAIN)
+        } else if (n == 0) {
             break;
-    } while (0);
-
-    return n;
+        }
+        if (errno == EINTR || errno == EAGAIN) {
+            perror("recv");
+            continue;
+        }
+        return -1;
+    }
+    return (len - left);
 }
 
 int skt_recvfrom(int fd, uint32_t *ip, uint16_t *port, void *buf, size_t len)
 {
     int n;
+    void *p = buf;
+    size_t left = len;
+    size_t step = MTU;
     struct sockaddr_in si;
     socklen_t si_len = sizeof(si);
 
     memset(&si, 0, sizeof(si));
 
-    do {
-        n = recvfrom(fd, buf, len, 0, (struct sockaddr *)&si, &si_len);
-        if (n == -1) {
-            perror("recvfrom");
-            return -1;
-        } else if (n == 0) {
-            fprintf(stderr, "peer has closed\n");
-            return -1;
-        }
-        if (errno == EINTR)
+    while (left > 0) {
+        if (left < step)
+            step = left;
+        n = recvfrom(fd, p, step, 0, (struct sockaddr *)&si, &si_len);
+        if (n > 0) {
+            p += n;
+            left -= n;
             continue;
-        if (errno == EAGAIN)
+        } else if (n == 0) {
             break;
-    } while (0);
+        }
+        if (errno == EINTR || errno == EAGAIN) {
+            perror("recvfrom");
+            continue;
+        }
+        return -1;
+    }
 
     *ip = si.sin_addr.s_addr;
     *port = ntohs(si.sin_port);
 
-    return n;
+    return (len - left);
 }
