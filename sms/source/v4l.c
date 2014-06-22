@@ -31,12 +31,6 @@ struct v4l_ctx {
     int buf_index;
 };
 
-struct v4l_frame {
-    void *addr;
-    int len;
-    int index;
-};
-
 static int v4l_set_format(struct v4l_ctx *vc)
 {
     struct v4l2_format fmt;
@@ -154,6 +148,7 @@ static int v4l_buf_dequeue(struct v4l_ctx *vc, struct frame *f)
     f->index = buf.index;
     f->addr = vc->buf[buf.index].addr;
     f->len = buf.bytesused;
+//    dbg("source frame addr = %p, len = %d, index = %d\n", f->addr, f->len, f->index);
 
     return buf.index;
 }

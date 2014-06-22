@@ -38,6 +38,7 @@ int source_register_all()
     registered = 1;
 
     REGISTER_SOURCE(v4l);
+    REGISTER_SOURCE(udp);
 //    REGISTER_SOURCE(file);
 //    REGISTER_SOURCE(rtsp);
 
@@ -75,6 +76,9 @@ struct source_ctx *source_init(const char *input)
 
 int source_open(struct source_ctx *src)
 {
+    if (!src->ops->open)
+        return 0;
+
     if (-1 == src->ops->open(src, src->url.body)) {
         err("source open failed!\n");
         return -1;
@@ -84,11 +88,17 @@ int source_open(struct source_ctx *src)
 
 int source_read(struct source_ctx *src, void *buf, int len)
 {
+    if (!src->ops->read)
+        return 0;
+
     return src->ops->read(src, buf, len);
 }
 
 int source_write(struct source_ctx *src, void *buf, int len)
 {
+    if (!src->ops->write)
+        return 0;
+
     return src->ops->write(src, buf, len);
 }
 

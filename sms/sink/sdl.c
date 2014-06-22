@@ -175,7 +175,7 @@ fail:
     return -1;
 }
 
-static int sdl_open(struct sink_ctx *sc)
+static int sdl_open(struct sink_ctx *sc, char *str)
 {
     struct sdl_ctx *c = sc->priv;
     sdl_init(c);
@@ -203,11 +203,45 @@ static void sdl_close(struct sink_ctx *sc)
     sdl_deinit();
 }
 
+static int sdl_poll(struct sink_ctx *sc)
+{
+    struct sdl_ctx *c = sc->priv;
+    return SDL_PollEvent(&c->event);
+}
+
+static void sdl_handle(struct sink_ctx *sc)
+{
+    struct sdl_ctx *c = sc->priv;
+    switch (c->event.type) {
+    case SDL_KEYDOWN:
+        switch (c->event.key.keysym.sym) {
+            case SDLK_q:
+                goto quit;
+                break;
+            default:
+                break;
+        }
+        break;
+    case SDL_QUIT:
+        goto quit;
+        break;
+    default:
+        break;
+    }
+    return;
+quit:
+    info("Quit %s\n", wnd_title);
+    sdl_deinit();
+    exit(0);
+}
+
 struct sink snk_sdl_module = {
     .name = "sdl",
     .open = sdl_open,
     .read = sdl_read,
     .write = sdl_write,
     .close = sdl_close,
+    .poll = sdl_poll,
+    .handle = sdl_handle,
     .priv_size = sizeof(struct sdl_ctx),
 };

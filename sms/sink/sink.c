@@ -38,7 +38,7 @@ int sink_register_all()
     registered = 1;
 
     REGISTER_SINK(sdl);
-//    REGISTER_SINK(rtsp);
+    REGISTER_SINK(udp);
 //    REGISTER_SINK(file);
 
     return 0;
@@ -75,7 +75,9 @@ struct sink_ctx *sink_init(const char *input)
 
 int sink_open(struct sink_ctx *snk)
 {
-    if (-1 == snk->ops->open(snk)) {
+    if (!snk->ops->open)
+        return 0;
+    if (-1 == snk->ops->open(snk, snk->url.body)) {
         err("sink open failed!\n");
         return -1;
     }
@@ -84,12 +86,30 @@ int sink_open(struct sink_ctx *snk)
 
 int sink_read(struct sink_ctx *snk, void *buf, int len)
 {
+    if (!snk->ops->read)
+        return 0;
     return snk->ops->read(snk, buf, len);
 }
 
 int sink_write(struct sink_ctx *snk, void *buf, int len)
 {
+    if (!snk->ops->write)
+        return 0;
     return snk->ops->write(snk, buf, len);
+}
+
+int sink_poll(struct sink_ctx *snk)
+{
+    if (!snk->ops->poll)
+        return 0;
+    return snk->ops->poll(snk);
+}
+
+void sink_handle(struct sink_ctx *snk)
+{
+    if (!snk->ops->handle)
+        return 0;
+    return snk->ops->handle(snk);
 }
 
 void sink_deinit(struct sink_ctx *sc)

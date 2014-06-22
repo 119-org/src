@@ -17,10 +17,12 @@ struct sink_ctx {
 
 struct sink {
     const char *name;
-    int (*open)(struct sink_ctx *c);
+    int (*open)(struct sink_ctx *c, const char *url);
     int (*read)(struct sink_ctx *c, void *buf, int len);
     int (*write)(struct sink_ctx *c, void *buf, int len);
     void (*close)(struct sink_ctx *c);
+    int (*poll)(struct sink_ctx *c);
+    void (*handle)(struct sink_ctx *c);
     int priv_size;
     struct sink *next;
 };
@@ -31,6 +33,8 @@ int sink_register_all();
 int sink_open(struct sink_ctx *snk);
 int sink_read(struct sink_ctx *snk, void *buf, int len);
 int sink_write(struct sink_ctx *snk, void *buf, int len);
+int sink_poll(struct sink_ctx *snk);
+void sink_handle(struct sink_ctx *snk);
 
 
 #ifdef __cplusplus

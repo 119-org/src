@@ -23,25 +23,25 @@ int sms_init(struct source_ctx *src, struct sink_ctx *snk)
 {
     source_open(src);
     sink_open(snk);
-    struct frame f;
-    int len;
-
-    while (1) {
-        len = source_read(src, &f, sizeof(f));
-        if (len == -1) {
-            continue;
-        }
-        sink_write(snk, &f, sizeof(f));
-        source_write(src, &f, sizeof(f));
-    }
-
     return 0;
 }
 
-int sms_loop()
+int sms_loop(struct source_ctx *src, struct sink_ctx *snk)
 {
+    struct frame f;
+    int len;
+    f.addr = calloc(1, 614400);
+    f.len = 614400;
+
     while (1) {
-        sleep(1);
+        sink_poll(snk);
+        sink_handle(snk);
+        len = source_read(src, &f, f.len);
+        if (len == -1) {
+            continue;
+        }
+        sink_write(snk, &f, f.len);
+        source_write(src, &f, f.len);
     }
 
     return 0;
@@ -62,7 +62,7 @@ void usage(void)
            "--input <source>\n"
            "-o <output>\n"
            "--output <sink>\n"
-           "$ ./sms -i v4l://dev/video0 -o sdl://player\n"
+           "$ ./sms -i v4l:///dev/video0 -o sdl://player\n"
            );
     exit(-1);
 }
@@ -102,8 +102,8 @@ int main(int argc, char **argv)
             break;
         }
     }
-    printf("output: %s\n", output);
-    printf("input: %s\n", input);
+    dbg("output: %s\n", output);
+    dbg("input: %s\n", input);
     source_register_all();
     sink_register_all();
 
@@ -111,7 +111,7 @@ int main(int argc, char **argv)
     struct sink_ctx *snk = sink_init(output);
 
     sms_init(src, snk);
-    sms_loop();
+    sms_loop(src, snk);
 
     return 0;
 }

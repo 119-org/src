@@ -15,7 +15,7 @@
 #include "libskt.h"
 
 #define LISTEN_MAX_BACKLOG	128
-#define MTU	(1500 - 42 - 100)
+#define MTU	(1500 - 42 - 200)
 
 int skt_tcp_conn(const char *host, uint16_t port)
 {
@@ -428,7 +428,7 @@ int skt_send(int fd, void *buf, size_t len)
             break;
         }
         if (errno == EINTR || errno == EAGAIN) {
-            perror("send");
+//            perror("send");
             continue;
         }
         return -1;
@@ -465,7 +465,7 @@ int skt_sendto(int fd, const char *ip, uint16_t port, const void *buf, size_t le
             break;
         }
         if (errno == EINTR || errno == EAGAIN) {
-            perror("sendto");
+//            perror("sendto");
             continue;
         }
         return -1;
@@ -495,7 +495,7 @@ int skt_recv(int fd, void *buf, size_t len)
             break;
         }
         if (errno == EINTR || errno == EAGAIN) {
-            perror("recv");
+//            perror("recv");
             continue;
         }
         return -1;
@@ -526,7 +526,7 @@ int skt_recvfrom(int fd, uint32_t *ip, uint16_t *port, void *buf, size_t len)
             break;
         }
         if (errno == EINTR || errno == EAGAIN) {
-            perror("recvfrom");
+//            perror("recvfrom");
             continue;
         }
         return -1;
