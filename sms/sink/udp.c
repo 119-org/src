@@ -12,7 +12,6 @@ struct udp_snk_ctx {
     int fd;
     char dst_ip[64];
     uint16_t dst_port;
-
 };
 
 static int udp_open(struct sink_ctx *sc, const char *url)

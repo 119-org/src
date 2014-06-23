@@ -12,7 +12,7 @@ enum debug_level {
     MAX = 10
 };
 
-static int verbose = 0;  // func:line:
+static int verbose = 1;  // func:line:
 static int level = MAX;
 
 #define print_func_line(flag, arg...)\

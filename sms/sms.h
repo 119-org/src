@@ -6,7 +6,9 @@ extern "C" {
 #endif
 
 struct sms {
-
+    struct source_ctx *src;
+    struct sink_ctx *snk;
+    struct codec_ctx *cdc;
 };
 
 struct buffer {
@@ -15,7 +17,7 @@ struct buffer {
     int ref_cnt;
 };
 
-int sms_init();
+int sms_init(struct sms *sms);
 int sms_loop();
 
 

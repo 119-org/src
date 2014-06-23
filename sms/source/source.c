@@ -63,7 +63,6 @@ struct source_ctx *source_init(const char *input)
         err("%s protocol is not support!\n", sc->url.head);
         return NULL;
     }
-    dbg("use %s source module\n", p->name);
 
     sc->ops = p;
     sc->priv = calloc(1, p->priv_size);
@@ -77,28 +76,21 @@ struct source_ctx *source_init(const char *input)
 int source_open(struct source_ctx *src)
 {
     if (!src->ops->open)
-        return 0;
-
-    if (-1 == src->ops->open(src, src->url.body)) {
-        err("source open failed!\n");
         return -1;
-    }
-    return 0;
+    return src->ops->open(src, src->url.body);
 }
 
 int source_read(struct source_ctx *src, void *buf, int len)
 {
     if (!src->ops->read)
-        return 0;
-
+        return -1;
     return src->ops->read(src, buf, len);
 }
 
 int source_write(struct source_ctx *src, void *buf, int len)
 {
     if (!src->ops->write)
-        return 0;
-
+        return -1;
     return src->ops->write(src, buf, len);
 }
 

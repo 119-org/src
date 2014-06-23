@@ -76,39 +76,35 @@ struct sink_ctx *sink_init(const char *input)
 int sink_open(struct sink_ctx *snk)
 {
     if (!snk->ops->open)
-        return 0;
-    if (-1 == snk->ops->open(snk, snk->url.body)) {
-        err("sink open failed!\n");
         return -1;
-    }
-    return 0;
+    return snk->ops->open(snk, snk->url.body);
 }
 
 int sink_read(struct sink_ctx *snk, void *buf, int len)
 {
     if (!snk->ops->read)
-        return 0;
+        return -1;
     return snk->ops->read(snk, buf, len);
 }
 
 int sink_write(struct sink_ctx *snk, void *buf, int len)
 {
     if (!snk->ops->write)
-        return 0;
+        return -1;
     return snk->ops->write(snk, buf, len);
 }
 
 int sink_poll(struct sink_ctx *snk)
 {
     if (!snk->ops->poll)
-        return 0;
+        return -1;
     return snk->ops->poll(snk);
 }
 
 void sink_handle(struct sink_ctx *snk)
 {
     if (!snk->ops->handle)
-        return 0;
+        return -1;
     return snk->ops->handle(snk);
 }
 

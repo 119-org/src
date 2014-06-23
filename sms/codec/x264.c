@@ -18,7 +18,7 @@ struct x264_ctx {
     x264_nal_t *nal;
 };
 
-int x264_init(struct codec_ctx *cc)
+int x264_init(struct codec_ctx *cc, int width, int height)
 {
     struct x264_ctx *c = cc->priv;
     int m_frameRate = 25;
@@ -27,8 +27,8 @@ int x264_init(struct codec_ctx *cc)
     c->picture = (x264_picture_t *)calloc(1, sizeof(x264_picture_t));
     x264_param_default_preset(c->param, "ultrafast" , "zerolatency");
 
-    c->param->i_width = c->width;
-    c->param->i_height = c->height;
+    c->param->i_width = width;
+    c->param->i_height = height;
     c->param->b_repeat_headers = 1;  // repeat SPS/PPS before i frame
     c->param->b_cabac = 1;         
     c->param->i_threads = 1;           
@@ -37,7 +37,9 @@ int x264_init(struct codec_ctx *cc)
     c->param->i_keyint_max = 128;
     c->param->i_log_level = X264_LOG_NONE;
     c->handle = x264_encoder_open(c->param);
+    dbg("handle = %p\n", c->handle);
     if (c->handle == 0) {
+        err("x264_encoder_open failed!\n");
         return -1;
     }
 
@@ -100,12 +102,13 @@ int x264_encode(struct codec_ctx *cc, void *in, void *out)
 int x264_decode(struct codec_ctx *c, void *buf, int *len, void *data)
 {
 
+    return 0;
 }
  
 
 struct codec cdc_x264_encoder = {
     .name = "x264",
-    .init = x264_init,
+    .open = x264_init,
     .encode = x264_encode,
     .decode = x264_decode,
     .priv_size = sizeof(struct x264_ctx),

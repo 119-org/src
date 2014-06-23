@@ -69,9 +69,18 @@ struct codec_ctx *codec_init(const char *name)
     return c;
 }
 
-int codec_encode(struct codec_ctx *cc)
+int codec_open(struct codec_ctx *c, int width, int height)
 {
+    if (!c->ops->open)
+        return -1;
+    return c->ops->open(c, width, height);
+}
 
+int codec_encode(struct codec_ctx *c, void *in, void *out)
+{
+    if (!c->ops->encode)
+        return -1;
+    return c->ops->encode(c, in, out);
 }
 
 

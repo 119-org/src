@@ -11,6 +11,8 @@ extern "C" {
 
 struct source_ctx {
     struct url url;
+    int width;
+    int height;
     struct source *ops;
     void *priv;
 };

@@ -19,28 +19,39 @@
 static char input[MAX_INPUT_LEN];
 static char output[MAX_OUTPUT_LEN];
 
-int sms_init(struct source_ctx *src, struct sink_ctx *snk)
+int sms_init(struct sms *sms)
 {
+    struct source_ctx *src = sms->src;
+    struct sink_ctx *snk = sms->snk;
+    struct codec_ctx *cdc = sms->cdc;
     source_open(src);
+    codec_open(cdc, src->width, src->height);
     sink_open(snk);
     return 0;
 }
 
-int sms_loop(struct source_ctx *src, struct sink_ctx *snk)
+int sms_loop(struct sms *sms)
 {
+    struct source_ctx *src = sms->src;
+    struct sink_ctx *snk = sms->snk;
+    struct codec_ctx *cdc = sms->cdc;
     struct frame f;
+    struct frame p;
     int len;
-    f.addr = calloc(1, 614400);
-    f.len = 614400;
+    p.addr = calloc(1, 0x100000);
+    p.len = 0x100000;
 
     while (1) {
         sink_poll(snk);
         sink_handle(snk);
         len = source_read(src, &f, f.len);
+//        dbg("source read len = %d\n", len);
         if (len == -1) {
             continue;
         }
-        sink_write(snk, &f, f.len);
+        len = codec_encode(cdc, f.addr, p.addr);
+//        dbg("codec_encode len = %d\n", len);
+        sink_write(snk, &p, len);
         source_write(src, &f, f.len);
     }
 
@@ -106,12 +117,18 @@ int main(int argc, char **argv)
     dbg("input: %s\n", input);
     source_register_all();
     sink_register_all();
+    codec_register_all();
 
     struct source_ctx *src = source_init(input);
     struct sink_ctx *snk = sink_init(output);
+    struct codec_ctx *cdc = codec_init("x264");
+    struct sms *sms = (struct sms *)calloc(1, sizeof(struct sms));
+    sms->src = src;
+    sms->snk = snk;
+    sms->cdc = cdc;
 
-    sms_init(src, snk);
-    sms_loop(src, snk);
+    sms_init(sms);
+    sms_loop(sms);
 
     return 0;
 }

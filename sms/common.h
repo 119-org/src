@@ -24,6 +24,12 @@ struct frame {
     int index;
 };
 
+struct packet {
+    void *addr;
+    int len;
+    int index;
+};
+
 
 #ifdef __cplusplus
 }

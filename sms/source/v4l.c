@@ -46,6 +46,8 @@ static int v4l_set_format(struct v4l_ctx *vc)
         perror("ioctl(VIDIOC_S_FMT)");
         goto fail;
     }
+    vc->width = pix->width;
+    vc->height = pix->height;
 
     return 0;
 fail:
@@ -169,6 +171,8 @@ static int v4l_open(struct source_ctx *sc, const char *dev)
 
     v4l_set_format(vc);
     v4l_req_buf(vc);
+    sc->width = vc->width;
+    sc->height = vc->height;
     return 0;
 }
 
