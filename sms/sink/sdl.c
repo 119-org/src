@@ -191,8 +191,7 @@ static int sdl_read(struct sink_ctx *sc, void *buf, int len)
 static int sdl_write(struct sink_ctx *sc, void *buf, int len)
 {
     struct sdl_ctx *c = sc->priv;
-    struct frame *f = (struct frame *)buf;
-    c->src_buf = f->addr;
+    c->src_buf = buf;
     rgb_surface_update(c);
 
     return 0;

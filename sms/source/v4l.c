@@ -179,13 +179,17 @@ static int v4l_open(struct source_ctx *sc, const char *dev)
 static int v4l_read(struct source_ctx *sc, void *buf, int len)
 {
     struct v4l_ctx *vc = sc->priv;
-    struct frame *f = (struct frame *)buf;
-    int ret = v4l_buf_dequeue(vc, f);
+    struct frame f;
+    int i;
+    int ret = v4l_buf_dequeue(vc, &f);
     if (ret == -1) {
         err("v4l dequeue failed!\n");
         return -1;
     }
-    return f->len;
+    for (i = 0; i < f.len; i++) {//8 byte copy
+        *((char *)buf + i) = *((char *)f.addr + i);
+    }
+    return f.len;
 }
 
 static int v4l_write(struct source_ctx *sc, void *buf, int len)

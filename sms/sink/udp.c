@@ -59,8 +59,7 @@ static int udp_read(struct sink_ctx *sc, void *buf, int len)
 static int udp_write(struct sink_ctx *sc, void *buf, int len)
 {
     struct udp_snk_ctx *c = sc->priv;
-    struct frame *f = (struct frame *)buf;
-    return skt_sendto(c->fd, c->dst_ip, c->dst_port, f->addr, f->len);
+    return skt_sendto(c->fd, c->dst_ip, c->dst_port, buf, len);
 }
 
 static void udp_close(struct sink_ctx *sc)

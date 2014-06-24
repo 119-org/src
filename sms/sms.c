@@ -35,24 +35,25 @@ int sms_loop(struct sms *sms)
     struct source_ctx *src = sms->src;
     struct sink_ctx *snk = sms->snk;
     struct codec_ctx *cdc = sms->cdc;
-    struct frame f;
-    struct frame p;
     int len;
-    p.addr = calloc(1, 0x100000);
-    p.len = 0x100000;
+    int flen = 0x100000;
+    void *frm = calloc(1, flen);
+    void *pkt = calloc(1, flen);
 
     while (1) {
         sink_poll(snk);
         sink_handle(snk);
-        len = source_read(src, &f, f.len);
-//        dbg("source read len = %d\n", len);
+        len = source_read(src, frm, flen);
         if (len == -1) {
-            continue;
+            err("source read failed!\n");
         }
-        len = codec_encode(cdc, f.addr, p.addr);
+        len = codec_encode(cdc, frm, pkt);
+        if (len == -1) {
+            err("encode failed!\n");
+        }
 //        dbg("codec_encode len = %d\n", len);
-        sink_write(snk, &p, len);
-        source_write(src, &f, f.len);
+        sink_write(snk, pkt, len);
+        source_write(src, NULL, 0);
     }
 
     return 0;

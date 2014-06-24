@@ -99,17 +99,10 @@ int x264_encode(struct codec_ctx *cc, void *in, void *out)
     return bit_len;
 }
 
-int x264_decode(struct codec_ctx *c, void *buf, int *len, void *data)
-{
-
-    return 0;
-}
- 
-
 struct codec cdc_x264_encoder = {
     .name = "x264",
     .open = x264_init,
     .encode = x264_encode,
-    .decode = x264_decode,
+    .decode = NULL,
     .priv_size = sizeof(struct x264_ctx),
 };

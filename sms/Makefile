@@ -6,6 +6,7 @@ TOPDIR		= `pwd`
 CFLAGS_SDL	= `pkg-config --cflags sdl`
 LDFLAGS_SDL	= `pkg-config --libs sdl`
 LDFLAGS_X264	= -lx264
+LDFLAGS_FFMPEG	= `pkg-config --libs libavformat libavutil libavcodec libswscale`
 
 CFLAGS	:= -g -Wall
 #CFLAGS	+= -Werror -Wcast-align
@@ -22,6 +23,7 @@ LDFLAGS	+= ../libraries/libskt/libskt.a
 LDFLAGS	+= -lpthread
 LDFLAGS	+= $(LDFLAGS_SDL)
 LDFLAGS	+= $(LDFLAGS_X264)
+LDFLAGS += $(LDFLAGS_FFMPEG)
 #LDFLAGS += -Wl,-rpath=/usr/local/lib -lrt
 
 .PHONY : all clean
@@ -37,7 +39,8 @@ SINK_OBJS	+= sink/sdl.o
 SINK_OBJS	+= sink/udp.o
 
 CODEC_OBJS	= codec/codec.o
-CODEC_OBJS	+= codec/x264.o
+CODEC_OBJS	+= codec/x264_enc.o
+CODEC_OBJS	+= codec/avcodec_dec.o
 
 
 OBJS	= $(SOURCE_OBJS) $(SINK_OBJS) $(CODEC_OBJS) sms.o common.o
