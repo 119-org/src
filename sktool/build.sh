@@ -1,6 +1,6 @@
 #!/bin/sh
 
+make distclean
 qmake -project
 qmake
-make clean
 make -j4

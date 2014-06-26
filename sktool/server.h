@@ -3,6 +3,7 @@
 
 #include <QtGui>
 #include <QWidget>
+#include "ui_server.h"
 
 class ServerWidget : public QTabWidget
 {
@@ -18,6 +19,7 @@ private:
     QLabel *descriptionLabel;
     QPushButton *addButton;
     QVBoxLayout *mainLayout;
+    Ui::ServerWidget m_ui;
     
 };
 

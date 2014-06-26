@@ -3,6 +3,7 @@
 ClientWidget::ClientWidget(QWidget *parent)
     : QTabWidget(parent)
 {
+    m_ui.setupUi(this);
     descriptionLabel = new QLabel(tr("This is client tab"));
     addButton = new QPushButton(tr("client test"));
     mainLayout = new QVBoxLayout;
