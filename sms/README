@@ -12,3 +12,12 @@ sink: player/relay server/stream output
 
 ==> data channel
 <-- ctrl channel
+
+
+--------------      --------------
+|            |=====>|            |
+|   SMS 1    | .... |   SMS n    |
+|            |<-----|            |
+--------------      --------------
+
+

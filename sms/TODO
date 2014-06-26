@@ -1,0 +1,16 @@
+1. sink
+  save to file
+  SDL yuv support
+
+2. source
+  read from file
+
+3. codec
+  avcodec decoder porting
+
+4. protocol
+  rtsp
+
+5. framework
+  data channel
+  cascade

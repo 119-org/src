@@ -10,6 +10,8 @@
 
 struct udp_snk_ctx {
     int fd;
+    char src_ip[64];
+    uint16_t src_port;
     char dst_ip[64];
     uint16_t dst_port;
 };
@@ -17,6 +19,7 @@ struct udp_snk_ctx {
 static int udp_open(struct sink_ctx *sc, const char *url)
 {
     struct udp_snk_ctx *c = sc->priv;
+    struct skt_addr addr;
     skt_addr_list_t *tmp;
     char str[MAX_ADDR_STRING];
     char ip[64];
@@ -40,12 +43,17 @@ static int udp_open(struct sink_ctx *sc, const char *url)
             printf("ip = %s port = %d\n", str, tmp->addr.port);
         }
     }
-    c->fd = skt_udp_bind(str, 4321);
+    strcpy(c->src_ip, str);
+    c->fd = skt_udp_bind(c->src_ip, 0);//random port
     if (c->fd == -1) {
         err("bind %s:%d failed\n", ip, port);
         return -1;
     }
+    skt_get_addr_by_fd(&addr, c->fd);
+    c->src_port = addr.port;
     skt_set_noblk(c->fd, 1);
+    skt_set_reuse(c->fd, 1);
+    dbg("source fd = %d url: udp://%s:%d\n", c->fd, c->src_ip, c->src_port);
     return 0;
 }
 

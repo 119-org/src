@@ -21,19 +21,18 @@ struct avcodec_ctx {
     int height;
     AVCodecContext *avctx;
     AVCodec *avcdc;
-    AVFrame *avfrm[2];
-    AVFrame *avfrmYUV[2];
+    AVFrame *avfrm;
+    AVFrame *avfrmYUV;
     AVPacket *avpkt;
-
 };
 
-int avcdc_open(struct codec_ctx *cc, int width, int height)
+int avcodec_init(struct codec_ctx *cc, int width, int height)
 {
     struct avcodec_ctx *c = cc->priv;
     int i;
-    const uint8_t *out_buffer[2];
-    AVFrame *avfrm[2];
-    AVFrame *avfrmYUV[2];
+    const uint8_t *out_buffer;
+    AVFrame *avfrm;
+    AVFrame *avfrmYUV;
     AVPacket *avpkt;
     av_register_all();
     AVCodec *avcdc = avcodec_find_decoder(CODEC_ID_H264);
@@ -61,29 +60,51 @@ int avcdc_open(struct codec_ctx *cc, int width, int height)
         return -1;
     }
 
-    for (i = 0; i < 2; i++) {
-//        avfrm[i] = frame_alloc();
-//        avfrmYUV[i] = frame_alloc();
-    }
+//    avfrm = av_frame_alloc();
+//    avfrmYUV = av_frame_alloc();
     avpkt = (AVPacket *)av_malloc(sizeof(AVPacket));
 
 /*preparation for frame convertion*/
 
-    for (i = 0; i < 2; i++) {
-        out_buffer[i] = (const uint8_t *)malloc(avpicture_get_size(PIX_FMT_YUV420P, avctx->width, avctx->height) * sizeof(uint8_t));
-        avpicture_fill((AVPicture *)avfrmYUV[i], out_buffer[i], PIX_FMT_YUV420P, avctx->width, avctx->height);
-    }
+    out_buffer = (const uint8_t *)malloc(avpicture_get_size(PIX_FMT_YUV420P, avctx->width, avctx->height) * sizeof(uint8_t));
+    avpicture_fill((AVPicture *)avfrmYUV, out_buffer, PIX_FMT_YUV420P, avctx->width, avctx->height);
+    c->width = width;
+    c->height = height;
+    c->avctx = avctx;
+    c->avcdc = avcdc;
+    c->avpkt = avpkt;
+    c->avfrm = avfrm;
+    c->avfrmYUV = avfrmYUV;
+    return 0;
 }
 
-int avcdc_decode(struct codec_ctx *cc, int width, int height)
+static int frame_conv(struct avcodec_ctx *c)
 {
-
+    struct SwsContext *swsctx;
+    swsctx = sws_getContext(c->avctx->width, c->avctx->height, c->avctx->pix_fmt, c->avctx->width, c->avctx->height, PIX_FMT_YUV420P, SWS_BICUBIC, NULL, NULL, NULL);
+    sws_scale(swsctx, (const uint8_t* const*)c->avfrm->data, c->avfrm->linesize, 0, c->avctx->height, c->avfrmYUV->data, c->avfrmYUV->linesize);
+    sws_freeContext(swsctx);
+    return 0;
 }
 
-struct codec cdc_avcdc_decoder = {
-    .name = "avcdc",
-    .open = avcdc_open,
+int avcodec_decode(struct codec_ctx *cc, void *in, int *inlen, void *out, int *outlen)
+{
+    struct avcodec_ctx *c = cc->priv;
+    int got_pic = 0;
+    c->avpkt->size = inlen;
+    c->avpkt->data = (uint8_t *)in;
+
+    avcodec_decode_video2(c->avctx, c->avfrm, (int *)&got_pic, c->avpkt);
+    if (got_pic) {
+        frame_conv(c);
+    }
+    return got_pic;
+}
+
+struct codec cdc_avcodec_decoder = {
+    .name = "avcodec",
+    .open = avcodec_init,
     .encode = NULL,
-    .decode = avcdc_decode,
+    .decode = avcodec_decode,
     .priv_size = sizeof(struct avcodec_ctx),
 };

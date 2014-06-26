@@ -29,6 +29,7 @@ struct sdl_rgb_ctx {
 };
 
 struct sdl_yuv_ctx {
+    SDL_Overlay *overlay;
 
 };
 
@@ -39,6 +40,7 @@ struct sdl_ctx {
     int height;
     int bpp;
     struct sdl_rgb_ctx *rgb;
+    struct sdl_yuv_ctx *yuv;
     SDL_Surface *surface;
     SDL_Event event;
 };
@@ -140,6 +142,18 @@ static int rgb_surface_update(struct sdl_ctx *c)
     return 0;
 }
 
+static int yuv_surface_init(struct sdl_ctx *c)
+{
+    struct sdl_yuv_ctx *yuv = (struct sdl_yuv_ctx *)calloc(1, sizeof(struct sdl_yuv_ctx));
+    yuv->overlay = SDL_CreateYUVOverlay(c->width, c->height, SDL_YV12_OVERLAY, c->surface);
+    if (yuv->overlay == NULL) {
+        err("SDL: could not create YUV overlay\n");
+        return -1;
+    }
+    c->yuv = yuv;
+    return 0;
+}
+
 static int wnd_init(struct sdl_ctx *c, int type)
 {
     int flags = SDL_SWSURFACE | SDL_DOUBLEBUF;
@@ -152,7 +166,11 @@ static int wnd_init(struct sdl_ctx *c, int type)
         err("SDL: could not set video mode - exiting\n");
         return -1;
     }
-    rgb_surface_init(c);
+    if (type == SDL_RGB) {
+        rgb_surface_init(c);
+    } else if (type == SDL_YUV) {
+        yuv_surface_init(c);
+    }
     return 0;
 }
 
