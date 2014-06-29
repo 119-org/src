@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
 //    sktool.show();
     ServerWidget srv;
     ClientWidget cli;
-//    srv.show();
+    srv.show();
     cli.show();
     return app.exec();
 }
