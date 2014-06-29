@@ -1,17 +1,15 @@
 #include "server.h"
+#include "sktlib.h"
 
 ServerWidget::ServerWidget(QWidget *parent)
     : QTabWidget(parent)
 {
     m_ui.setupUi(this);
-#if 0
-    descriptionLabel = new QLabel(tr("This is server tab"));
-    addButton = new QPushButton(tr("server test"));
-    mainLayout = new QVBoxLayout;
-    mainLayout->addWidget(descriptionLabel);
-    mainLayout->addWidget(addButton, 0, Qt::AlignCenter);
+    initConfig();
+}
 
-    setLayout(mainLayout);
-    setWindowTitle(tr("Server"));
-#endif
+void ServerWidget::initConfig()
+{
+    SocketLib::initNetwork(m_ui.cmbTcpAddr);
+    SocketLib::initNetwork(m_ui.cmbUdpAddr);
 }

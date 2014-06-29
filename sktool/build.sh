@@ -1,6 +1,6 @@
 #!/bin/sh
 
 make distclean
-qmake -project
+qmake -project "LIBS += ../libraries/libskt/libskt.a"
 qmake
 make -j4

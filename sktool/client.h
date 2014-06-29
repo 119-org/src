@@ -3,7 +3,6 @@
 
 #include <QtGui>
 #include <QWidget>
-#include <QTabWidget>
 #include "ui_client.h"
 
 class ClientWidget : public QTabWidget
@@ -12,16 +11,14 @@ class ClientWidget : public QTabWidget
 
 public:
     ClientWidget(QWidget *parent = 0);
+    void initConfig();
+    void initHandler();
+
 
 private slots:
 
 private:
-
-    QLabel *descriptionLabel;
-    QPushButton *addButton;
-    QVBoxLayout *mainLayout;
     Ui::ClientWidget m_ui;
- 
  
 };
 

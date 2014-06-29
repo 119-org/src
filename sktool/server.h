@@ -11,14 +11,12 @@ class ServerWidget : public QTabWidget
 
 public:
     ServerWidget(QWidget *parent = 0);
+    void initConfig();
+    void initHandler();
 
 private slots:
 
 private:
-
-    QLabel *descriptionLabel;
-    QPushButton *addButton;
-    QVBoxLayout *mainLayout;
     Ui::ServerWidget m_ui;
     
 };

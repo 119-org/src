@@ -3,12 +3,11 @@
 
 #include <QGlobalStatic>
 #include <QVector>
-#include "../libraries/libskt/libskt.h"
 
 class SocketLib
 {
 public:
-    void initNetwork(QComboBox *box);
+    static void initNetwork(QComboBox *box);
 
 };
 
