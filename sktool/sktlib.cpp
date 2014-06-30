@@ -6,6 +6,15 @@
 #include "sktlib.h"
 #include "../libraries/libskt/libskt.h"
 
+ServerSkt::ServerSkt(QObject *parent)
+: QObject(parent)
+{
+}
+
+ServerSkt::~ServerSkt()
+{
+}
+
 void SocketLib::initNetwork(QComboBox *box)
 {
     skt_addr_list_t *sal, *p;
@@ -28,5 +37,34 @@ void SocketLib::initNetwork(QComboBox *box)
     if (!def.isEmpty() && (-1 != box->findText(def))) {
         box->setEditText(def);
     }
+}
+
+bool ServerSkt::start(const QString ip, quint16 port)
+{
+    return true;
+}
+
+void ServerSkt::stop()
+{
+}
+
+
+
+TcpServerSkt::TcpServerSkt(QObject *parent)
+:ServerSkt(parent)
+{
+}
+
+TcpServerSkt::~TcpServerSkt()
+{
+}
+
+UdpServerSkt::UdpServerSkt(QObject *parent)
+:ServerSkt(parent)
+{
+}
+
+UdpServerSkt::~UdpServerSkt()
+{
 }
 
