@@ -6,6 +6,7 @@ ServerWidget::ServerWidget(QWidget *parent)
 {
     m_ui.setupUi(this);
     initConfig();
+    initHandler();
 }
 
 void ServerWidget::initConfig()
@@ -18,6 +19,7 @@ void ServerWidget::initHandler()
 {
     connect(m_ui.btnTcp, SIGNAL(clicked(bool)), this, SLOT(trigger(bool)));
     connect(m_ui.btnUdp, SIGNAL(clicked(bool)), this, SLOT(trigger(bool)));
+    connect(&m_tcp, SIGNAL(message(const QString&)), this, SIGNAL(output(const QString&)));
 
 }
 
@@ -31,12 +33,14 @@ void ServerWidget::trigger(bool start)
     QComboBox* cmbPort = istcp ? m_ui.cmbTcpPort : m_ui.cmbUdpPort;
     ServerSkt* server = istcp ? (ServerSkt*)&m_tcp : (ServerSkt*)&m_udp;
 
-    IPAddr addr;
+    bool res;
+    QString ip = cmbAddr->currentText().trimmed();
+    quint16 port = cmbPort->currentText().trimmed().toUShort(&res, 10);
 
     if (start)
-        start = server->start(addr.ip, addr.port);
+        start = server->open(ip, port);
     else
-        server->stop();
+        server->close();
 
     cmbAddr->setDisabled(start);
     cmbPort->setDisabled(start);

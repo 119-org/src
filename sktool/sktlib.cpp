@@ -6,15 +6,6 @@
 #include "sktlib.h"
 #include "../libraries/libskt/libskt.h"
 
-ServerSkt::ServerSkt(QObject *parent)
-: QObject(parent)
-{
-}
-
-ServerSkt::~ServerSkt()
-{
-}
-
 void SocketLib::initNetwork(QComboBox *box)
 {
     skt_addr_list_t *sal, *p;
@@ -39,15 +30,21 @@ void SocketLib::initNetwork(QComboBox *box)
     }
 }
 
-bool ServerSkt::start(const QString ip, quint16 port)
-{
-    return true;
-}
-
-void ServerSkt::stop()
+ServerSkt::ServerSkt(QObject *parent)
+: QObject(parent),
+  m_ip("127.0.0.1"),
+  m_port(0)
 {
 }
 
+ServerSkt::~ServerSkt()
+{
+}
+
+void ServerSkt::printMsg(const QString &msg)
+{
+    emit message(msg);
+}
 
 
 TcpServerSkt::TcpServerSkt(QObject *parent)
@@ -59,6 +56,23 @@ TcpServerSkt::~TcpServerSkt()
 {
 }
 
+bool TcpServerSkt::open(QString ip, quint16 port)
+{
+    QString msg("xxx");
+    m_fd = skt_tcp_bind_listen(qPrintable(ip), port);
+    if (m_fd == -1) {
+	printMsg(msg);
+        return false;
+    }
+    printMsg(msg);
+    return true;
+}
+
+void TcpServerSkt::close()
+{
+    skt_close(m_fd);
+}
+
 UdpServerSkt::UdpServerSkt(QObject *parent)
 :ServerSkt(parent)
 {
@@ -68,3 +82,16 @@ UdpServerSkt::~UdpServerSkt()
 {
 }
 
+bool UdpServerSkt::open(QString ip, quint16 port)
+{
+    m_fd = skt_tcp_bind_listen(qPrintable(ip), port);
+    if (m_fd == -1) {
+        return false;
+    }
+    return true;
+}
+
+void UdpServerSkt::close()
+{
+    skt_close(m_fd);
+}

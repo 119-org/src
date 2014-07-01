@@ -26,9 +26,20 @@ public:
     ServerSkt(QObject *parent=0);
     virtual ~ServerSkt();
 
-    bool start(const QString ip, quint16 port);
-    void stop();
+    const QString addr() const {return m_ip;};
+    quint16 port() {return m_port;};
 
+    void printMsg(const QString &msg);
+    virtual bool open(QString ip, quint16 port) = 0;
+    virtual void close() = 0;
+
+signals:
+    void message(const QString &msg);
+
+private:
+    bool m_started;
+    QString m_ip;
+    quint16 m_port;
 };
 
 class TcpServerSkt : public ServerSkt
@@ -40,10 +51,14 @@ public:
     virtual ~TcpServerSkt();
 
 protected:
-//    virtual bool open();
-//    virtual bool close(void* cookie);
+    virtual bool open(QString ip, quint16 port);
+    virtual void close();
 //    virtual void send(void* cookie, const QByteArray& bin);
 //    virtual void close();
+
+private:
+    int m_fd;
+    QString m_error;
 };
 
 class UdpServerSkt : public ServerSkt
@@ -55,9 +70,13 @@ public:
     virtual ~UdpServerSkt();
 
 protected:
+    virtual bool open(QString ip, quint16 port);
+    virtual void close();
 //    virtual bool open();
 //    virtual bool close(void* cookie);
 //    virtual void send(void* cookie, const QByteArray& bin);
 //    virtual void close();
+private:
+    int m_fd;
 };
 #endif

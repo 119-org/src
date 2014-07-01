@@ -22,7 +22,7 @@ private:
     Ui::ServerWidget m_ui;
     TcpServerSkt m_tcp;
     UdpServerSkt m_udp;
-    
+
 };
 
 #endif
