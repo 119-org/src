@@ -58,19 +58,51 @@ TcpServerSkt::~TcpServerSkt()
 
 bool TcpServerSkt::open(QString ip, quint16 port)
 {
-    QString msg("xxx");
+    QString msg("Open TCP Server %1.");
     m_fd = skt_tcp_bind_listen(qPrintable(ip), port);
     if (m_fd == -1) {
-	printMsg(msg);
+        msg = msg.arg("failed");
+        printMsg(msg);
         return false;
     }
+    msg = msg.arg("success");
     printMsg(msg);
+    m_ip = ip;
+    if (port == 0) {
+        struct skt_addr addr;
+        skt_get_addr_by_fd(&addr, m_fd);
+        m_port = addr.port;
+    } else {
+        m_port = port;
+    }
+    connect(this, SIGNAL(onConnectSignal()), this, SLOT(onConnect()));
     return true;
 }
 
 void TcpServerSkt::close()
 {
+    QString msg("Close TCP Server.");
     skt_close(m_fd);
+    printMsg(msg);
+}
+
+void TcpServerSkt::send(void* cookie, const QByteArray& bin)
+{
+}
+
+void TcpServerSkt::recv()
+{
+
+}
+
+void TcpServerSkt::onConnect()
+{
+    TcpServerSkt *server = qobject_cast<TcpServerSkt*>(sender());
+    if (!server) return;
+    QString msg("new connect incoming");
+
+    printMsg(msg);
+
 }
 
 UdpServerSkt::UdpServerSkt(QObject *parent)
@@ -84,14 +116,29 @@ UdpServerSkt::~UdpServerSkt()
 
 bool UdpServerSkt::open(QString ip, quint16 port)
 {
-    m_fd = skt_tcp_bind_listen(qPrintable(ip), port);
+    QString msg("Open UDP Server %1.");
+    m_fd = skt_udp_bind(qPrintable(ip), port);
     if (m_fd == -1) {
+        msg = msg.arg("failed");
+        printMsg(msg);
         return false;
+    }
+    msg = msg.arg("success");
+    printMsg(msg);
+    m_ip = ip;
+    if (port == 0) {
+        struct skt_addr addr;
+        skt_get_addr_by_fd(&addr, m_fd);
+        m_port = addr.port;
+    } else {
+        m_port = port;
     }
     return true;
 }
 
 void UdpServerSkt::close()
 {
+    QString msg("Close UDP Server.");
     skt_close(m_fd);
+    printMsg(msg);
 }

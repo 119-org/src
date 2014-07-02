@@ -5,6 +5,7 @@
 #include <QWidget>
 #include "ui_server.h"
 #include "sktlib.h"
+#include "logger.h"
 
 class ServerWidget : public QTabWidget
 {
@@ -14,14 +15,22 @@ public:
     ServerWidget(QWidget *parent = 0);
     void initConfig();
     void initHandler();
+    void initLogger();
+    void initLogger(QToolButton* c, QTreeWidget* o, QPlainTextEdit* d);
+
+signals:
+    void output(const QString& info);
+    void output(const QString& title, const char* buf, quint32 len);
 
 private slots:
     void trigger(bool start);
+    void clearMsg();
 
 private:
     Ui::ServerWidget m_ui;
     TcpServerSkt m_tcp;
     UdpServerSkt m_udp;
+    Logger m_logger;
 
 };
 
