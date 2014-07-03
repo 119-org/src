@@ -16,6 +16,7 @@
 
 #define LISTEN_MAX_BACKLOG	128
 #define MTU	(1500 - 42 - 200)
+#define MAX_RETRY_CNT	10
 
 int skt_tcp_conn(const char *host, uint16_t port)
 {
@@ -112,6 +113,11 @@ int skt_accept(int fd, uint32_t *ip, uint16_t *port)
         *port = ntohs(si.sin_port);
     }
     return afd;
+}
+
+void skt_close(int fd)
+{
+    close(fd);
 }
 
 int skt_get_local_list(skt_addr_list_t **al, int loopback)
@@ -409,6 +415,7 @@ int skt_send(int fd, void *buf, size_t len)
     void *p = buf;
     size_t left = len;
     size_t step = MTU;
+    int cnt = 0;
 
     if (buf == NULL || len == 0) {
         fprintf(stderr, "%s paraments invalid!\n", __func__);
@@ -429,6 +436,9 @@ int skt_send(int fd, void *buf, size_t len)
         }
         if (errno == EINTR || errno == EAGAIN) {
 //            perror("send");
+            cnt++;
+            if (cnt > MAX_RETRY_CNT)
+                break;
             continue;
         }
         return -1;
@@ -436,13 +446,14 @@ int skt_send(int fd, void *buf, size_t len)
     return (len - left);
 }
 
-int skt_sendto(int fd, const char *ip, uint16_t port, const void *buf, size_t len)
+int skt_sendto(int fd, const char *ip, uint16_t port, void *buf, size_t len)
 {
     ssize_t n;
     void *p = buf;
     size_t left = len;
     size_t step = MTU;
     struct sockaddr_in sa;
+    int cnt = 0;
 
     if (buf == NULL || len == 0) {
         fprintf(stderr, "%s paraments invalid!\n", __func__);
@@ -466,6 +477,9 @@ int skt_sendto(int fd, const char *ip, uint16_t port, const void *buf, size_t le
         }
         if (errno == EINTR || errno == EAGAIN) {
 //            perror("sendto");
+            cnt++;
+            if (cnt > MAX_RETRY_CNT)
+                break;
             continue;
         }
         return -1;
@@ -479,6 +493,7 @@ int skt_recv(int fd, void *buf, size_t len)
     void *p = buf;
     size_t left = len;
     size_t step = MTU;
+    int cnt = 0;
     if (buf == NULL || len == 0) {
         fprintf(stderr, "%s paraments invalid!\n", __func__);
         return -1;
@@ -496,6 +511,9 @@ int skt_recv(int fd, void *buf, size_t len)
         }
         if (errno == EINTR || errno == EAGAIN) {
 //            perror("recv");
+            cnt++;
+            if (cnt > MAX_RETRY_CNT)
+                break;
             continue;
         }
         return -1;
@@ -507,6 +525,7 @@ int skt_recvfrom(int fd, uint32_t *ip, uint16_t *port, void *buf, size_t len)
 {
     int n;
     void *p = buf;
+    int cnt = 0;
     size_t left = len;
     size_t step = MTU;
     struct sockaddr_in si;
@@ -527,6 +546,9 @@ int skt_recvfrom(int fd, uint32_t *ip, uint16_t *port, void *buf, size_t len)
         }
         if (errno == EINTR || errno == EAGAIN) {
 //            perror("recvfrom");
+            cnt++;
+            if (cnt > MAX_RETRY_CNT)
+                break;
             continue;
         }
         return -1;
