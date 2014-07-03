@@ -53,6 +53,8 @@ class TcpServerSkt : public ServerSkt
 public:
     TcpServerSkt(QObject *parent=0);
     virtual ~TcpServerSkt();
+    int m_fd;
+    int m_afd;
 
 protected:
     virtual bool open(QString ip, quint16 port);
@@ -68,7 +70,6 @@ private slots:
     void recv();
 
 private:
-    int m_fd;
     QString m_error;
 };
 
