@@ -26,8 +26,8 @@ int skt_accept(int fd, uint32_t *ip, uint16_t *port);
 int skt_udp_bind(const char *host, uint16_t port);
 void skt_close(int fd);
 
-int skt_send(int fd, void *buf, size_t len);
-int skt_sendto(int fd, const char *ip, uint16_t port, void *buf, size_t len);
+int skt_send(int fd, const void *buf, size_t len);
+int skt_sendto(int fd, const char *ip, uint16_t port, const void *buf, size_t len);
 int skt_recv(int fd, void *buf, size_t len);
 int skt_recvfrom(int fd, uint32_t *ip, uint16_t *port, void *buf, size_t len);
 

@@ -409,10 +409,10 @@ int skt_set_buflen(int fd, int size)
     return 0;
 }
 
-int skt_send(int fd, void *buf, size_t len)
+int skt_send(int fd, const void *buf, size_t len)
 {
     ssize_t n;
-    void *p = buf;
+    void *p = (void *)buf;
     size_t left = len;
     size_t step = MTU;
     int cnt = 0;
@@ -446,10 +446,10 @@ int skt_send(int fd, void *buf, size_t len)
     return (len - left);
 }
 
-int skt_sendto(int fd, const char *ip, uint16_t port, void *buf, size_t len)
+int skt_sendto(int fd, const char *ip, uint16_t port, const void *buf, size_t len)
 {
     ssize_t n;
-    void *p = buf;
+    void *p = (void *)buf;
     size_t left = len;
     size_t step = MTU;
     struct sockaddr_in sa;
