@@ -28,8 +28,6 @@ public:
 
     const QString addr() const {return m_ip;};
     quint16 port() {return m_port;};
-    void setAddr(const QString ip) { m_ip = ip;};
-    void setPort(quint16 port) {m_port = port;};
 
     void printMsg(const QString &msg);
     virtual bool open(QString ip, quint16 port) = 0;
@@ -59,7 +57,7 @@ public:
 protected:
     virtual bool open(QString ip, quint16 port);
     virtual void close();
-    virtual void send(void* cookie, const QByteArray& bin);
+    virtual int send(const QString& data);
 
 signals:
     void onConnectSignal();
@@ -84,11 +82,90 @@ public:
 protected:
     virtual bool open(QString ip, quint16 port);
     virtual void close();
-//    virtual bool open();
-//    virtual bool close(void* cookie);
-//    virtual void send(void* cookie, const QByteArray& bin);
-//    virtual void close();
+
 private:
     int m_fd;
 };
+
+class ClientSkt : public QObject
+{
+    Q_OBJECT
+
+public:
+    ClientSkt(QObject *parent=0);
+    virtual ~ClientSkt();
+
+    const QString srcAddr() const {return m_src_ip;};
+    quint16 srcPort() {return m_src_port;};
+    const QString dstAddr() const {return m_dst_ip;};
+    quint16 dstPort() {return m_dst_port;};
+
+    void printMsg(const QString &msg);
+    virtual bool open(QString ip, quint16 port) = 0;
+    virtual void close() = 0;
+    virtual int send(const QString &data) = 0;
+
+    QString m_src_ip;
+    quint16 m_src_port;
+    QString m_dst_ip;
+    quint16 m_dst_port;
+
+signals:
+    void message(const QString &msg);
+
+private:
+    bool m_started;
+
+};
+
+class TcpClientSkt : public ClientSkt
+{
+    Q_OBJECT
+
+public:
+    TcpClientSkt(QObject *parent=0);
+    virtual ~TcpClientSkt();
+    int m_fd;
+
+protected:
+    virtual bool open(QString ip, quint16 port);
+    virtual void close();
+    virtual int send(const QString& data);
+
+signals:
+    void onConnectSignal();
+
+
+private slots:
+//    void onConnect();
+    void recv();
+
+private:
+    QString m_error;
+};
+
+class UdpClientSkt : public ClientSkt
+{
+    Q_OBJECT
+
+public:
+    UdpClientSkt(QObject *parent=0);
+    virtual ~UdpClientSkt();
+
+protected:
+    virtual bool open(QString ip, quint16 port);
+    virtual void close();
+//    virtual bool open();
+//    virtual bool close(void* cookie);
+    virtual int send(const QString& data);
+//    virtual void close();
+
+private slots:
+    void recv();
+private:
+    int m_fd;
+};
+
+
+
 #endif

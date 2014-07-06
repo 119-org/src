@@ -15,7 +15,6 @@ public:
     ServerWidget(QWidget *parent = 0);
     void initConfig();
     void initHandler();
-    void initLogger();
     void initLogger(QToolButton* c, QTreeWidget* o, QPlainTextEdit* d);
 
 signals:

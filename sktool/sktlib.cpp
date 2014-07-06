@@ -46,7 +46,6 @@ void ServerSkt::printMsg(const QString &msg)
     emit message(msg);
 }
 
-
 TcpServerSkt::TcpServerSkt(QObject *parent)
 :ServerSkt(parent)
 {
@@ -62,9 +61,7 @@ void recv_msg(void *args)
     int fd = tcp->m_afd;
     char buf[20];
     skt_recv(fd, buf, 20);
-//    printf("recv buf = %s\n", buf);
-    QString msg(buf);
-    tcp->printMsg(msg);
+    tcp->printMsg(QString(buf));
 }
 void handle_new_conn(void *args)
 {
@@ -90,10 +87,8 @@ void handle_new_conn(void *args)
 
 void *tcp_server(void *args)
 {
-    int ret;
     TcpServerSkt *tcp = (TcpServerSkt *)args;
-    ret = skt_ev_init();
-    if (ret == -1) {
+    if (-1 == skt_ev_init()) {
         return NULL;
     }
 
@@ -103,24 +98,17 @@ void *tcp_server(void *args)
     evcb->ev_err = NULL;
     struct skt_ev *e = skt_ev_create(tcp->m_fd, EVENT_READ, evcb, (void *)tcp);
     if (-1 == skt_ev_add(e)) {
-        QString msg("event_add failed!");
-        tcp->printMsg(msg);
-//        err("event_add failed!\n");
+        tcp->printMsg(QString("event_add failed!"));
+        return NULL;
     }
-    QString msg("event_add success.");
-    tcp->printMsg(msg);
-
     skt_ev_dispatch();
+    return NULL;
 }
 
 bool TcpServerSkt::open(QString ip, quint16 port)
 {
-    int ret;
-    QString msg("Open TCP Server %1.");
     m_fd = skt_tcp_bind_listen(qPrintable(ip), port);
     if (m_fd == -1) {
-        msg = msg.arg("failed");
-        printMsg(msg);
         return false;
     }
 
@@ -134,25 +122,25 @@ bool TcpServerSkt::open(QString ip, quint16 port)
     }
     pthread_t pid;
     if (-1 == pthread_create(&pid, NULL, tcp_server, (void *)this)) {
-        msg = msg.arg("failed");
-        printMsg(msg);
+        printMsg(QString("Create TCP Server thread failed."));
         return false;
     }
     connect(this, SIGNAL(onConnectSignal()), this, SLOT(onConnect()));
-    msg = msg.arg("success");
-    printMsg(msg);
     return true;
 }
 
 void TcpServerSkt::close()
 {
-    QString msg("Close TCP Server.");
     skt_close(m_fd);
-    printMsg(msg);
 }
 
-void TcpServerSkt::send(void* cookie, const QByteArray& bin)
+int TcpServerSkt::send(const QString& data)
 {
+    QByteArray bin = data.toAscii();
+    const void *buf = bin.constData();
+    size_t len = bin.length();
+    return skt_send(m_fd, buf, len);
+
 }
 
 void TcpServerSkt::recv()
@@ -164,10 +152,7 @@ void TcpServerSkt::onConnect()
 {
     TcpServerSkt *server = qobject_cast<TcpServerSkt*>(sender());
     if (!server) return;
-    QString msg("new connect incoming");
-
-    printMsg(msg);
-
+    printMsg(QString("new connect incoming"));
 }
 
 UdpServerSkt::UdpServerSkt(QObject *parent)
@@ -206,4 +191,120 @@ void UdpServerSkt::close()
     QString msg("Close UDP Server.");
     skt_close(m_fd);
     printMsg(msg);
+}
+
+// Below is Client Socket Class
+
+ClientSkt::ClientSkt(QObject *parent)
+: QObject(parent),
+  m_src_ip("127.0.0.1"),
+  m_src_port(0)
+{
+}
+
+ClientSkt::~ClientSkt()
+{
+}
+
+TcpClientSkt::TcpClientSkt(QObject *parent)
+:ClientSkt(parent)
+{
+}
+
+TcpClientSkt::~TcpClientSkt()
+{
+}
+
+bool TcpClientSkt::open(QString ip, quint16 port)
+{
+    m_fd = skt_tcp_conn(qPrintable(ip), port);
+    if (m_fd == -1) {
+        return false;
+    }
+
+    m_dst_ip = ip;
+    m_dst_port = port;
+
+    struct skt_addr addr;
+    if (-1 == skt_get_addr_by_fd(&addr, m_fd)) {
+        return false;
+    }
+    m_src_port = addr.port;
+    char str[MAX_ADDR_STRING];
+    skt_addr_ntop(str, addr.ip);
+    m_src_ip = str;
+    return true;
+}
+
+void TcpClientSkt::close()
+{
+    skt_close(m_fd);
+}
+
+int TcpClientSkt::send(const QString& data)
+{
+    QByteArray bin = data.toAscii();
+    const void *buf = bin.constData();
+    size_t len = bin.length();
+    return skt_send(m_fd, buf, len);
+}
+
+void TcpClientSkt::recv()
+{
+
+}
+
+
+UdpClientSkt::UdpClientSkt(QObject *parent)
+:ClientSkt(parent)
+{
+}
+
+void ClientSkt::printMsg(const QString &msg)
+{
+    emit message(msg);
+}
+
+
+UdpClientSkt::~UdpClientSkt()
+{
+}
+
+bool UdpClientSkt::open(QString ip, quint16 port)
+{
+    m_fd = skt_udp_bind(NULL, 0);
+    if (m_fd == -1) {
+        return false;
+    }
+
+    m_dst_ip = ip;
+    m_dst_port = port;
+
+    struct skt_addr addr;
+    if (-1 == skt_get_addr_by_fd(&addr, m_fd)) {
+        return false;
+    }
+    m_src_port = addr.port;
+    char str[MAX_ADDR_STRING];
+    skt_addr_ntop(str, addr.ip);
+    m_src_ip = str;
+
+    return true;
+}
+void UdpClientSkt::close()
+{
+    skt_close(m_fd);
+}
+
+int UdpClientSkt::send(const QString& data)
+{
+    QByteArray bin = data.toAscii();
+    const void *buf = bin.constData();
+    size_t len = bin.length();
+    return skt_sendto(m_fd, qPrintable(m_dst_ip), m_dst_port, buf, len);
+}
+
+void UdpClientSkt::recv()
+{
+
 }

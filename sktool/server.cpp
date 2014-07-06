@@ -53,10 +53,17 @@ void ServerWidget::trigger(bool start)
     QString ip = cmbAddr->currentText().trimmed();
     quint16 port = cmbPort->currentText().trimmed().toUShort(&res, 10);
 
-    if (start)
+    if (start) {
         start = server->open(ip, port);
-    else
+        if (start) {
+            server->printMsg(QString("Open Server %1:%2 success.").arg(ip).arg(port));
+        } else {
+            server->printMsg(QString("Open Server %1:%2 failed.").arg(ip).arg(port));
+        }
+    } else {
         server->close();
+        server->printMsg(QString("Close Server."));
+    }
 
     QString tmpPort;
     tmpPort.setNum(server->port(), 10);

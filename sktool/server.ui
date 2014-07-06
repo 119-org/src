@@ -634,13 +634,6 @@
       </spacer>
      </item>
      <item>
-      <widget class="QCheckBox" name="chkLog">
-       <property name="text">
-        <string>Write log</string>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QToolButton" name="btnClear">
        <property name="minimumSize">
         <size>
@@ -763,7 +756,6 @@
   <tabstop>btnConnDel</tabstop>
   <tabstop>edtBuf1</tabstop>
   <tabstop>btnSend1</tabstop>
-  <tabstop>chkLog</tabstop>
   <tabstop>btnClear</tabstop>
   <tabstop>treeOutput</tabstop>
  </tabstops>
