@@ -18,7 +18,7 @@ struct x264_ctx {
     x264_nal_t *nal;
 };
 
-int x264_init(struct codec_ctx *cc, int width, int height)
+static int x264_init(struct codec_ctx *cc, int width, int height)
 {
     struct x264_ctx *c = cc->priv;
     int m_frameRate = 25;
@@ -50,7 +50,7 @@ int x264_init(struct codec_ctx *cc, int width, int height)
     return 0;
 }
 
-int x264_encode(struct codec_ctx *cc, void *in, void *out)
+static int x264_encode(struct codec_ctx *cc, void *in, void *out)
 {
     struct x264_ctx *c = cc->priv;
     x264_picture_t pic_out;

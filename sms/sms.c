@@ -8,8 +8,9 @@
 #include <getopt.h>
 
 #include "debug.h"
-#include "source.h"
-#include "sink.h"
+//#include "source.h"
+//#include "sink.h"
+//#include "codec.h"
 #include "common.h"
 #include "sms.h"
 
@@ -18,15 +19,30 @@
 
 static char input[MAX_INPUT_LEN];
 static char output[MAX_OUTPUT_LEN];
+static struct sms *g_sms = NULL;
 
 int sms_init(struct sms *sms)
 {
     struct source_ctx *src = sms->src;
     struct sink_ctx *snk = sms->snk;
-    struct codec_ctx *cdc = sms->cdc;
-    source_open(src);
-    codec_open(cdc, src->width, src->height);
-    sink_open(snk);
+    struct codec_ctx *enc = sms->enc;
+    struct codec_ctx *dec = sms->dec;
+    if (-1 == source_open(src)) {
+        err("source_open failed!\n");
+        return -1;
+    }
+    if (-1 == codec_open(enc, src->width, src->height)) {
+        err("codec_open failed!\n");
+        return -1;
+    }
+    if (-1 == codec_open(dec, src->width, src->height)) {
+        err("codec_open failed!\n");
+        return -1;
+    }
+    if (-1 == sink_open(snk)) {
+        err("sink_open failed!\n");
+        return -1;
+    }
     return 0;
 }
 
@@ -34,26 +50,43 @@ int sms_loop(struct sms *sms)
 {
     struct source_ctx *src = sms->src;
     struct sink_ctx *snk = sms->snk;
-    struct codec_ctx *cdc = sms->cdc;
-    int len;
+    struct codec_ctx *enc = sms->enc;
+    struct codec_ctx *dec = sms->dec;
+    int ret, len;
     int flen = 0x100000;
     void *frm = calloc(1, flen);
     void *pkt = calloc(1, flen);
+    void *yuv = frm;
 
     while (1) {
-        sink_poll(snk);
+        if (-1 == sink_poll(snk)) {
+            err("sink poll failed!\n");
+            continue;
+        }
         sink_handle(snk);
         len = source_read(src, frm, flen);
         if (len == -1) {
             err("source read failed!\n");
+            continue;
         }
-        len = codec_encode(cdc, frm, pkt);
+        len = codec_encode(enc, frm, pkt);
         if (len == -1) {
             err("encode failed!\n");
+            continue;
         }
-//        dbg("codec_encode len = %d\n", len);
-        sink_write(snk, pkt, len);
-        source_write(src, NULL, 0);
+        ret = codec_decode(dec, pkt, len, &yuv);
+        if (ret == -1) {
+            err("decode failed!\n");
+            continue;
+        }
+        if (-1 == sink_write(snk, yuv, len)) {
+            err("sink write failed!\n");
+            continue;
+        }
+        if (-1 == source_write(src, NULL, 0)) {
+            err("source write failed!\n");
+            continue;
+        }
     }
 
     return 0;
@@ -120,16 +153,14 @@ int main(int argc, char **argv)
     sink_register_all();
     codec_register_all();
 
-    struct source_ctx *src = source_init(input);
-    struct sink_ctx *snk = sink_init(output);
-    struct codec_ctx *cdc = codec_init("x264");
-    struct sms *sms = (struct sms *)calloc(1, sizeof(struct sms));
-    sms->src = src;
-    sms->snk = snk;
-    sms->cdc = cdc;
+    g_sms = (struct sms *)calloc(1, sizeof(struct sms));
+    g_sms->src = source_init(input);
+    g_sms->snk = sink_init(output);
+    g_sms->enc = codec_init("x264");
+    g_sms->dec = codec_init("avcodec");
 
-    sms_init(sms);
-    sms_loop(sms);
+    sms_init(g_sms);
+    sms_loop(g_sms);
 
     return 0;
 }

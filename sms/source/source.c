@@ -32,10 +32,10 @@ static int source_register(struct source *src, int size)
 
 int source_register_all()
 {
-    static int registered;
-    if (registered)
+    static int src_registered;
+    if (src_registered)
         return -1;
-    registered = 1;
+    src_registered = 1;
 
     REGISTER_SOURCE(v4l);
     REGISTER_SOURCE(udp);
@@ -63,6 +63,7 @@ struct source_ctx *source_init(const char *input)
         err("%s protocol is not support!\n", sc->url.head);
         return NULL;
     }
+    dbg("use %s source module\n", p->name);
 
     sc->ops = p;
     sc->priv = calloc(1, p->priv_size);

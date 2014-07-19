@@ -21,7 +21,6 @@ static int udp_open(struct source_ctx *sc, const char *url)
     skt_addr_list_t *tmp;
     char str[MAX_ADDR_STRING];
     char ip[64];
-    uint16_t port;
     int len;
     char *p;
     char *tag = ":";
@@ -43,7 +42,7 @@ static int udp_open(struct source_ctx *sc, const char *url)
     }
     c->fd = skt_udp_bind(str, c->dst_port);
     if (c->fd == -1) {
-        err("bind %s:%d failed\n", ip, port);
+        err("bind %s:%d failed\n", ip, c->dst_port);
         return -1;
     }
     skt_set_noblk(c->fd, 1);
@@ -66,6 +65,7 @@ static int udp_read(struct source_ctx *sc, void *buf, int len)
 static int udp_write(struct source_ctx *sc, void *buf, int len)
 {
     struct udp_src_ctx *c = sc->priv;
+    return 0;
 }
 
 static void udp_close(struct source_ctx *sc)

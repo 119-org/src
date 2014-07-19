@@ -1,6 +1,10 @@
 #ifndef _SMS_H_
 #define _SMS_H_
 
+#include "source/source.h"
+#include "sink/sink.h"
+#include "codec/codec.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -8,7 +12,8 @@ extern "C" {
 struct sms {
     struct source_ctx *src;
     struct sink_ctx *snk;
-    struct codec_ctx *cdc;
+    struct codec_ctx *enc;
+    struct codec_ctx *dec;
 };
 
 struct buffer {

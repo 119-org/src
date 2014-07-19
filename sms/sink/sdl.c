@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <SDL/SDL.h>
+#include <libavformat/avformat.h>
 
 #include "sink.h"
 #include "common.h"
@@ -30,15 +31,14 @@ struct sdl_rgb_ctx {
 
 struct sdl_yuv_ctx {
     SDL_Overlay *overlay;
-
 };
 
 struct sdl_ctx {
     int index;
-    uint8_t *src_buf;
     int width;
     int height;
     int bpp;
+    int type;
     struct sdl_rgb_ctx *rgb;
     struct sdl_yuv_ctx *yuv;
     SDL_Surface *surface;
@@ -102,9 +102,9 @@ static int rgb_surface_init(struct sdl_ctx *c)
     return 0;
 }
 
-static void rgb_pixels_update(struct sdl_ctx *c)
+static void rgb_pixels_update(struct sdl_ctx *c, void *buf)
 {
-    uint8_t *data = c->src_buf;
+    uint8_t *data = (uint8_t *)buf;
     uint8_t *pixels = c->rgb->pixels;
     int width = c->rgb->width;
     int height = c->rgb->height;
@@ -134,11 +134,33 @@ static void rgb_pixels_update(struct sdl_ctx *c)
         }
     }
 }
-static int rgb_surface_update(struct sdl_ctx *c)
+static int rgb_surface_update(struct sdl_ctx *c, void *buf)
 {
-    rgb_pixels_update(c);
+    rgb_pixels_update(c, buf);
     SDL_BlitSurface(c->rgb->surface, NULL, c->surface, NULL);
     SDL_Flip(c->surface);
+    return 0;
+}
+
+static int yuv_surface_update(struct sdl_ctx *c, void *in)
+{
+    AVFrame *avfrm = (AVFrame *)in;
+    SDL_Rect rect;
+    SDL_Overlay *overlay = c->yuv->overlay;
+//    SDL_LockYUVOverlay(overlay);
+    overlay->pixels[0] = avfrm->data[0];
+    overlay->pixels[2] = avfrm->data[1];
+    overlay->pixels[1] = avfrm->data[2];
+    overlay->pitches[0] = avfrm->linesize[0];
+    overlay->pitches[2] = avfrm->linesize[1];
+    overlay->pitches[1] = avfrm->linesize[2];
+//    SDL_UnlockYUVOverlay(overlay);
+    rect.x = 0;
+    rect.y = 0;
+    rect.w = c->width;
+    rect.h = c->height;
+    SDL_DisplayYUVOverlay(overlay, &rect);
+//    SDL_Delay(40);
     return 0;
 }
 
@@ -154,21 +176,26 @@ static int yuv_surface_init(struct sdl_ctx *c)
     return 0;
 }
 
-static int wnd_init(struct sdl_ctx *c, int type)
+static int wnd_init(struct sdl_ctx *c)
 {
-    int flags = SDL_SWSURFACE | SDL_DOUBLEBUF;
+    int flags = SDL_SWSURFACE;// | SDL_DOUBLEBUF;
     flags |= SDL_RESIZABLE;
     c->width = 640;
     c->height = 480;
-    c->bpp = 32;
+
+    if (c->type == SDL_RGB) {
+        c->bpp = 32;
+    } else if (c->type == SDL_YUV) {
+        c->bpp = 24;
+    }
     c->surface = SDL_SetVideoMode(c->width, c->height, c->bpp, flags);
     if (c->surface == NULL) {
         err("SDL: could not set video mode - exiting\n");
         return -1;
     }
-    if (type == SDL_RGB) {
+    if (c->type == SDL_RGB) {
         rgb_surface_init(c);
-    } else if (type == SDL_YUV) {
+    } else if (c->type == SDL_YUV) {
         yuv_surface_init(c);
     }
     return 0;
@@ -176,13 +203,13 @@ static int wnd_init(struct sdl_ctx *c, int type)
 
 static int sdl_init(struct sdl_ctx *c)
 {
-    int flags = SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTTHREAD;
+    int flags = SDL_INIT_VIDEO | SDL_INIT_TIMER;// | SDL_INIT_EVENTTHREAD;
     if (-1 == SDL_Init(flags)) {
         err("Could not initialize SDL - %s\n", SDL_GetError());
         goto fail;
     }
     SDL_WM_SetCaption(wnd_title, NULL);
-    if (-1 == wnd_init(c, SDL_RGB)) {
+    if (-1 == wnd_init(c)) {
         err("Could not initialize RGB surface\n");
         goto fail;
     }
@@ -193,9 +220,16 @@ fail:
     return -1;
 }
 
-static int sdl_open(struct sink_ctx *sc, char *str)
+static int sdl_open(struct sink_ctx *sc, const char *type)
 {
     struct sdl_ctx *c = sc->priv;
+    if (!strcmp(type, "rgb")) {
+        c->type = SDL_RGB;
+        dbg("use RGB surface\n");
+    } else {// if (!strcmp(type, "yuv")) {
+        c->type = SDL_YUV;
+        dbg("use YUV surface\n");
+    }
     sdl_init(c);
     return 0;
 }
@@ -209,8 +243,11 @@ static int sdl_read(struct sink_ctx *sc, void *buf, int len)
 static int sdl_write(struct sink_ctx *sc, void *buf, int len)
 {
     struct sdl_ctx *c = sc->priv;
-    c->src_buf = buf;
-    rgb_surface_update(c);
+    if (c->type == SDL_RGB) {
+        rgb_surface_update(c, buf);
+    } else if (c->type == SDL_YUV) {
+        yuv_surface_update(c, buf);
+    }
 
     return 0;
 }

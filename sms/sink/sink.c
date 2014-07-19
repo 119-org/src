@@ -32,10 +32,10 @@ static int sink_register(struct sink *snk, int size)
 
 int sink_register_all()
 {
-    static int registered;
-    if (registered)
+    static int snk_registered;
+    if (snk_registered)
         return -1;
-    registered = 1;
+    snk_registered = 1;
 
     REGISTER_SINK(sdl);
     REGISTER_SINK(udp);
@@ -104,7 +104,7 @@ int sink_poll(struct sink_ctx *snk)
 void sink_handle(struct sink_ctx *snk)
 {
     if (!snk->ops->handle)
-        return -1;
+        return NULL;
     return snk->ops->handle(snk);
 }
 

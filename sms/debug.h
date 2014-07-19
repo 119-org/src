@@ -18,7 +18,7 @@ static int level = MAX;
 #define print_func_line(flag, arg...)\
     do {\
         if (verbose)\
-            fprintf(stderr, "%s: %s:%d: ", flag, __func__, __LINE__);\
+            fprintf(stderr, "%s: %s:%s:%d: ", flag, __FILE__, __func__, __LINE__);\
         else\
             fprintf(stderr, "%s: ", flag);\
         fprintf(stderr, ##arg);\
