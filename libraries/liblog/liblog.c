@@ -1,22 +1,28 @@
-
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdarg.h>
-#include <sys/time.h>
+#include <errno.h>
 #include <pthread.h>
-#include <time.h>
+#include <syslog.h>
 
 #include "liblog.h"
 
-FILE *log_fp;
-static char log_name[32];
-static pthread_mutex_t mutex_lock;
+static char g_log_filename[256];
+static FILE *g_log_fp = NULL;
+static int g_log_level = 0;
+static pthread_mutex_t g_log_lock;
 
-static char *LOG_STR[MAX_LEVEL] = {
-    "ERROR:",
-    "WARN:",
-    "DEBUG:",
-    "INFO:"
+static char *g_log_level_str[] = {
+    "EMERG",
+    "ALERT",
+    "CRIT",
+    "ERR",
+    "WARNING",
+    "NOTICE",
+    "INFO",
+    "DEBUG",
+    NULL
 };
 
 static void log_time(char *str, int flag_name)
@@ -39,45 +45,93 @@ static void log_time(char *str, int flag_name)
         sprintf(str, "%4d-%02d-%02d %02d:%02d:%02d ", year, month, day, hour, min, sec);
 }
 
-void log_init(char *log_out)
+static void log_print_syslog(int level, const char *format, ...)
 {
-    if (!strcmp(log_out, "stdout")) {
-        log_fp = stdout;
-    } else if (!strcmp(log_out, "stderr")) {
-        log_fp = stderr;
-    } else if (!strcmp(log_out, "file")) {
-        log_time(log_name, 1);
-        log_fp = fopen(log_name, "w+");
-        printf("name = %s\n", log_name);
-        fclose(log_fp);
-    }
-    pthread_mutex_init(&mutex_lock, NULL);
+    if (level > g_log_level)
+        return;
+    va_list ap;
+    va_start(ap, format);
+    syslog(level, "%s: ", g_log_level_str[level]);
+    vsyslog(level, format, ap);
+    va_end(ap);
 }
 
-void log(log_level_t flag, const char *str, ...)
+static void log_print_stderr(int level, const char *format, ...)
 {
-    pthread_mutex_lock(&mutex_lock);
-
-    if (log_fp != stdout && log_fp != stderr) {
-        log_fp = fopen(log_name, "a+");
-    }
-
-    va_list args;
+    if (level > g_log_level)
+        return;
     char str_time[32] = {0};
-
+    va_list ap;
+    va_start(ap, format);
     log_time(str_time, 0);
-    va_start(args, str);
-    fputs(str_time, log_fp);
-    flag = (flag > MAX_LEVEL) ? INFO : flag;
-    fputs(LOG_STR[flag], log_fp);
-    fputc(' ', log_fp);
-    vfprintf(log_fp, str, args);
-    fputc('\n', log_fp);
-    va_end(args);
-
-    if (log_fp != stdout && log_fp != stderr) {
-        fclose(log_fp);
-    }
-    pthread_mutex_unlock(&mutex_lock);
+    fputs(str_time, stderr);
+    fprintf(stderr, "%s: ", g_log_level_str[level]);
+    vfprintf(stderr, format, ap);
+    va_end(ap);
 }
 
+static void log_print_file(int level, const char *format, ...)
+{
+    if (level > g_log_level)
+        return;
+    pthread_mutex_lock(&g_log_lock);
+    char str_time[32] = {0};
+    va_list ap;
+    g_log_fp = fopen(g_log_filename, "a+");
+    if (g_log_fp == NULL) {
+        fprintf(stderr, "fopen %s failed: %s\n",
+                g_log_filename, strerror(errno));
+        goto err;
+    }
+
+    va_start(ap, format);
+    log_time(str_time, 0);
+    fputs(str_time, g_log_fp);
+    fprintf(g_log_fp, "%s: ", g_log_level_str[level]);
+    vfprintf(g_log_fp, format, ap);
+    va_end(ap);
+
+err:
+    fclose(g_log_fp);
+    pthread_mutex_unlock(&g_log_lock);
+}
+
+int log_init(int type, int level, const char *ident)
+{
+    memset(g_log_filename, 0, sizeof(g_log_filename));
+    g_log_fp = NULL;
+    g_log_level = level;
+
+    switch (type) {
+    case LOG_STDERR:
+        g_log_fp = stderr;
+        g_log_print_func = &log_print_stderr;
+        break;
+    case LOG_FILE:
+        if (ident == NULL) {
+            log_time(g_log_filename, 1);
+        } else {
+            strncpy(g_log_filename, ident, sizeof(g_log_filename));
+        }
+        g_log_fp = fopen(g_log_filename, "a+");
+        if (g_log_fp == NULL) {
+            fprintf(stderr, "fopen %s failed: %s\n", g_log_filename, strerror(errno));
+            return -1;
+        }
+        fprintf(stderr, "name = %s\n", g_log_filename);
+        g_log_print_func = &log_print_file;
+        fclose(g_log_fp);
+        break;
+    case LOG_RSYSLOG:
+        openlog(ident, LOG_CONS | LOG_PID, level);
+        g_log_print_func = &log_print_syslog;
+        break;
+    default:
+        fprintf(stderr, "unsupport log type!\n");
+        return -1;
+        break;
+    }
+
+    pthread_mutex_init(&g_log_lock, NULL);
+    return 0;
+}

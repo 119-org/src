@@ -2,7 +2,7 @@
 CC	= gcc
 LD	= ld
 
-CFLAGS	:= -g -Wall -fPIC -fno-builtin
+CFLAGS	:= -g -Wall -Werror -fPIC -fno-builtin
 LDFLAGS	:= -lpthread
 
 .PHONY : all clean
@@ -25,9 +25,6 @@ all: $(TGT)
 
 
 %.o:%.c
-#$(OBJS): $(SRC)
-	@echo ""
-	@echo "compiling $@ ..."
 	$(CC) -c $(CFLAGS) $< -o $@
 
 $(TGT_LIB_A): $(OBJS_LIB)
@@ -45,6 +42,10 @@ $(TGT_UNIT_TEST): $(OBJS_UNIT_TEST)
 	@echo "compiling $(TGT_UNIT_TEST) ..."
 	$(CC) -o $@ $^ $(TGT_LIB_A) $(LDFLAGS)
 
+install:
+	sudo cp -f liblog.h /usr/local/include/
+	sudo cp -f $(TGT_LIB_A) /usr/local/lib/
+	sudo cp -f $(TGT_LIB_SO) /usr/local/lib/
 clean:
 	rm -f $(OBJS)
 	rm -f $(TGT)
