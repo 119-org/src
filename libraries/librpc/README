@@ -1,0 +1,7 @@
+This is a rpc library based on protobuf and libevent
+
+Following below steps
+0. libprotoc >=2.5.0 is needed
+1. add example.proto as hello.proto
+2. add Makefile
+3. add example_caller and example_callee code

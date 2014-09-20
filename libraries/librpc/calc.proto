@@ -1,0 +1,21 @@
+import "librpc.proto";
+package calc;
+
+enum ops {
+    ADD = 1;
+    SUB = 2;
+    MUL = 3;
+    DIV = 4;
+}
+
+message request {
+    required req_cmd cmd = 1;
+    required ops ops = 2;
+    required int32 arg1 = 3;
+    optional int32 arg2 = 4;
+}
+
+message reply {
+    required rep_errno ret = 1;
+    required int32 result = 2;
+}

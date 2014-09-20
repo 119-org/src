@@ -11,7 +11,6 @@
 
 #include "librpc.h"
 #include "librpc.pb.h"
-#include "librpc_callee.h"
 
 using namespace std;
 
@@ -76,12 +75,12 @@ static void on_accept(struct evconnlistener *listener, evutil_socket_t fd,
 
 int rpc_reply_error(struct rpc_srv *r)
 {
-    librpc::rpc_rep rep;
+    reply rep;
     string repbuf;
     fprintf(stderr, "rpc_reply_error\n");
 
-    rep.set_rpcerrno(librpc::ERROR);
-    rep.set_rpcstrerr("parse failed");
+    rep.set_rpc_errno(ERROR);
+    rep.set_rpc_strerr("parse failed");
     if (!rep.SerializeToString(&repbuf)) {
         fprintf(stderr, "serialize reply buffer failed!\n");
         return -1;
@@ -95,8 +94,8 @@ static int rpc_srv_parse(struct rpc_srv *r, const char *buf, int len)
     int i;
     string reqbuf(buf, len);
     string repbuf;
-    librpc::rpc_req req;
-    librpc::rpc_rep rep;
+    request req;
+    reply rep;
 
     if (!req.ParseFromString(reqbuf)) {
         fprintf(stderr, "parse message failed!\n");

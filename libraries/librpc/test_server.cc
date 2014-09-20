@@ -1,10 +1,11 @@
 #include <stdlib.h>
-#include "librpc.h"
-#include "librpc_callee.h"
+#include "librpc.pb.h"
+#include "hello_callee.h"
+#include "calc_callee.h"
 
 struct rpc_handler rh[] = {
-    {HELLO, rpc_hello},
-    {CALC, rpc_calc},
+    {HELLO, on_hello},
+    {CALC, on_calc},
 };
 
 int main(int argc, char **argv)

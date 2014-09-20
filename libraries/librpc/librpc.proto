@@ -1,57 +1,26 @@
-package librpc;
+/*
+ * librpc.proto is the base of all proto files
+ */
 
-//below is base templet
-enum rpc_req_cmd {
-    HELLO = 1;
-    CALC = 2;
+//base message
+enum req_cmd {
+    HELLO = 0;
+    CALC = 1;
+    //add here below...
 }
 
-enum rpc_rep_errno {
+enum rep_errno {
     SUCCESS = 0;
     ERROR = 1;
     NOEXIST = 2;
 }
 
-message rpc_req {
-    required rpc_req_cmd cmd = 1;
+//example
+message request {
+    required req_cmd cmd = 1;
 }
 
-message rpc_rep {
-    required rpc_rep_errno rpcerrno = 1;
-    optional bytes rpcstrerr = 2;
-}
-
-//add your request and reply message as follows:
-
-//hello rpc
-message hello_req {
-    required rpc_req_cmd cmd = 1;
-    required uint32 uint32_arg = 2;
-    optional string string_arg = 3;
-}
-
-message hello_rep {
-    required rpc_rep_errno type = 1;
-    optional uint32 uint32_arg = 2;
-    optional string string_arg = 3;
-}
-
-//calc rpc
-enum calc_cmd {
-    ADD = 1;
-    SUB = 2;
-    MUL = 3;
-    DIV = 4;
-}
-
-message calc_req {
-    required rpc_req_cmd cmd = 1;
-    required calc_cmd opcode = 2;
-    required int32 arg1 = 3;
-    optional int32 arg2 = 4;
-}
-
-message calc_rep {
-    required rpc_rep_errno type = 1;
-    required int32 value = 2;
+message reply {
+    required rep_errno rpc_errno = 1;
+    required bytes rpc_strerr = 2;
 }

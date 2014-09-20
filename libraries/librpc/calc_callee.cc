@@ -1,9 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
+
 #include "librpc.h"
-#include "librpc.pb.h"
-#include "librpc_callee.h"
+#include "calc_callee.h"
+#include "calc.pb.h"
 
 using namespace std;
 
@@ -11,36 +12,12 @@ using namespace std;
 extern "C" {
 #endif
 
-int rpc_hello(struct rpc_srv *r, void *q, void *p)
+int on_calc(struct rpc_srv *r, void *q, void *p)
 {
     string *reqbuf = static_cast <string *>(q);
     string *repbuf = static_cast <string *>(p);
-    librpc::hello_req req;
-    librpc::hello_rep rep;
-    if (!req.ParseFromString(*reqbuf)) {
-        fprintf(stderr, "parse message failed!\n");
-        return -1;
-    }
-    cout << "request:>>>>>>>>\n" << req.DebugString() << ">>>>>>>>>>>>>>>\n" << endl;
-
-    rep.set_type(librpc::SUCCESS);
-    rep.set_uint32_arg(4321);
-    rep.set_string_arg("world");
-    if (!rep.SerializeToString(repbuf)) {
-        fprintf(stderr, "serialize to string failed!\n");
-        return -1;
-    }
-    cout << "reply:<<<<<<<<\n" << rep.DebugString() << "<<<<<<<<<<<<<<<\n" << endl;
-
-    return 0;
-}
-
-int rpc_calc(struct rpc_srv *r, void *q, void *p)
-{
-    string *reqbuf = static_cast <string *>(q);
-    string *repbuf = static_cast <string *>(p);
-    librpc::calc_req req;
-    librpc::calc_rep rep;
+    calc::request req;
+    calc::reply rep;
     int value;
     if (!req.ParseFromString(*reqbuf)) {
         fprintf(stderr, "parse message failed!\n");
@@ -48,17 +25,17 @@ int rpc_calc(struct rpc_srv *r, void *q, void *p)
     }
     cout << "request:>>>>>>>>\n" << req.DebugString() << ">>>>>>>>>>>>>>>\n" << endl;
 
-    switch (req.opcode()) {
-    case librpc::ADD:
+    switch (req.ops()) {
+    case calc::ADD:
         value = req.arg1() + req.arg2();
         break;
-    case librpc::SUB:
+    case calc::SUB:
         value = req.arg1() - req.arg2();
         break;
-    case librpc::MUL:
+    case calc::MUL:
         value = req.arg1() * req.arg2();
         break;
-    case librpc::DIV:
+    case calc::DIV:
         if (req.arg2() == 0)
             break;
         value = req.arg1() / req.arg2();
@@ -68,8 +45,8 @@ int rpc_calc(struct rpc_srv *r, void *q, void *p)
         break;
     }
 
-    rep.set_type(librpc::SUCCESS);
-    rep.set_value(value);
+    rep.set_ret(SUCCESS);
+    rep.set_result(value);
     if (!rep.SerializeToString(repbuf)) {
         fprintf(stderr, "serialize to string failed!\n");
         return -1;

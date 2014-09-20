@@ -9,7 +9,6 @@
 
 #include "librpc.h"
 #include "librpc.pb.h"
-#include "librpc_caller.h"
 #include "rpc_client.h"
 
 using namespace std;
