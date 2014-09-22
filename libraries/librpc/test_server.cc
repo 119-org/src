@@ -1,7 +1,11 @@
 #include <stdlib.h>
-#include "librpc.pb.h"
 #include "hello_callee.h"
 #include "calc_callee.h"
+
+enum req_id {
+    HELLO = 0,
+    CALC = 1
+};
 
 struct rpc_handler rh[] = {
     {HELLO, on_hello},

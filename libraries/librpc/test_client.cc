@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <unistd.h>
 #include "hello_caller.h"
 #include "calc_caller.h"
 
@@ -26,7 +27,9 @@ int test_calc()
 
 int main(int argc, char **argv)
 {
+    while (1) {
     test_hello();
     test_calc();
+    }
 
 }

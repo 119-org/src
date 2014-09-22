@@ -23,7 +23,7 @@ int on_calc(struct rpc_srv *r, void *q, void *p)
         fprintf(stderr, "parse message failed!\n");
         return -1;
     }
-    cout << "request:>>>>>>>>\n" << req.DebugString() << ">>>>>>>>>>>>>>>\n" << endl;
+//    cout << "request:>>>>>>>>\n" << req.DebugString() << ">>>>>>>>>>>>>>>\n" << endl;
 
     switch (req.ops()) {
     case calc::ADD:
@@ -51,7 +51,7 @@ int on_calc(struct rpc_srv *r, void *q, void *p)
         fprintf(stderr, "serialize to string failed!\n");
         return -1;
     }
-    cout << "reply:<<<<<<<<\n" << rep.DebugString() << "<<<<<<<<<<<<<<<\n" << endl;
+//    cout << "reply:<<<<<<<<\n" << rep.DebugString() << "<<<<<<<<<<<<<<<\n" << endl;
 
     return 0;
 }

@@ -19,7 +19,7 @@ int rpc_calc(struct rpc *r, void *args)
     calc::request req;
     calc::reply rep;
     struct calc_args *ca = (struct calc_args *)args;
-    req.set_cmd(CALC);
+    req.set_id(CALC);
     req.set_ops(static_cast< ::calc::ops >(ca->opcode));
     req.set_arg1(ca->arg1);
     req.set_arg2(ca->arg2);

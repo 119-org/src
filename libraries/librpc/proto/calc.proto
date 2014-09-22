@@ -9,7 +9,7 @@ enum ops {
 }
 
 message request {
-    required req_cmd cmd = 1;
+    required req_cmd id = 1;
     required ops ops = 2;
     required int32 arg1 = 3;
     optional int32 arg2 = 4;

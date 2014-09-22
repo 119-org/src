@@ -2,7 +2,7 @@ import "librpc.proto";
 package hello;
 
 message request {
-    required req_cmd cmd = 1;
+    required req_cmd id = 1;
     required uint32 uint32_arg = 2;
     optional string string_arg = 3;
 }

@@ -18,8 +18,7 @@ int rpc_hello(struct rpc *r, void *args)
     hello::request req;
     hello::reply rep;
     string wbuf, rbuf;
-    req.set_cmd(HELLO);
-//    req.set_allocated_cmd(&rrq);
+    req.set_id(HELLO);
     req.set_uint32_arg(1234);
     req.set_string_arg("hello");
 

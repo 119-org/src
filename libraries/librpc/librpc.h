@@ -30,7 +30,7 @@ struct rpc_srv {
 typedef int (*rpc_callee)(struct rpc_srv *r, void *req, void *rep);
 
 struct rpc_handler {
-    int cmd;
+    int id;
     rpc_callee rc;
 };
 

@@ -102,7 +102,7 @@ static int rpc_srv_parse(struct rpc_srv *r, const char *buf, int len)
         return rpc_reply_error(r);
     }
     for (i = 0; i < g_handle_table_size; i++) {
-        if (req.cmd() == g_handle_table[i].cmd) {
+        if (req.id() == g_handle_table[i].id) {
             g_handle_table[i].rc(r, &reqbuf, &repbuf);
             break;
         }
