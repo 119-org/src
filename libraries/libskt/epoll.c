@@ -5,8 +5,8 @@
 #include <errno.h>
 #include <limits.h>
 #include <sys/epoll.h>
-#include "event.h"
-#include "debug.h"
+#include "libskt_event.h"
+#include "libskt_log.h"
 
 #define EPOLL_MAX_NEVENT	4096
 #define MAX_SECONDS_IN_MSEC_LONG \
@@ -24,19 +24,19 @@ static void *epoll_init()
     struct epoll_ctx *ec;
     fd = epoll_create(1);
     if (-1 == fd) {
-        err("errno=%d %s\n", errno, strerror(errno));
+        skt_log(LOG_ERR, "errno=%d %s\n", errno, strerror(errno));
         return NULL;
     }
     ec = (struct epoll_ctx *)calloc(1, sizeof(struct epoll_ctx));
     if (!ec) {
-        err("malloc epoll_ctx failed!\n");
+        skt_log(LOG_ERR, "malloc epoll_ctx failed!\n");
         return NULL;
     }
     ec->epfd = fd;
     ec->nevents = EPOLL_MAX_NEVENT;
     ec->events = (struct epoll_event *)calloc(EPOLL_MAX_NEVENT, sizeof(struct epoll_event));
     if (!ec->events) {
-        err("malloc epoll_event failed!\n");
+        skt_log(LOG_ERR, "malloc epoll_event failed!\n");
         return NULL;
     }
     return ec;
@@ -57,7 +57,7 @@ static int epoll_add(struct event_base *eb, struct skt_ev *e)
     epev.data.ptr = (void *)e;
 
     if (-1 == epoll_ctl(ec->epfd, EPOLL_CTL_ADD, e->evfd, &epev)) {
-        err("errno=%d %s\n", errno, strerror(errno));
+        skt_log(LOG_ERR, "errno=%d %s\n", errno, strerror(errno));
         return -1;
     }
     return 0;
@@ -90,11 +90,11 @@ static int epoll_dispatch(struct event_base *eb, struct timeval *tv)
     }
     n = epoll_wait(epop->epfd, events, epop->nevents, timeout); 
     if (-1 == n) {
-        err("errno=%d %s\n", errno, strerror(errno));
+        skt_log(LOG_ERR, "errno=%d %s\n", errno, strerror(errno));
         return -1;
     }
     if (0 == n) {
-        err("epoll_wait timeout\n");
+        skt_log(LOG_ERR, "epoll_wait timeout\n");
         return 0;
     }
     for (i = 0; i < n; i++) {

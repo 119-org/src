@@ -4,8 +4,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/select.h>
-#include "event.h"
-#include "debug.h"
+#include "libskt_event.h"
+#include "libskt_log.h"
 
 #define SELECT_MAX_FD	1024
 
@@ -21,14 +21,14 @@ static void *select_init()
     struct select_ctx *sc;
     sc = (struct select_ctx *)calloc(1, sizeof(struct select_ctx));
     if (!sc) {
-        err("malloc select_ctx failed!\n");
+        skt_log(LOG_ERR, "malloc select_ctx failed!\n");
         return NULL;
     }
     fd_set *rfds = (fd_set *)calloc(1, sizeof(rfds));
     fd_set *wfds = (fd_set *)calloc(1, sizeof(fd_set));
     fd_set *efds = (fd_set *)calloc(1, sizeof(fd_set));
     if (!rfds || !wfds || !efds) {
-        err("malloc fd_set failed!\n");
+        skt_log(LOG_ERR, "malloc fd_set failed!\n");
         return NULL;
     }
     sc->rfds = rfds;
@@ -79,11 +79,11 @@ static int select_dispatch(struct event_base *eb, struct timeval *tv)
 
     n = select(sc->nfds, sc->rfds, sc->wfds, sc->efds, tv);
     if (-1 == n) {
-        err("errno=%d %s\n", errno, strerror(errno));
+        skt_log(LOG_ERR, "errno=%d %s\n", errno, strerror(errno));
         return -1;
     }
     if (0 == n) {
-        err("select timeout\n");
+        skt_log(LOG_ERR, "select timeout\n");
         return 0;
     }
     for (i = 0; i < sc->nfds; i++) {

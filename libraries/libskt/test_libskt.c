@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include "libskt.h"
-#include "debug.h"
+#include "libskt_event.h"
 
 struct conn {
     int fd;
@@ -14,21 +14,22 @@ struct conn {
 
 int tcp_client(const char *host, uint16_t port)
 {
-    int fd;
     int n;
     char buf[] = { "hello world" };
+    struct skt_connection *sc;
 
-    if (-1 == (fd = skt_tcp_conn(host, port))) {
+    sc = skt_tcp_connect(host, port);
+    if (sc == NULL) {
         printf("connect failed!\n");
         return -1;
     }
     while (1) {
-        n = skt_send(fd, buf, strlen(buf));
+        n = skt_send(sc->fd, buf, strlen(buf));
         if (n == -1) {
             printf("skt_send failed!\n");
             return -1;
         }
-        sleep(1);
+//        sleep(1);
     }
 }
 
@@ -49,7 +50,7 @@ void handle_new_conn(void *arg)
     uint16_t port;
     fd = skt_accept(c->fd, &ip, &port);
     if (fd == -1) {
-        err("errno=%d %s\n", errno, strerror(errno));
+        printf("errno=%d %s\n", errno, strerror(errno));
         return;
     };
     struct skt_ev_cbs *evcb = (struct skt_ev_cbs *)calloc(1, sizeof(struct skt_ev_cbs));
@@ -58,7 +59,7 @@ void handle_new_conn(void *arg)
     evcb->ev_err = NULL;
     struct skt_ev *e = skt_ev_create(fd, EVENT_READ, evcb, (void *)&fd);
     if (-1 == skt_ev_add(e)) {
-        err("event_add failed!\n");
+        printf("event_add failed!\n");
     }
 }
 
@@ -68,7 +69,7 @@ int tcp_server(uint16_t port)
     int ret;
     struct conn *c = (struct conn *)calloc(1, sizeof(struct conn));
 
-    fd = skt_tcp_bind_listen(NULL, port);
+    fd = skt_tcp_bind_listen(NULL, port, 1);
     if (fd == -1) {
         return -1;
     }
@@ -84,7 +85,7 @@ int tcp_server(uint16_t port)
     evcb->ev_err = NULL;
     struct skt_ev *e = skt_ev_create(fd, EVENT_READ, evcb, (void *)c);
     if (-1 == skt_ev_add(e)) {
-        err("event_add failed!\n");
+        printf("event_add failed!\n");
     }
     skt_ev_dispatch();
 

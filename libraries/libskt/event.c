@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "libskt.h"
-#include "event.h"
-#include "debug.h"
+#include "libskt_event.h"
+#include "libskt_log.h"
 
 extern const struct event_ops selectops;
 extern const struct event_ops pollops;
@@ -20,7 +20,7 @@ int skt_ev_init()
     int i;
     struct event_base *eb = (struct event_base *)calloc(1, sizeof(struct event_base));
     if (!eb) {
-        err("malloc failed!\n");
+        skt_log(LOG_ERR, "malloc failed!\n");
         return -1;
     }
     eb->base = NULL;
@@ -38,7 +38,7 @@ struct skt_ev *skt_ev_create(int fd, int flags, struct skt_ev_cbs *evcb, void *a
 {
     struct skt_ev *e = (struct skt_ev *)calloc(1, sizeof(struct skt_ev));
     if (!e) {
-        err("malloc skt_ev failed!\n");
+        skt_log(LOG_ERR, "malloc skt_ev failed!\n");
         return NULL;
     }
     e->evfd = fd;
@@ -62,7 +62,7 @@ int skt_ev_add(struct skt_ev *e)
 {
     struct event_base *eb = g_evbase;
     if (!e || !eb) {
-        err("paraments is NULL\n");
+        skt_log(LOG_ERR, "paraments is NULL\n");
         return -1;
     }
     eb->evop->add(eb, e);
@@ -73,7 +73,7 @@ int skt_ev_del(struct skt_ev *e)
 {
     struct event_base *eb = g_evbase;
     if (!e || !eb) {
-        err("paraments is NULL\n");
+        skt_log(LOG_ERR, "paraments is NULL\n");
         return -1;
     }
     eb->evop->del(eb, e);
@@ -89,7 +89,7 @@ int skt_ev_dispatch()
     while (!done) {
         ret = evop->dispatch(eb, NULL);
         if (ret == -1) {
-            err("dispatch failed\n");
+            skt_log(LOG_ERR, "dispatch failed\n");
 //            return -1;
         }
     }

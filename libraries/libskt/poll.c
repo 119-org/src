@@ -5,8 +5,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <poll.h>
-#include "event.h"
-#include "debug.h"
+#include "libskt_event.h"
+#include "libskt_log.h"
 
 #define POLL_MAX_FD	1024
 #define MAX_SECONDS_IN_MSEC_LONG \
@@ -25,12 +25,12 @@ static void *poll_init()
     struct pollfd *fds;
     pc = (struct poll_ctx *)calloc(1, sizeof(struct poll_ctx));
     if (!pc) {
-        err("malloc poll_ctx failed!\n");
+        skt_log(LOG_ERR, "malloc poll_ctx failed!\n");
         return NULL;
     }
     fds = (struct pollfd *)calloc(POLL_MAX_FD, sizeof(struct pollfd));
     if (!fds) {
-        err("malloc pollfd failed!\n");
+        skt_log(LOG_ERR, "malloc pollfd failed!\n");
         return NULL;
     }
     pc->fds = fds;
@@ -77,11 +77,11 @@ static int poll_dispatch(struct event_base *eb, struct timeval *tv)
 
     n = poll(pc->fds, pc->nfds, timeout);
     if (-1 == n) {
-        err("errno=%d %s\n", errno, strerror(errno));
+        skt_log(LOG_ERR, "errno=%d %s\n", errno, strerror(errno));
         return -1;
     }
     if (0 == n) {
-        err("poll timeout\n");
+        skt_log(LOG_ERR, "poll timeout\n");
         return 0;
     }
     for (i = 0; i < n; i++) {

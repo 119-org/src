@@ -3,12 +3,22 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <ifaddrs.h>
+#include <netdb.h>
+#include "event.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define MAX_ADDR_STRING (65)
+
+//socket structs
+
+enum skt_connect_type {
+    SKT_TCP = 0,
+    SKT_UDP,
+};
 
 typedef struct skt_addr {
     uint32_t ip;
@@ -20,10 +30,25 @@ typedef struct skt_addr_list {
     struct skt_addr_list *next;
 } skt_addr_list_t;
 
-int skt_tcp_conn(const char *host, uint16_t port);
-int skt_tcp_bind_listen(const char *host, uint16_t port);
+typedef struct skt_connection {
+    int fd;
+    int type;
+    struct sockaddr_in si;
+    struct skt_addr remote;
+} skt_connection_t;
+
+void skt_log_set_cb(void (*cb)(int level, const char* format, va_list vl));
+
+//socket tcp apis
+struct skt_connection *skt_tcp_connect(const char *host, uint16_t port);
+int skt_tcp_bind_listen(const char *host, uint16_t port, int reuse);
 int skt_accept(int fd, uint32_t *ip, uint16_t *port);
-int skt_udp_bind(const char *host, uint16_t port);
+
+//socket udp apis
+struct skt_connection *skt_udp_connect(const char *host, uint16_t port);
+int skt_udp_bind(const char *host, uint16_t port, int reuse);
+
+//socket common apis
 void skt_close(int fd);
 
 int skt_send(int fd, const void *buf, size_t len);
@@ -44,41 +69,6 @@ int skt_gethostbyname(struct skt_addr_list **list, const char *name);
 int skt_getaddrinfo(skt_addr_list_t **list, const char *domain, const char *port);
 int skt_get_addr_by_fd(struct skt_addr *addr, int fd);
 int skt_get_remote_addr(struct skt_addr *addr, int fd);
-
-/*blow is event apis */
-struct skt_ev_cbs {
-    void (*ev_in)(void *);
-    void (*ev_out)(void *);
-    void (*ev_err)(void *);
-    void *args;
-};
-
-struct skt_ev {
-    int evfd;
-    int flags;
-    struct skt_ev_cbs *evcb;
-};
-
-enum skt_ev_flags {
-    EVENT_TIMEOUT  = 1<<0,
-    EVENT_READ     = 1<<1,
-    EVENT_WRITE    = 1<<2,
-    EVENT_SIGNAL   = 1<<3,
-    EVENT_PERSIST  = 1<<4,
-    EVENT_ET       = 1<<5,
-    EVENT_FINALIZE = 1<<6,
-    EVENT_CLOSED   = 1<<7,
-    EVENT_ERROR    = 1<<8,
-    EVENT_EXCEPT   = 1<<9,
-};
-
-int skt_ev_init();
-struct skt_ev *skt_ev_create(int fd, int flags, struct skt_ev_cbs *evcb, void *args);
-void skt_ev_destory(struct skt_ev *e);
-int skt_ev_add(struct skt_ev *e);
-int skt_ev_del(struct skt_ev *e);
-int skt_ev_dispatch();
-
 #ifdef __cplusplus
 }
 #endif
