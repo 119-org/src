@@ -1,0 +1,9 @@
+
+session 1
+session 2        stream channel 1   media video
+session n
+                                                   muxer filter   player
+session 1
+session 2        stream channel 2   media audio
+session n
+

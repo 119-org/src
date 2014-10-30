@@ -3,8 +3,8 @@ CC	= gcc
 LD	= ld
 
 TOPDIR		= `pwd`
-CFLAGS_SDL	= `pkg-config --cflags sdl`
-LDFLAGS_SDL	= `pkg-config --libs sdl`
+CFLAGS_SDL2	= `pkg-config --cflags sdl2`
+LDFLAGS_SDL2	= `pkg-config --libs sdl2`
 LDFLAGS_X264	= -lx264
 LDFLAGS_LIBEVENT= -levent
 LDFLAGS_FFMPEG	= `pkg-config --libs libavformat libavutil libavcodec libswscale`
@@ -12,11 +12,11 @@ LDFLAGS_FFMPEG	= `pkg-config --libs libavformat libavutil libavcodec libswscale`
 CFLAGS	:= -g -Wall
 #CFLAGS	+= -Werror -Wcast-align
 CFLAGS	+= -I$(TOPDIR)
-CFLAGS	+= $(CFLAGS_SDL)
+CFLAGS	+= $(CFLAGS_SDL2)
 
 LDFLAGS	:=
 LDFLAGS	+= -lpthread
-LDFLAGS	+= $(LDFLAGS_SDL)
+LDFLAGS	+= $(LDFLAGS_SDL2)
 LDFLAGS	+= $(LDFLAGS_X264)
 LDFLAGS += $(LDFLAGS_FFMPEG)
 LDFLAGS += $(LDFLAGS_LIBEVENT)
