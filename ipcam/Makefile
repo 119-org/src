@@ -6,6 +6,7 @@ TOPDIR		= `pwd`
 CFLAGS_SDL	= `pkg-config --cflags sdl`
 LDFLAGS_SDL	= `pkg-config --libs sdl`
 LDFLAGS_X264	= -lx264
+LDFLAGS_ALSA	= -lasound
 LDFLAGS_LIBEVENT = -levent
 LDFLAGS_FFMPEG	= `pkg-config --libs libavformat libavutil libavcodec libswscale`
 
@@ -23,6 +24,7 @@ LDFLAGS	+= ../libraries/libskt/libskt.a
 LDFLAGS	+= -lpthread
 LDFLAGS	+= $(LDFLAGS_SDL)
 LDFLAGS	+= $(LDFLAGS_X264)
+LDFLAGS += $(LDFLAGS_ALSA)
 LDFLAGS += $(LDFLAGS_FFMPEG)
 LDFLAGS += $(LDFLAGS_LIBEVENT)
 
@@ -32,7 +34,8 @@ TGT := ipcam
 
 DEVICE_OBJS := \
     devices/device.o \
-    devices/v4l2.o
+    devices/v4l2.o \
+    devices/alsa.o
 
 PROTOCOL_OBJS := \
     protocols/protocol.o \
