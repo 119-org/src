@@ -104,5 +104,6 @@ struct codec cdc_x264_encoder = {
     .open = x264_init,
     .encode = x264_encode,
     .decode = NULL,
+    .close = NULL,
     .priv_size = sizeof(struct x264_ctx),
 };

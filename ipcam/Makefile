@@ -16,6 +16,7 @@ CFLAGS	+= -I$(TOPDIR)
 CFLAGS	+= -I./codecs
 CFLAGS	+= -I./devices
 CFLAGS	+= -I./protocols
+CFLAGS	+= -I./queue
 CFLAGS	+= -I../libraries
 CFLAGS	+= $(CFLAGS_SDL)
 
@@ -35,6 +36,8 @@ TGT := ipcam
 DEVICE_OBJS := \
     devices/device.o \
     devices/v4l2.o \
+    devices/usbcam_agent.o
+# \
     devices/alsa.o
 
 PROTOCOL_OBJS := \
@@ -45,13 +48,17 @@ PROTOCOL_OBJS := \
 CODEC_OBJS := \
     codecs/codec.o \
     codecs/x264_enc.o \
-    codecs/avcodec_dec.o
+    codecs/avcodec_dec.o \
+    codecs/x264_agent.o
 
+QUEUE_OBJS := \
+    queue/queue.o
 
 OBJS := \
     $(DEVICE_OBJS) \
     $(PROTOCOL_OBJS) \
     $(CODEC_OBJS) \
+    $(QUEUE_OBJS) \
     common.o \
     main.o 
 

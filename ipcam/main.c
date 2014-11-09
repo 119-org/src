@@ -10,12 +10,14 @@
 #include "device.h"
 #include "protocol.h"
 #include "codec.h"
+#include "usbcam_agent.h"
 
 typedef struct ipcam {
     struct device_ctx *dev;
     struct protocol_ctx *prt;
     struct codec_ctx *encoder;
     struct codec_ctx *decoder;
+    struct usbcam_agent *ua;
 
 } ipcam_t;
 
@@ -24,25 +26,27 @@ static struct ipcam *ipcam_instance = NULL;
 struct ipcam *ipcam_init()
 {
     ipcam_t *ipcam = NULL;
+    struct usbcam_agent *ua = NULL;
 
     device_register_all();
     protocol_register_all();
     codec_register_all();
 
-    printf("%s:%d xxxx\n", __func__, __LINE__);
-    usbcam_agent_create();
-    printf("%s:%d xxxx\n", __func__, __LINE__);
-
     ipcam = (ipcam_t *)calloc(1, sizeof(ipcam_t));
     if (!ipcam)
         return NULL;
 
+    ua = usbcam_agent_create();
 
+
+#if 0
+    ipcam->ua = ua;
     ipcam->dev = device_new("v4l2:///dev/video0");
     ipcam->prt = protocol_init("sdl://player");
 //    ipcam->prt = protocol_init("udp://127.0.0.1:2333");
     ipcam->encoder = codec_init("x264");
     ipcam->decoder = codec_init("avcodec");
+#endif
 
     return ipcam;
 }
@@ -129,6 +133,9 @@ int main(int argc, char **argv)
 
     ipcam_instance = ipcam_init();
 
+    while (1) {
+        sleep(2);
+    }
 #if 0
     ipcam_open();
     ipcam_dispatch();

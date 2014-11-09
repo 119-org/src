@@ -19,6 +19,7 @@ struct codec {
     int (*open)(struct codec_ctx *c, int width, int height);
     int (*encode)(struct codec_ctx *c, void *in, void *out);
     int (*decode)(struct codec_ctx *c, void *in, int inlen, void **out);
+    void (*close)(struct codec_ctx *c);
     int priv_size;
     struct codec *next;
 };

@@ -47,7 +47,7 @@ int codec_register_all()
     return 0;
 }
 
-struct codec_ctx *codec_init(const char *name)
+struct codec_ctx *codec_new(const char *name)
 {
     struct codec *p;
     struct codec_ctx *c = (struct codec_ctx *)calloc(1, sizeof(struct codec_ctx));
@@ -96,7 +96,7 @@ int codec_decode(struct codec_ctx *c, void *in, int inlen, void **out)
     return c->ops->decode(c, in, inlen, out);
 }
 
-void codec_deinit(struct codec_ctx *sc)
+void codec_free(struct codec_ctx *sc)
 {
     if (sc)
         free(sc);

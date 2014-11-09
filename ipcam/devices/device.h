@@ -33,6 +33,7 @@ void device_free(struct device_ctx *sc);
 int device_open(struct device_ctx *src);
 int device_read(struct device_ctx *src, void *buf, int len);
 int device_write(struct device_ctx *src, void *buf, int len);
+void device_close(struct device_ctx *dc);
 int device_register_all();
 
 #ifdef __cplusplus
