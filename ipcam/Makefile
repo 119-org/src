@@ -36,8 +36,7 @@ TGT := ipcam
 DEVICE_OBJS := \
     devices/device.o \
     devices/v4l2.o \
-    devices/usbcam_agent.o
-# \
+    devices/usbcam_agent.o \
     devices/alsa.o
 
 PROTOCOL_OBJS := \

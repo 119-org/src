@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #include "queue.h"
 
 struct queue_item *queue_item_new(void *data, int len)
@@ -35,8 +36,8 @@ struct queue_ctx *queue_new()
         printf("create pipe failed: %s\n", strerror(errno));
         return NULL;
     }
-    qc->on_read_fd = fd[0];
-    qc->on_write_fd = fd[1];
+    qc->on_read_fd = fds[0];
+    qc->on_write_fd = fds[1];
 
 
     return qc;

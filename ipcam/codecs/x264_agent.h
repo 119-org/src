@@ -18,7 +18,8 @@ typedef struct x264_agent {
     timer_t timerid;
     int on_read_fd;
     int on_write_fd;
-    struct queue_ctx *packet_queue;
+    struct queue_ctx *qin;
+    struct queue_ctx *qout;
 
 } x264_agent_t;
 

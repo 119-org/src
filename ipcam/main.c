@@ -10,6 +10,7 @@
 #include "device.h"
 #include "protocol.h"
 #include "codec.h"
+#include "queue.h"
 #include "usbcam_agent.h"
 
 typedef struct ipcam {
@@ -27,6 +28,8 @@ struct ipcam *ipcam_init()
 {
     ipcam_t *ipcam = NULL;
     struct usbcam_agent *ua = NULL;
+    struct x264_agent *xa = NULL;
+    struct queue_ctx *dev_qout = NULL;
 
     device_register_all();
     protocol_register_all();
@@ -35,8 +38,10 @@ struct ipcam *ipcam_init()
     ipcam = (ipcam_t *)calloc(1, sizeof(ipcam_t));
     if (!ipcam)
         return NULL;
+    dev_qout = queue_new();
 
-    ua = usbcam_agent_create();
+    ua = usbcam_agent_create(NULL, dev_qout);
+    xa = x264_agent_create(dev_qout, NULL);
 
 
 #if 0
@@ -125,9 +130,9 @@ static void sigterm_handler(int sig)
 {
     exit(0);
 }
+
 int main(int argc, char **argv)
 {
-
     signal(SIGPIPE,SIG_IGN);
     signal(SIGINT, sigterm_handler);
 

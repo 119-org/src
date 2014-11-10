@@ -19,6 +19,7 @@
 
 typedef struct alsa_ctx {
     snd_pcm_t *sp;
+    int period_size;
 
 } alsa_ctx_t;
 
@@ -28,111 +29,115 @@ static int alsa_open(struct device_ctx *dc, const char *dev)
     int res;
     snd_pcm_t *sp;
     snd_pcm_hw_params_t *hw_params;
+    snd_pcm_format_t format;
+    format = SND_PCM_FORMAT_S16_LE;
+    snd_pcm_uframes_t buffer_size, period_size;
+    uint32_t sample_rate = 16000;//8000;
+    int channels = 1;
+
     struct alsa_ctx *ac = (struct alsa_ctx *)dc->priv;
     res = snd_pcm_open(&sp, dev, SND_PCM_STREAM_CAPTURE, 0);
     if (res < 0) {
-        printf("snd_pcm_open %s failed: %s\n", dev, strerror(errno));
+        printf("snd_pcm_open %s failed: %s\n", dev, snd_strerror(res));
         return -1;
     }
 
     res = snd_pcm_hw_params_malloc(&hw_params);
     if (res < 0) {
-        printf("cannot allocate hardware parameter structure: %s\n", strerror(errno));
+        printf("cannot allocate hardware parameter structure: %s\n", snd_strerror(res));
         goto fail1;
     }
 
     res = snd_pcm_hw_params_any(sp, hw_params);
     if (res < 0) {
-        printf("cannot initialize hardware parameter structure: %s\n", strerror(errno));
+        printf("cannot initialize hardware parameter structure: %s\n", snd_strerror(res));
         goto fail;
     }
 
     res = snd_pcm_hw_params_set_access(sp, hw_params, SND_PCM_ACCESS_RW_INTERLEAVED);
     if (res < 0) {
-        printf("cannot set access type: %s\n", strerror(errno));
+        printf("cannot set access type: %s\n", snd_strerror(res));
         goto fail;
     }
 
-    format = SND_PCM_FORMAT_S16_LE;
     res = snd_pcm_hw_params_set_format(sp, hw_params, format);
     if (res < 0) {
-        printf("cannot set sample format %d: %s\n", format, strerror(res));
+        printf("cannot set sample format %d: %s\n", format, snd_strerror(res));
         goto fail;
     }
 
-    res = snd_pcm_hw_params_set_rate_near(h, hw_params, sample_rate, 0);
+    res = snd_pcm_hw_params_set_rate_near(sp, hw_params, &sample_rate, 0);
     if (res < 0) {
-        av_log(ctx, AV_LOG_ERROR, "cannot set sample rate (%s)\n",
-               snd_strerror(res));
+        printf("cannot set sample rate: %s\n", snd_strerror(res));
         goto fail;
     }
 
-    res = snd_pcm_hw_params_set_channels(h, hw_params, channels);
+    res = snd_pcm_hw_params_set_channels(sp, hw_params, channels);
     if (res < 0) {
-        av_log(ctx, AV_LOG_ERROR, "cannot set channel count to %d (%s)\n",
-               channels, snd_strerror(res));
+        printf("cannot set channel count to %d: %s\n", channels, snd_strerror(res));
         goto fail;
     }
+
+#define ALSA_BUFFER_SIZE_MAX 65536
+#define FFMIN(a,b) ((a) > (b) ? (b) : (a))
 
     snd_pcm_hw_params_get_buffer_size_max(hw_params, &buffer_size);
     buffer_size = FFMIN(buffer_size, ALSA_BUFFER_SIZE_MAX);
     /* TODO: maybe use ctx->max_picture_buffer somehow */
-    res = snd_pcm_hw_params_set_buffer_size_near(h, hw_params, &buffer_size);
+    res = snd_pcm_hw_params_set_buffer_size_near(sp, hw_params, &buffer_size);
     if (res < 0) {
-        av_log(ctx, AV_LOG_ERROR, "cannot set ALSA buffer size (%s)\n",
-               snd_strerror(res));
+        printf("cannot set ALSA buffer size: %s\n", snd_strerror(res));
         goto fail;
     }
 
     snd_pcm_hw_params_get_period_size_min(hw_params, &period_size, NULL);
     if (!period_size)
         period_size = buffer_size / 4;
-    res = snd_pcm_hw_params_set_period_size_near(h, hw_params, &period_size, NULL);
+    res = snd_pcm_hw_params_set_period_size_near(sp, hw_params, &period_size, NULL);
     if (res < 0) {
-        av_log(ctx, AV_LOG_ERROR, "cannot set ALSA period size (%s)\n",
-               snd_strerror(res));
+        printf("cannot set ALSA period size (%s)\n", snd_strerror(res));
         goto fail;
     }
-    s->period_size = period_size;
+    ac->period_size = period_size;
 
-    res = snd_pcm_hw_params(h, hw_params);
+    res = snd_pcm_hw_params(sp, hw_params);
     if (res < 0) {
-        av_log(ctx, AV_LOG_ERROR, "cannot set parameters (%s)\n",
-               snd_strerror(res));
+        printf("cannot set parameters (%s)\n", snd_strerror(res));
         goto fail;
     }
 
     snd_pcm_hw_params_free(hw_params);
 
-    if (channels > 2 && layout) {
-        if (find_reorder_func(s, *codec_id, layout, mode == SND_PCM_STREAM_PLAYBACK) < 0) {
-            char name[128];
-            av_get_channel_layout_string(name, sizeof(name), channels, layout);
-            av_log(ctx, AV_LOG_WARNING, "ALSA channel layout unknown or unimplemented for %s %s.\n",
-                   name, mode == SND_PCM_STREAM_PLAYBACK ? "playback" : "capture");
-        }
-        if (s->reorder_func) {
-            s->reorder_buf_size = buffer_size;
-            s->reorder_buf = av_malloc(s->reorder_buf_size * s->frame_size);
-            if (!s->reorder_buf)
-                goto fail1;
-        }
-    }
-
-    s->h = h;
+    ac->sp = sp;
     return 0;
 
 fail:
     snd_pcm_hw_params_free(hw_params);
 fail1:
-    snd_pcm_close(h);
-    return AVERROR(EIO);
-    return 0;
+    snd_pcm_close(sp);
+    return -1;
 }
 
 static int alsa_read(struct device_ctx *dc, void *buf, int len)
 {
+    int res;
+    struct alsa_ctx *ac = (struct alsa_ctx *)dc->priv;
 
+    while ((res = snd_pcm_readi(ac->sp, buf, len)) < 0) {
+        if (res == -EAGAIN) {
+            return -1;
+        }
+        if (res == -EPIPE) {
+            res = snd_pcm_prepare(ac->sp);
+            if (res < 0) {
+                printf("cannot recover from underrun (snd_pcm_prepare failed: %s)\n", snd_strerror(res));
+                return -1;
+            }
+        } else if (res == -ESTRPIPE) {
+            printf("-ESTRPIPE... Unsupported!\n");
+            return -1;
+        }
+    }
     return 0;
 }
 
@@ -144,7 +149,8 @@ static int alsa_write(struct device_ctx *dc, void *buf, int len)
 
 static void alsa_close(struct device_ctx *dc)
 {
-
+    struct alsa_ctx *ac = (struct alsa_ctx *)dc->priv;
+    snd_pcm_close(ac->sp);
 }
 
 struct device ipc_alsa_device = {

@@ -95,7 +95,7 @@ void timer_handle_destroy(timer_t tid)
     timer_delete(tid);
 }
 
-void notify_to_break_event_loop(struct usbcam_agent *ua)
+static void notify_to_break_event_loop(struct usbcam_agent *ua)
 {
     char notify = '1';
     if (!ua)

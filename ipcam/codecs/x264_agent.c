@@ -13,6 +13,13 @@
 #include "queue.h"
 #include "x264_agent.h"
 
+
+
+static void on_break_event(int fd, short what, void *arg)
+{
+
+}
+
 static void on_x264_read(int fd, short what, void *arg)
 {
     int len;
@@ -20,7 +27,12 @@ static void on_x264_read(int fd, short what, void *arg)
     int flen = 0x96000;//equals to one v4l2 frame buffer
     void *frm = calloc(1, flen);
     x264_agent_t *ua = (x264_agent_t *)arg;
-    struct device_ctx *dc = ua->dc;
+    struct codec_ctx *encoder = ua->dc;
+        len = codec_encode(encoder, ua->qin->data, ua->qout->data);
+        if (len == -1) {
+            err("encode failed!\n");
+            continue;
+        }
     len = device_read(dc, frm, flen);
     if (len == -1) {
         free(frm);
@@ -31,7 +43,14 @@ static void on_x264_read(int fd, short what, void *arg)
     queue_add(ua->qout, item);
 }
 
-
+static void *x264_agent_loop(void *arg)
+{
+    struct x264_agent *ua = (struct x264_agent *)arg;
+    if (!ua)
+        return NULL;
+    event_base_loop(ua->ev_base, 0);
+    return NULL;
+}
 
 struct x264_agent *x264_agent_create(struct queue_ctx *qin, struct queue_ctx *qout)
 {
@@ -55,6 +74,11 @@ struct x264_agent *x264_agent_create(struct queue_ctx *qin, struct queue_ctx *qo
         printf("source_open failed!\n");
         return -1;
     }
+    ua->dc = x264_cdc;
+    ua->qin = qin;
+    ua->qout = qout;
+
+
     ev_base = event_base_new();
     if (!ev_base)
         return NULL;
@@ -84,8 +108,6 @@ struct x264_agent *x264_agent_create(struct queue_ctx *qin, struct queue_ctx *qo
 
     ua->ev_read = ev_read;
     ua->ev_base = ev_base;
-    ua->dc = x264_cdc;
-    ua->packet_queue = queue_new();
 
     if (0 != pthread_create(&tid, NULL, x264_agent_loop, ua)) {
         printf("pthread_create falied: %s\n", strerror(errno));
@@ -94,5 +116,34 @@ struct x264_agent *x264_agent_create(struct queue_ctx *qin, struct queue_ctx *qo
     }
 
     return ua;
+}
 
+static void notify_to_break_event_loop(struct x264_agent *ua)
+{
+    char notify = '1';
+    if (!ua)
+        return;
+    if (write(ua->on_write_fd, &notify, 1) != 1) {
+        printf("write pipe failed: %s\n", strerror(errno));
+    }
+}
+
+
+void x264_agent_destroy(struct x264_agent *ua)
+{
+    if (!ua)
+        return;
+
+    if (0 != event_base_loopbreak(ua->ev_base)) {
+        notify_to_break_event_loop(ua);
+    }
+
+    event_del(ua->ev_read);
+    event_del(ua->ev_close);
+    event_base_free(ua->ev_base);
+    device_close(ua->dc);
+    device_free(ua->dc);
+    queue_free(ua->qin);
+    queue_free(ua->qout);
+    free(ua);
 }

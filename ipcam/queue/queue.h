@@ -19,8 +19,8 @@ struct queue_item {
 struct queue_ctx {
     struct list_head head;
     pthread_mutex_t lock;
-    int notify_fd;
-    int on_notify_fd;
+    int on_write_fd;
+    int on_read_fd;
 };
 
 
