@@ -71,7 +71,7 @@ static void on_usbcam_read(int fd, short what, void *arg)
         return;
     }
     item = queue_item_new(frm, flen);
-    queue_add(ua->qout, item);
+    queue_push(ua->qout, item);
 }
 
 static void *usbcam_agent_loop(void *arg)

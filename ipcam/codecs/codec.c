@@ -9,13 +9,13 @@
 #include "common.h"
 #include "codec.h"
 
-#define SMS_REGISTER_ENCODER(x) { \
-    extern struct codec cdc_##x##_encoder; \
-    codec_register(&cdc_##x##_encoder, sizeof(cdc_##x##_encoder)); }
+#define REGISTER_ENCODER(x) { \
+    extern struct codec ipc_##x##_encoder; \
+    codec_register(&ipc_##x##_encoder, sizeof(ipc_##x##_encoder)); }
 
-#define SMS_REGISTER_DECODER(x) { \
-    extern struct codec cdc_##x##_decoder; \
-    codec_register(&cdc_##x##_decoder, sizeof(cdc_##x##_decoder)); }
+#define REGISTER_DECODER(x) { \
+    extern struct codec ipc_##x##_decoder; \
+    codec_register(&ipc_##x##_decoder, sizeof(ipc_##x##_decoder)); }
 
 static struct codec *first_codec = NULL;
 
@@ -41,8 +41,8 @@ int codec_register_all()
         return -1;
     cdc_registered = 1;
 
-    SMS_REGISTER_ENCODER(x264);
-    SMS_REGISTER_DECODER(avcodec);
+    REGISTER_ENCODER(x264);
+    REGISTER_DECODER(avcodec);
 
     return 0;
 }

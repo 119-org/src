@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <errno.h>
 #include "queue.h"
 
@@ -26,24 +28,24 @@ void queue_item_free(struct queue_item *item)
 struct queue_ctx *queue_new()
 {
     int fds[2];
-    struct queue_ctx *qc = (struct queue_ctx *)calloc(1, sizeof(struct queue_ctx));
-    if (!qc) {
+    struct queue_ctx *q = (struct queue_ctx *)calloc(1, sizeof(struct queue_ctx));
+    if (!q) {
         return NULL;
     }
-    INIT_LIST_HEAD(&qc->head);
-    pthread_mutex_init(&qc->lock, NULL);
+    INIT_LIST_HEAD(&q->head);
+    pthread_mutex_init(&q->lock, NULL);
     if (pipe(fds)) {
         printf("create pipe failed: %s\n", strerror(errno));
         return NULL;
     }
-    qc->on_read_fd = fds[0];
-    qc->on_write_fd = fds[1];
+    q->depth = 0;
+    q->on_read_fd = fds[0];
+    q->on_write_fd = fds[1];
 
-
-    return qc;
+    return q;
 }
 
-int queue_add(struct queue_ctx *q, struct queue_item *item)
+int queue_push(struct queue_ctx *q, struct queue_item *item)
 {
     char notify = '1';
     if (!q || !item) {
@@ -51,6 +53,7 @@ int queue_add(struct queue_ctx *q, struct queue_item *item)
     }
     pthread_mutex_lock(&q->lock);
     list_add_tail(&item->entry, &q->head);
+    ++(q->depth);
     if (write(q->on_write_fd, &notify, sizeof(notify)) != 1) {
         printf("write pipe failed: %s\n", strerror(errno));
     }
@@ -58,15 +61,31 @@ int queue_add(struct queue_ctx *q, struct queue_item *item)
     return 0;
 }
 
-int queue_del(struct queue_ctx *q, struct queue_item *item)
+struct queue_item *queue_pop(struct queue_ctx *q)
 {
-    if (!q || !item) {
-        return -1;
+    if (!q) {
+        return NULL;
     }
+    if (list_empty(&q->head)) {
+        return NULL;
+    }
+    struct queue_item *item = NULL;
     pthread_mutex_lock(&q->lock);
-    list_del(&item->entry);
+    item = list_first_entry_or_null(&q->head, struct queue_item, entry);
+    if (item) {
+        list_del(&item->entry);
+        --(q->depth);
+    }
     pthread_mutex_unlock(&q->lock);
-    return 0;
+    return item;
+}
+
+int queue_empty(struct queue_ctx *q)
+{
+    if (!q) {
+        return 1;
+    }
+    return (q->depth == 0);
 }
 
 void queue_free(struct queue_ctx *q)

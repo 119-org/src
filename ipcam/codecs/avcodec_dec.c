@@ -96,7 +96,7 @@ static int avcodec_decode(struct codec_ctx *cc, void *in, int inlen, void **out)
     return got_pic;
 }
 
-struct codec cdc_avcodec_decoder = {
+struct codec ipc_avcodec_decoder = {
     .name = "avcodec",
     .open = __avcodec_open,
     .encode = NULL,

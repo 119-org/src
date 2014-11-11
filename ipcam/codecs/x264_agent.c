@@ -23,24 +23,22 @@ static void on_break_event(int fd, short what, void *arg)
 static void on_x264_read(int fd, short what, void *arg)
 {
     int len;
-    struct queue_item *item = NULL;
+    struct queue_item *in_item, *out_item;
     int flen = 0x96000;//equals to one v4l2 frame buffer
-    void *frm = calloc(1, flen);
-    x264_agent_t *ua = (x264_agent_t *)arg;
-    struct codec_ctx *encoder = ua->dc;
-        len = codec_encode(encoder, ua->qin->data, ua->qout->data);
+    void *enc_buf = calloc(1, flen);
+    x264_agent_t *xa = (x264_agent_t *)arg;
+    struct codec_ctx *encoder = xa->dc;
+    struct queue_ctx *qin = xa->qin;
+    struct queue_ctx *qout = xa->qout;
+
+    while (NULL != (in_item = queue_pop(qin))) {
+        len = codec_encode(encoder, in_item->data, enc_buf);
         if (len == -1) {
-            err("encode failed!\n");
-            continue;
+            printf("encode failed!\n");
         }
-    len = device_read(dc, frm, flen);
-    if (len == -1) {
-        free(frm);
-        printf("source read failed!\n");
-        return;
+        out_item = queue_item_new(enc_buf, len);
+        queue_push(qout, out_item);
     }
-    item = queue_item_new(frm, flen);
-    queue_add(ua->qout, item);
 }
 
 static void *x264_agent_loop(void *arg)
