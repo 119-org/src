@@ -107,13 +107,8 @@ static void notify_to_break_event_loop(struct usbcam_agent *ua)
 
 struct usbcam_agent *usbcam_agent_create(struct queue_ctx *qin, struct queue_ctx *qout)
 {
-    struct event_base *ev_base = NULL;
-    struct event *ev_read = NULL;
-    struct event *ev_close = NULL;
     usbcam_agent_t *ua = NULL;
-    struct device_ctx *v4l2_dev = NULL;
     struct timeval tv = {0, 150*1000};
-    timer_t timerid;
     pthread_t tid;
     int fds[2];
 
@@ -121,27 +116,29 @@ struct usbcam_agent *usbcam_agent_create(struct queue_ctx *qin, struct queue_ctx
     if (!ua)
         return NULL;
 
-    v4l2_dev = device_new("v4l2:///dev/video0");
-    if (!v4l2_dev)
+    ua->dc = device_new("v4l2:///dev/video0");
+    if (!ua->dc)
         return NULL;
-    if (-1 == device_open(v4l2_dev)) {
+
+    if (-1 == device_open(ua->dc)) {
         printf("source_open failed!\n");
         return -1;
     }
-    ev_base = event_base_new();
-    if (!ev_base)
+
+    ua->ev_base = event_base_new();
+    if (!ua->ev_base)
         return NULL;
 
-    timerid = timer_handle_create(on_usbcam_write, v4l2_dev, &tv);
-    if (-1 == timerid) {
+    ua->timerid = timer_handle_create(on_usbcam_write, ua->dc, &tv);
+    if (-1 == ua->timerid) {
         return NULL;
     }
 
-    ev_read = event_new(ev_base, v4l2_dev->fd, EV_READ|EV_PERSIST, on_usbcam_read, ua);
-    if (!ev_read) {
+    ua->ev_read = event_new(ua->ev_base, ua->dc->fd, EV_READ|EV_PERSIST, on_usbcam_read, ua);
+    if (!ua->ev_read) {
         return NULL;
     }
-    if (-1 == event_add(ev_read, NULL)) {
+    if (-1 == event_add(ua->ev_read, NULL)) {
         return NULL;
     }
 
@@ -150,20 +147,16 @@ struct usbcam_agent *usbcam_agent_create(struct queue_ctx *qin, struct queue_ctx
         return NULL;
     }
 
-    ev_close = event_new(ev_base, fds[0], EV_READ|EV_PERSIST, on_break_event, v4l2_dev);
-    if (!ev_close) {
+    ua->ev_close = event_new(ua->ev_base, fds[0], EV_READ|EV_PERSIST, on_break_event, ua->dc);
+    if (!ua->ev_close) {
         return NULL;
     }
-    if (-1 == event_add(ev_close, NULL)) {
+    if (-1 == event_add(ua->ev_close, NULL)) {
         return NULL;
     }
     ua->on_read_fd = fds[0];
     ua->on_write_fd = fds[1];
 
-    ua->ev_read = ev_read;
-    ua->ev_base = ev_base;
-    ua->timerid = timerid;
-    ua->dc = v4l2_dev;
     ua->qout = qout;
 
     if (0 != pthread_create(&tid, NULL, usbcam_agent_loop, ua)) {
