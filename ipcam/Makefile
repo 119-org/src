@@ -22,7 +22,7 @@ CFLAGS	+= $(CFLAGS_SDL)
 
 LDFLAGS	:=
 LDFLAGS	+= ../libraries/libskt/libskt.a
-LDFLAGS	+= -lpthread
+LDFLAGS	+= -lpthread -lrt
 LDFLAGS	+= $(LDFLAGS_SDL)
 LDFLAGS	+= $(LDFLAGS_X264)
 LDFLAGS += $(LDFLAGS_ALSA)
@@ -42,7 +42,8 @@ DEVICE_OBJS := \
 PROTOCOL_OBJS := \
     protocols/protocol.o \
     protocols/udp.o \
-    protocols/sdl.o
+    protocols/sdl.o \
+    protocols/network_agent.o
 
 CODEC_OBJS := \
     codecs/codec.o \

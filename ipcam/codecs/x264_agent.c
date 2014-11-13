@@ -31,14 +31,17 @@ static void on_x264_read(int fd, short what, void *arg)
     struct queue_ctx *qin = xa->qin;
     struct queue_ctx *qout = xa->qout;
 
-    while (NULL != (in_item = queue_pop(qin))) {
+//    while (NULL != (in_item = queue_pop(qin))) {
+    in_item = queue_pop(qin);
+    printf("%s:%d queue_pop item=%x\n", __func__, __LINE__, in_item->data);
+        usleep(200 *1000);
         len = codec_encode(encoder, in_item->data, enc_buf);
         if (len == -1) {
             printf("encode failed!\n");
         }
         out_item = queue_item_new(enc_buf, len);
         queue_push(qout, out_item);
-    }
+//    }
 }
 
 static void *x264_agent_loop(void *arg)

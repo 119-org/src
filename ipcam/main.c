@@ -19,6 +19,8 @@ typedef struct ipcam {
     struct codec_ctx *encoder;
     struct codec_ctx *decoder;
     struct usbcam_agent *ua;
+    struct x264_agent *xa;
+    struct network_agent *na;
 
 } ipcam_t;
 
@@ -29,7 +31,9 @@ struct ipcam *ipcam_init()
     ipcam_t *ipcam = NULL;
     struct usbcam_agent *ua = NULL;
     struct x264_agent *xa = NULL;
+    struct network_agent *na = NULL;
     struct queue_ctx *dev_qout = NULL;
+    struct queue_ctx *enc_qout = NULL;
 
     device_register_all();
     protocol_register_all();
@@ -39,10 +43,26 @@ struct ipcam *ipcam_init()
     if (!ipcam)
         return NULL;
     dev_qout = queue_new();
+    enc_qout = queue_new();
 
     ua = usbcam_agent_create(NULL, dev_qout);
-    xa = x264_agent_create(dev_qout, NULL);
-
+    if (!ua) {
+        printf("usbcam_agent_create failed!\n");
+        return NULL;
+    }
+    xa = x264_agent_create(dev_qout, enc_qout);
+    if (!xa) {
+        printf("x264_agent_create failed!\n");
+        return NULL;
+    }
+    na = network_agent_create(enc_qout, NULL);
+    if (!na) {
+        printf("network_agent_create failed!\n");
+        return NULL;
+    }
+    ipcam->ua = ua;
+    ipcam->xa = xa;
+    ipcam->na = na;
 
 #if 0
     ipcam->ua = ua;
@@ -128,6 +148,9 @@ void ipcam_dispatch()
 
 static void sigterm_handler(int sig)
 {
+    usbcam_agent_destroy(ipcam_instance->ua);
+    x264_agent_destroy(ipcam_instance->xa);
+    network_agent_destroy(ipcam_instance->na);
     exit(0);
 }
 
@@ -137,6 +160,9 @@ int main(int argc, char **argv)
     signal(SIGINT, sigterm_handler);
 
     ipcam_instance = ipcam_init();
+    if (!ipcam_instance) {
+        return -1;
+    }
 
     while (1) {
         sleep(2);

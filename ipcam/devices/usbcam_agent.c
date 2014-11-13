@@ -58,7 +58,7 @@ static void on_usbcam_write(union sigval sv)
 
 static void on_usbcam_read(int fd, short what, void *arg)
 {
-    int len;
+    int ret, len;
     struct queue_item *item = NULL;
     int flen = 0x96000;//equals to one v4l2 frame buffer
     void *frm = calloc(1, flen);
@@ -71,7 +71,8 @@ static void on_usbcam_read(int fd, short what, void *arg)
         return;
     }
     item = queue_item_new(frm, flen);
-    queue_push(ua->qout, item);
+    ret = queue_push(ua->qout, item);
+    printf("%s:%d queue_push item=%x\n", __func__, __LINE__, item->data);
 }
 
 static void *usbcam_agent_loop(void *arg)

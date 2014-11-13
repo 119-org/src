@@ -21,8 +21,8 @@ typedef struct network_agent {
     timer_t timerid;
     int on_read_fd;
     int on_write_fd;
+    struct queue_ctx *qin;
     struct queue_ctx *qout;
-
 } network_agent_t;
 
 struct network_agent *network_agent_create(struct queue_ctx *qin, struct queue_ctx *qout);
