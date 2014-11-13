@@ -122,7 +122,7 @@ struct usbcam_agent *usbcam_agent_create(struct queue_ctx *qin, struct queue_ctx
 
     if (-1 == device_open(ua->dc)) {
         printf("source_open failed!\n");
-        return -1;
+        return NULL;
     }
 
     ua->ev_base = event_base_new();
