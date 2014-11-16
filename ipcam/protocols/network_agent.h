@@ -18,7 +18,6 @@ typedef struct network_agent {
     struct event_base *ev_base;
     struct event *ev_read;
     struct event *ev_close;
-    timer_t timerid;
     int on_read_fd;
     int on_write_fd;
     struct queue_ctx *qin;

@@ -11,7 +11,7 @@ extern "C" {
 #endif
 
 typedef struct x264_agent {
-    struct codec_ctx *dc;
+    struct codec_ctx *encoder;
     struct event_base *ev_base;
     struct event *ev_read;
     struct event *ev_close;

@@ -43,7 +43,7 @@ int protocol_register_all()
     return 0;
 }
 
-struct protocol_ctx *protocol_init(const char *input)
+struct protocol_ctx *protocol_new(const char *input)
 {
     struct protocol *p;
     struct protocol_ctx *sc = (struct protocol_ctx *)calloc(1, sizeof(struct protocol_ctx));
@@ -72,42 +72,49 @@ struct protocol_ctx *protocol_init(const char *input)
     return sc;
 }
 
-int protocol_open(struct protocol_ctx *snk)
+int protocol_open(struct protocol_ctx *c)
 {
-    if (!snk->ops->open)
+    if (!c->ops->open)
         return -1;
-    return snk->ops->open(snk, snk->url.body);
+    return c->ops->open(c, c->url.body);
 }
 
-int protocol_read(struct protocol_ctx *snk, void *buf, int len)
+int protocol_read(struct protocol_ctx *c, void *buf, int len)
 {
-    if (!snk->ops->read)
+    if (!c->ops->read)
         return -1;
-    return snk->ops->read(snk, buf, len);
+    return c->ops->read(c, buf, len);
 }
 
-int protocol_write(struct protocol_ctx *snk, void *buf, int len)
+int protocol_write(struct protocol_ctx *c, void *buf, int len)
 {
-    if (!snk->ops->write)
+    if (!c->ops->write)
         return -1;
-    return snk->ops->write(snk, buf, len);
+    return c->ops->write(c, buf, len);
 }
 
-int protocol_poll(struct protocol_ctx *snk)
+int protocol_poll(struct protocol_ctx *c)
 {
-    if (!snk->ops->poll)
+    if (!c->ops->poll)
         return -1;
-    return snk->ops->poll(snk);
+    return c->ops->poll(c);
 }
 
-void protocol_handle(struct protocol_ctx *snk)
+void protocol_handle(struct protocol_ctx *c)
 {
-    if (!snk->ops->handle)
+    if (!c->ops->handle)
         return;
-    return snk->ops->handle(snk);
+    return c->ops->handle(c);
 }
 
-void protocol_deinit(struct protocol_ctx *sc)
+void protocol_close(struct protocol_ctx *c)
+{
+    if (!c->ops->close)
+        return;
+    return c->ops->close(c);
+}
+
+void protocol_free(struct protocol_ctx *sc)
 {
     if (!sc)
         return;

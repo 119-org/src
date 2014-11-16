@@ -25,7 +25,7 @@ void queue_item_free(struct queue_item *item)
     free(item);
 }
 
-struct queue_ctx *queue_new()
+struct queue_ctx *queue_new(int max)
 {
     int fds[2];
     struct queue_ctx *q = (struct queue_ctx *)calloc(1, sizeof(struct queue_ctx));
@@ -39,6 +39,7 @@ struct queue_ctx *queue_new()
         return NULL;
     }
     q->depth = 0;
+    q->max_depth = max;
     q->on_read_fd = fds[0];
     q->on_write_fd = fds[1];
 
@@ -58,6 +59,9 @@ int queue_push(struct queue_ctx *q, struct queue_item *item)
         printf("write pipe failed: %s\n", strerror(errno));
     }
     pthread_mutex_unlock(&q->lock);
+    if (q->depth > q->max_depth) {
+        queue_pop(q);
+    }
     return 0;
 }
 
@@ -69,12 +73,16 @@ struct queue_item *queue_pop(struct queue_ctx *q)
     if (list_empty(&q->head)) {
         return NULL;
     }
+    char notify;
     struct queue_item *item = NULL;
     pthread_mutex_lock(&q->lock);
     item = list_first_entry_or_null(&q->head, struct queue_item, entry);
     if (item) {
         list_del(&item->entry);
         --(q->depth);
+        if (read(q->on_read_fd, &notify, sizeof(notify)) != 1) {
+            printf("read pipe failed: %s\n", strerror(errno));
+        }
     }
     pthread_mutex_unlock(&q->lock);
     return item;
@@ -86,6 +94,14 @@ int queue_empty(struct queue_ctx *q)
         return 1;
     }
     return (q->depth == 0);
+}
+
+int queue_depth(struct queue_ctx *q)
+{
+    if (!q) {
+        return 0;
+    }
+    return q->depth;
 }
 
 void queue_free(struct queue_ctx *q)

@@ -24,14 +24,12 @@ struct codec {
     struct codec *next;
 };
 
-struct codec_ctx *codec_init(const char *name);
-void codec_deinit(struct codec_ctx *sc);
-int codec_open(struct codec_ctx *src, int w, int h);
+struct codec_ctx *codec_new(const char *name);
+void codec_free(struct codec_ctx *c);
+int codec_open(struct codec_ctx *c, int w, int h);
+void codec_close(struct codec_ctx *c);
 int codec_encode(struct codec_ctx *c, void *in, void *out);
 int codec_decode(struct codec_ctx *c, void *in, int inlen, void **out);
-int codec_register_all();
-
-
 int codec_register_all();
 
 #ifdef __cplusplus

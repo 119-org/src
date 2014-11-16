@@ -27,15 +27,19 @@ struct protocol {
     struct protocol *next;
 };
 
-struct protocol_ctx *protocol_init(const char *url);
-void protocol_deinit(struct protocol_ctx *sc);
-int protocol_register_all();
-int protocol_open(struct protocol_ctx *snk);
-int protocol_read(struct protocol_ctx *snk, void *buf, int len);
-int protocol_write(struct protocol_ctx *snk, void *buf, int len);
-int protocol_poll(struct protocol_ctx *snk);
-void protocol_handle(struct protocol_ctx *snk);
+struct protocol_ctx *protocol_new(const char *url);
+void protocol_free(struct protocol_ctx *c);
 
+int protocol_open(struct protocol_ctx *c);
+void protocol_close(struct protocol_ctx *c);
+
+int protocol_read(struct protocol_ctx *c, void *buf, int len);
+int protocol_write(struct protocol_ctx *c, void *buf, int len);
+
+int protocol_poll(struct protocol_ctx *c);
+void protocol_handle(struct protocol_ctx *c);
+
+int protocol_register_all();
 
 #ifdef __cplusplus
 }

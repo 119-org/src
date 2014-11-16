@@ -96,6 +96,12 @@ int codec_decode(struct codec_ctx *c, void *in, int inlen, void **out)
     return c->ops->decode(c, in, inlen, out);
 }
 
+void codec_close(struct codec_ctx *c)
+{
+    if (!c->ops->close)
+        return -1;
+    return c->ops->close(c);
+}
 void codec_free(struct codec_ctx *sc)
 {
     if (sc)

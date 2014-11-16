@@ -11,18 +11,19 @@
 #include "common.h"
 #include "protocol.h"
 #include "queue.h"
-#include "network_agent.h"
+#include "display_agent.h"
 
 static void on_break_event(int fd, short what, void *arg)
 {
 
 }
 
+
 static void on_buffer_read(int fd, short what, void *arg)
 {
     int len;
     struct queue_item *item;
-    network_agent_t *na = (network_agent_t *)arg;
+    display_agent_t *na = (display_agent_t *)arg;
     struct queue_ctx *qin = na->qin;
 
     while (NULL != (item = queue_pop(qin))) {
@@ -31,13 +32,12 @@ static void on_buffer_read(int fd, short what, void *arg)
             printf("protocol_write failed!\n");
         }
 //    printf("%s:%d protocol_write len=%d\n", __func__, __LINE__, len);
-        queue_item_free(item);
+//        queue_item_free(item);
     }
 }
-
-static void *network_agent_loop(void *arg)
+static void *display_agent_loop(void *arg)
 {
-    struct network_agent *na = (struct network_agent *)arg;
+    struct display_agent *na = (struct display_agent *)arg;
     if (!na)
         return NULL;
     event_base_loop(na->ev_base, 0);
@@ -45,18 +45,18 @@ static void *network_agent_loop(void *arg)
 }
 
 
-struct network_agent *network_agent_create(struct queue_ctx *qin, struct queue_ctx *qout)
+struct display_agent *display_agent_create(struct queue_ctx *qin, struct queue_ctx *qout)
 {
     pthread_t tid;
-    network_agent_t *na = NULL;
+    display_agent_t *na = NULL;
     int fds[2];
 
-    na = (network_agent_t *)calloc(1, sizeof(network_agent_t));
+    na = (display_agent_t *)calloc(1, sizeof(display_agent_t));
     if (!na) {
         return NULL;
     }
 //    na->pc = protocol_new("udp://127.0.0.1:2333");
-    na->pc = protocol_new("udp://192.168.1.103:2333");
+    na->pc = protocol_new("sdl://player");
     if (!na->pc) {
         return NULL;
     }
@@ -92,41 +92,11 @@ struct network_agent *network_agent_create(struct queue_ctx *qin, struct queue_c
         return NULL;
     }
 
-    if (0 != pthread_create(&tid, NULL, network_agent_loop, na)) {
+    if (0 != pthread_create(&tid, NULL, display_agent_loop, na)) {
         printf("pthread_create falied: %s\n", strerror(errno));
         free(na);
         return NULL;
     }
 
     return na;
-}
-
-
-static void notify_to_break_event_loop(struct network_agent *na)
-{
-    char notify = '1';
-    if (!na)
-        return;
-    if (write(na->on_write_fd, &notify, 1) != 1) {
-        printf("write pipe failed: %s\n", strerror(errno));
-    }
-}
-
-void network_agent_destroy(struct network_agent *na)
-{
-    if (!na)
-        return;
-
-    if (0 != event_base_loopbreak(na->ev_base)) {
-        notify_to_break_event_loop(na);
-    }
-
-    event_del(na->ev_read);
-    event_del(na->ev_close);
-    event_base_free(na->ev_base);
-    protocol_close(na->pc);
-    protocol_free(na->pc);
-    queue_free(na->qin);
-    queue_free(na->qout);
-    free(na);
 }

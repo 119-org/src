@@ -16,7 +16,8 @@ CFLAGS	+= -I$(TOPDIR)
 CFLAGS	+= -I./codecs
 CFLAGS	+= -I./devices
 CFLAGS	+= -I./protocols
-CFLAGS	+= -I./queue
+CFLAGS	+= -I./buffer
+CFLAGS	+= -I./utils
 CFLAGS	+= -I../libraries
 CFLAGS	+= $(CFLAGS_SDL)
 
@@ -31,44 +32,55 @@ LDFLAGS += $(LDFLAGS_LIBEVENT)
 
 .PHONY : all clean
 
-TGT := ipcam
+TGT := ipcam test_libevent
 
 DEVICE_OBJS := \
+    devices/video_device_agent.o \
     devices/device.o \
     devices/v4l2.o \
-    devices/usbcam_agent.o \
     devices/alsa.o
 
 PROTOCOL_OBJS := \
     protocols/protocol.o \
     protocols/udp.o \
     protocols/sdl.o \
-    protocols/network_agent.o
+    protocols/network_agent.o \
+    protocols/display_agent.o
 
 CODEC_OBJS := \
     codecs/codec.o \
     codecs/x264_enc.o \
     codecs/avcodec_dec.o \
-    codecs/x264_agent.o
+    codecs/x264_agent.o \
+    codecs/decoder_agent.o
 
-QUEUE_OBJS := \
-    queue/queue.o
+BUFFER_OBJS := \
+    buffer/queue.o
 
-OBJS := \
+UTILS_OBJS := \
+    utils/common.o
+
+IPCAM_OBJS := \
     $(DEVICE_OBJS) \
     $(PROTOCOL_OBJS) \
     $(CODEC_OBJS) \
-    $(QUEUE_OBJS) \
-    common.o \
+    $(BUFFER_OBJS) \
+    $(UTILS_OBJS) \
     main.o 
+
+UNITTEST_OBJS := \
+    test/test_libevent.o
 
 all: $(TGT)
 
 %.o:%.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
-$(TGT): $(OBJS)
+ipcam: $(IPCAM_OBJS)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+test_libevent: $(UNITTEST_OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
-	rm -f $(OBJS) $(TGT)
+	rm -f $(TGT) $(IPCAM_OBJS) $(UNITTEST_OBJS)

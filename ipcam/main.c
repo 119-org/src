@@ -11,16 +11,21 @@
 #include "protocol.h"
 #include "codec.h"
 #include "queue.h"
-#include "usbcam_agent.h"
+#include "video_device_agent.h"
+#include "x264_agent.h"
+#include "network_agent.h"
+#include "decoder_agent.h"
+#include "display_agent.h"
 
 typedef struct ipcam {
     struct device_ctx *dev;
     struct protocol_ctx *prt;
     struct codec_ctx *encoder;
     struct codec_ctx *decoder;
-    struct usbcam_agent *ua;
+    struct video_device_agent *ua;
     struct x264_agent *xa;
     struct network_agent *na;
+    struct display_agent *da;
 
 } ipcam_t;
 
@@ -29,11 +34,12 @@ static struct ipcam *ipcam_instance = NULL;
 struct ipcam *ipcam_init()
 {
     ipcam_t *ipcam = NULL;
-    struct usbcam_agent *ua = NULL;
+    struct video_device_agent *ua = NULL;
     struct x264_agent *xa = NULL;
     struct network_agent *na = NULL;
     struct queue_ctx *dev_qout = NULL;
     struct queue_ctx *enc_qout = NULL;
+    struct queue_ctx *dec_qout = NULL;
 
     device_register_all();
     protocol_register_all();
@@ -42,28 +48,43 @@ struct ipcam *ipcam_init()
     ipcam = (ipcam_t *)calloc(1, sizeof(ipcam_t));
     if (!ipcam)
         return NULL;
-    dev_qout = queue_new();
-    enc_qout = queue_new();
+    dev_qout = queue_new(5);
+    enc_qout = queue_new(5);
+    dec_qout = queue_new(5);
 
-    ua = usbcam_agent_create(NULL, dev_qout);
-    if (!ua) {
+    ipcam->ua = video_device_agent_create(NULL, dev_qout);
+    if (!ipcam->ua) {
         printf("usbcam_agent_create failed!\n");
         return NULL;
     }
-    xa = x264_agent_create(dev_qout, enc_qout);
-    if (!xa) {
+#if 1
+    ipcam->xa = x264_agent_create(dev_qout, enc_qout);
+    if (!ipcam->xa) {
         printf("x264_agent_create failed!\n");
         return NULL;
     }
-    na = network_agent_create(enc_qout, NULL);
-    if (!na) {
+#endif
+#if 0
+    ipcam->na = network_agent_create(enc_qout, NULL);
+    if (!ipcam->na) {
         printf("network_agent_create failed!\n");
         return NULL;
     }
-    ipcam->ua = ua;
-    ipcam->xa = xa;
-    ipcam->na = na;
-
+#endif
+#if 1
+    ipcam->na = decoder_agent_create(enc_qout, dec_qout);
+    if (!ipcam->na) {
+        printf("network_agent_create failed!\n");
+        return NULL;
+    }
+#endif
+#if 1
+    ipcam->da = display_agent_create(dec_qout, NULL);
+    if (!ipcam->da) {
+        printf("network_agent_create failed!\n");
+        return NULL;
+    }
+#endif
 #if 0
     ipcam->ua = ua;
     ipcam->dev = device_new("v4l2:///dev/video0");
@@ -78,6 +99,7 @@ struct ipcam *ipcam_init()
 
 int ipcam_open()
 {
+#if 0
     struct device_ctx *dev = ipcam_instance->dev;
     struct protocol_ctx *prt = ipcam_instance->prt;
     struct codec_ctx *encoder = ipcam_instance->encoder;
@@ -99,6 +121,7 @@ int ipcam_open()
         err("sink_open failed!\n");
         return -1;
     }
+#endif
 }
 
 void ipcam_dispatch()
@@ -148,7 +171,7 @@ void ipcam_dispatch()
 
 static void sigterm_handler(int sig)
 {
-    usbcam_agent_destroy(ipcam_instance->ua);
+    video_device_agent_destroy(ipcam_instance->ua);
     x264_agent_destroy(ipcam_instance->xa);
     network_agent_destroy(ipcam_instance->na);
     exit(0);

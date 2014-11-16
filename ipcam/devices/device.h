@@ -12,8 +12,12 @@ extern "C" {
 struct device_ctx {
     int fd;
     struct url url;
-    int width;
-    int height;
+    struct {
+        int width;
+        int height;
+    } video;
+    struct {
+    } audio;
     struct device *ops;
     void *priv;
 };

@@ -12,8 +12,8 @@
 #include <linux/videodev2.h>
 
 #include "device.h"
-#include "common.h"
-#include "debug.h"
+//#include "common.h"
+//#include "debug.h"
 
 #define MAX_V4L_BUF		32
 #define MAX_V4L_REQBUF_CNT	256
@@ -155,7 +155,7 @@ static int v4l2_buf_dequeue(struct v4l2_ctx *vc, struct frame *f)
     f->index = buf.index;
     f->addr = vc->buf[buf.index].addr;
     f->len = buf.bytesused;
-    printf("v4l2 frame buffer addr = %p, len = %d, index = %d\n", f->addr, f->len, f->index);
+//    printf("v4l2 frame buffer addr = %p, len = %d, index = %d\n", f->addr, f->len, f->index);
 
     return f->len;
 }
@@ -190,8 +190,8 @@ static int v4l2_open(struct device_ctx *dc, const char *dev)
     }
 
     dc->fd = vc->on_read_fd;
-    dc->width = vc->width;
-    dc->height = vc->height;
+    dc->video.width = vc->width;
+    dc->video.height = vc->height;
     return 0;
 
 fail:
@@ -206,7 +206,7 @@ static int v4l2_read(struct device_ctx *dc, void *buf, int len)
     int i, flen;
     char notify;
 
-    if (read(vc->on_read_fd, &notify, 1) != 1) {
+    if (read(vc->on_read_fd, &notify, sizeof(notify)) != 1) {
         perror("Failed read from notify pipe");
     }
 
@@ -219,6 +219,7 @@ static int v4l2_read(struct device_ctx *dc, void *buf, int len)
         printf("v4l2 frame is %d bytes, but buffer len is %d, not enough!\n", flen, len);
         return -1;
     }
+    assert(len==f.len);
 
     for (i = 0; i < f.len; i++) {//8 byte copy
         *((char *)buf + i) = *((char *)f.addr + i);

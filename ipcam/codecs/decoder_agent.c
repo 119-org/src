@@ -9,35 +9,41 @@
 #include <event2/event.h>
 
 #include "common.h"
-#include "protocol.h"
+#include "codec.h"
 #include "queue.h"
-#include "network_agent.h"
+#include "decoder_agent.h"
 
 static void on_break_event(int fd, short what, void *arg)
 {
 
 }
 
+
 static void on_buffer_read(int fd, short what, void *arg)
 {
     int len;
-    struct queue_item *item;
-    network_agent_t *na = (network_agent_t *)arg;
+    struct queue_item *in_item, *out_item;
+    decoder_agent_t *na = (decoder_agent_t *)arg;
     struct queue_ctx *qin = na->qin;
+    struct queue_ctx *qout = na->qout;
+    int flen = 0x100000;//bigger than one x264 packet buffer
+    void *dec_buf = calloc(1, flen);
 
-    while (NULL != (item = queue_pop(qin))) {
-        len = protocol_write(na->pc, item->data, item->len);
+    while (NULL != (in_item = queue_pop(qin))) {
+        len = codec_decode(na->pc, in_item->data, in_item->len, &dec_buf);
         if (len == -1) {
-            printf("protocol_write failed!\n");
+            printf("codec_write failed!\n");
         }
-//    printf("%s:%d protocol_write len=%d\n", __func__, __LINE__, len);
-        queue_item_free(item);
+        assert(len <= flen);
+        out_item = queue_item_new(dec_buf, in_item->len);
+        queue_push(qout, out_item);
+//        queue_item_free(in_item);
+//    printf("%s:%d codec_write len=%d\n", __func__, __LINE__, len);
     }
 }
-
-static void *network_agent_loop(void *arg)
+static void *decoder_agent_loop(void *arg)
 {
-    struct network_agent *na = (struct network_agent *)arg;
+    struct decoder_agent *na = (struct decoder_agent *)arg;
     if (!na)
         return NULL;
     event_base_loop(na->ev_base, 0);
@@ -45,22 +51,21 @@ static void *network_agent_loop(void *arg)
 }
 
 
-struct network_agent *network_agent_create(struct queue_ctx *qin, struct queue_ctx *qout)
+struct decoder_agent *decoder_agent_create(struct queue_ctx *qin, struct queue_ctx *qout)
 {
     pthread_t tid;
-    network_agent_t *na = NULL;
+    decoder_agent_t *na = NULL;
     int fds[2];
 
-    na = (network_agent_t *)calloc(1, sizeof(network_agent_t));
+    na = (decoder_agent_t *)calloc(1, sizeof(decoder_agent_t));
     if (!na) {
         return NULL;
     }
-//    na->pc = protocol_new("udp://127.0.0.1:2333");
-    na->pc = protocol_new("udp://192.168.1.103:2333");
+    na->pc = codec_new("avcodec");
     if (!na->pc) {
         return NULL;
     }
-    if (-1 == protocol_open(na->pc)) {
+    if (-1 == codec_open(na->pc, 640, 480)) {
         return NULL;
     }
     na->ev_base = event_base_new();
@@ -92,41 +97,11 @@ struct network_agent *network_agent_create(struct queue_ctx *qin, struct queue_c
         return NULL;
     }
 
-    if (0 != pthread_create(&tid, NULL, network_agent_loop, na)) {
+    if (0 != pthread_create(&tid, NULL, decoder_agent_loop, na)) {
         printf("pthread_create falied: %s\n", strerror(errno));
         free(na);
         return NULL;
     }
 
     return na;
-}
-
-
-static void notify_to_break_event_loop(struct network_agent *na)
-{
-    char notify = '1';
-    if (!na)
-        return;
-    if (write(na->on_write_fd, &notify, 1) != 1) {
-        printf("write pipe failed: %s\n", strerror(errno));
-    }
-}
-
-void network_agent_destroy(struct network_agent *na)
-{
-    if (!na)
-        return;
-
-    if (0 != event_base_loopbreak(na->ev_base)) {
-        notify_to_break_event_loop(na);
-    }
-
-    event_del(na->ev_read);
-    event_del(na->ev_close);
-    event_base_free(na->ev_base);
-    protocol_close(na->pc);
-    protocol_free(na->pc);
-    queue_free(na->qin);
-    queue_free(na->qout);
-    free(na);
 }
