@@ -52,7 +52,7 @@ struct codec_ctx *codec_new(const char *name)
     struct codec *p;
     struct codec_ctx *c = (struct codec_ctx *)calloc(1, sizeof(struct codec_ctx));
     if (!c) {
-        err("malloc codec context failed!\n");
+        printf("malloc codec context failed!\n");
         return NULL;
     }
     for (p = first_codec; p != NULL; p = p->next) {
@@ -60,14 +60,13 @@ struct codec_ctx *codec_new(const char *name)
             break;
     }
     if (p == NULL) {
-        err("%s codec is not support!\n", name);
+        printf("%s codec is not support!\n", name);
         return NULL;
     }
-    dbg("use %s codec module\n", p->name);
+    printf("use %s codec module\n", p->name);
     c->ops = p;
     c->priv = calloc(1, p->priv_size);
     if (!c->priv) {
-        err("malloc codec priv failed!\n");
         return NULL;
     }
     return c;
@@ -80,10 +79,9 @@ int codec_open(struct codec_ctx *c, int width, int height)
     return c->ops->open(c, width, height);
 }
 
-int codec_encode(struct codec_ctx *c, void *in, void *out)
+int codec_encode(struct codec_ctx *c, void *in, void **out)
 {
     if (!c->ops->encode) {
-        dbg("xxx\n");
         return -1;
     }
     return c->ops->encode(c, in, out);
@@ -99,7 +97,7 @@ int codec_decode(struct codec_ctx *c, void *in, int inlen, void **out)
 void codec_close(struct codec_ctx *c)
 {
     if (!c->ops->close)
-        return -1;
+        return;
     return c->ops->close(c);
 }
 void codec_free(struct codec_ctx *sc)

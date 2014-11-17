@@ -16,7 +16,7 @@ int parse_url(struct url *u, const char *input)
 
     p = strstr(input, url_tag);
     if (!p) {
-        err("input is not url format\n");
+        printf("input is not url format\n");
         return -1;
     }
     hlen = p - input;

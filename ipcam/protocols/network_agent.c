@@ -30,10 +30,20 @@ static void on_buffer_read(int fd, short what, void *arg)
         if (len == -1) {
             printf("protocol_write failed!\n");
         }
-//    printf("%s:%d protocol_write len=%d\n", __func__, __LINE__, len);
         buffer_item_free(item);
     }
 }
+
+static void notify_to_break_event_loop(struct network_agent *na)
+{
+    char notify = '1';
+    if (!na)
+        return;
+    if (write(na->pipe_wfd, &notify, 1) != 1) {
+        printf("write pipe failed: %s\n", strerror(errno));
+    }
+}
+
 
 static void *network_agent_loop(void *arg)
 {
@@ -47,7 +57,6 @@ static void *network_agent_loop(void *arg)
 
 struct network_agent *network_agent_create(struct buffer_ctx *buf_src, struct buffer_ctx *buf_snk)
 {
-    pthread_t tid;
     network_agent_t *na = NULL;
     int fds[2];
 
@@ -55,8 +64,8 @@ struct network_agent *network_agent_create(struct buffer_ctx *buf_src, struct bu
     if (!na) {
         return NULL;
     }
-//    na->pc = protocol_new("udp://127.0.0.1:2333");
-    na->pc = protocol_new("udp://192.168.1.103:2333");
+    na->pc = protocol_new("udp://127.0.0.1:2333");
+//    na->pc = protocol_new("udp://192.168.1.103:2333");
     if (!na->pc) {
         return NULL;
     }
@@ -92,24 +101,18 @@ struct network_agent *network_agent_create(struct buffer_ctx *buf_src, struct bu
         return NULL;
     }
 
-    if (0 != pthread_create(&tid, NULL, network_agent_loop, na)) {
-        printf("pthread_create falied: %s\n", strerror(errno));
-        free(na);
-        return NULL;
-    }
-
     return na;
 }
 
-
-static void notify_to_break_event_loop(struct network_agent *na)
+int network_agent_dispatch(struct network_agent *na)
 {
-    char notify = '1';
-    if (!na)
-        return;
-    if (write(na->pipe_wfd, &notify, 1) != 1) {
-        printf("write pipe failed: %s\n", strerror(errno));
+    pthread_t tid;
+    if (0 != pthread_create(&tid, NULL, network_agent_loop, na)) {
+        printf("pthread_create falied: %s\n", strerror(errno));
+        free(na);
+        return -1;
     }
+    return 0;
 }
 
 void network_agent_destroy(struct network_agent *na)

@@ -35,12 +35,12 @@ static int __avcodec_open(struct codec_ctx *cc, int width, int height)
     av_register_all();
     AVCodec *avcdc = avcodec_find_decoder(CODEC_ID_H264);
     if (!avcdc) {
-        err("avcodec_find_decoder failed!\n");
+        printf("avcodec_find_decoder failed!\n");
         return -1;
     }
     AVCodecContext *avctx = avcodec_alloc_context3(avcdc);
     if (!avctx) {
-        err("can not alloc avcodec context!\n");
+        printf("can not alloc avcodec context!\n");
         return -1;
     }
 #if 0
@@ -56,7 +56,7 @@ static int __avcodec_open(struct codec_ctx *cc, int width, int height)
 
     /*open codec*/
     if (0 > avcodec_open2(avctx, avcdc, NULL)) {
-        err("can not open avcodec!\n");
+        printf("can not open avcodec!\n");
         return -1;
     }
 

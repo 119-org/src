@@ -7,6 +7,7 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <time.h>
+#include <pthread.h>
 #include <event2/event.h>
 
 struct pipe_t {
@@ -88,6 +89,7 @@ static void *test_pipe_loop(void *arg)
 {
     struct pipe_t *p = (struct pipe_t *)arg;
     event_base_loop(p->evbase, 0);
+    return NULL;
 }
 
 int test_pipe()
@@ -108,12 +110,14 @@ int test_pipe()
 
 
     pthread_create(&tid, NULL, test_pipe_loop, p);
+    return 0;
 }
 
 int test_event_base()
 {
     struct event_base *evbase = event_base_new();
     event_base_free(evbase);
+    return 0;
 }
 
 int main(int argc, char **argv)

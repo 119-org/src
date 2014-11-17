@@ -1,5 +1,6 @@
 #ifndef _DISPLAY_AGENT_H_
 #define _DISPLAY_AGENT_H_
+
 #ifdef __cplusplus
 extern "C" {
 #endif

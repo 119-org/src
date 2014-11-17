@@ -1,5 +1,5 @@
-#ifndef _VIDEO_DEVICE_AGENT_H_
-#define _VIDEO_DEVICE_AGENT_H_
+#ifndef _VIDEO_CAPTURE_AGENT_H_
+#define _VIDEO_CAPTURE_AGENT_H_
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-typedef struct video_device_agent {
+typedef struct video_capture_agent {
     struct device_ctx *dev;
     struct event_base *ev_base;
     struct event *ev_read;
@@ -25,12 +25,12 @@ typedef struct video_device_agent {
     struct buffer_ctx *buf_src;
     struct buffer_ctx *buf_snk;
 
-} video_device_agent_t;
+} video_capture_agent_t;
 
 
-struct video_device_agent *video_device_agent_create();
-int video_device_agent_dispatch(struct video_device_agent *p);
-void video_device_agent_destroy(struct video_device_agent *p);
+struct video_capture_agent *video_capture_agent_create();
+int video_capture_agent_dispatch(struct video_capture_agent *p);
+void video_capture_agent_destroy(struct video_capture_agent *p);
 
 #ifdef __cplusplus
 }

@@ -48,7 +48,6 @@ struct protocol_ctx *protocol_new(const char *input)
     struct protocol *p;
     struct protocol_ctx *sc = (struct protocol_ctx *)calloc(1, sizeof(struct protocol_ctx));
     if (!sc) {
-        err("malloc protocol context failed!\n");
         return NULL;
     }
     parse_url(&sc->url, input);
@@ -58,15 +57,14 @@ struct protocol_ctx *protocol_new(const char *input)
             break;
     }
     if (p == NULL) {
-        err("%s protocol is not support!\n", sc->url.head);
+        printf("%s protocol is not support!\n", sc->url.head);
         return NULL;
     }
-    dbg("use %s protocol module\n", p->name);
+    printf("use %s protocol module\n", p->name);
 
     sc->ops = p;
     sc->priv = calloc(1, p->priv_size);
     if (!sc->priv) {
-        err("malloc source priv failed!\n");
         return NULL;
     }
     return sc;

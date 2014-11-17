@@ -28,7 +28,7 @@ static int udp_open(struct protocol_ctx *sc, const char *url)
     char *tag = ":";
     p = strstr(url, tag);
     if (!p) {
-        err("udp url is invalid\n");
+        printf("udp url is invalid\n");
         return -1;
     }
     len = p - url;
@@ -45,21 +45,22 @@ static int udp_open(struct protocol_ctx *sc, const char *url)
     strcpy(c->src_ip, str);
     c->fd = skt_udp_bind(c->src_ip, 0, 0);//random port
     if (c->fd == -1) {
-        err("bind %s failed\n", ip);
+        printf("bind %s failed\n", ip);
         return -1;
     }
     skt_get_addr_by_fd(&addr, c->fd);
     c->src_port = addr.port;
     skt_set_noblk(c->fd, 1);
     skt_set_reuse(c->fd, 1);
-    dbg("source fd = %d url: udp://%s:%d?localport=%d\n", c->fd, c->src_ip, c->src_port, c->dst_port);
+    printf("url: \"udp://%s:%d?localport=%d\"\n", c->src_ip, c->src_port, c->dst_port);
     return 0;
 }
 
 static int udp_read(struct protocol_ctx *sc, void *buf, int len)
 {
-    struct udp_ctx *c = sc->priv;
-    return skt_recvfrom(c->fd, c->dst_ip, c->dst_port, buf, len);
+//    struct udp_ctx *c = sc->priv;
+//    return skt_recvfrom(c->fd, c->dst_ip, c->dst_port, buf, len);
+    return 0;
 }
 
 static int udp_write(struct protocol_ctx *sc, void *buf, int len)

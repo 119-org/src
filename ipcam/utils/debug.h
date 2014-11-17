@@ -12,6 +12,7 @@ enum debug_level {
     MAX = 10
 };
 
+#if 0
 static int verbose = 1;  // func:line:
 static int level = MAX;
 
@@ -48,4 +49,5 @@ static int level = MAX;
         print_func_line("DBG", ##arg); \
     } while (0);
 
+#endif
 #endif

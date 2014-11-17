@@ -10,23 +10,20 @@
 #include "device.h"
 #include "protocol.h"
 #include "codec.h"
-#include "queue.h"
-#include "video_device_agent.h"
-#include "x264_agent.h"
+#include "buffer.h"
+#include "video_capture_agent.h"
+#include "x264_encode_agent.h"
 #include "network_agent.h"
-#include "decoder_agent.h"
+#include "avcodec_decode_agent.h"
 #include "display_agent.h"
 
+#define TEST_DISPLAY 1
 typedef struct ipcam {
-    struct device_ctx *dev;
-    struct protocol_ctx *prt;
-    struct codec_ctx *encoder;
-    struct codec_ctx *decoder;
-    struct video_device_agent *ua;
-    struct x264_agent *xa;
+    struct video_capture_agent *vca;
+    struct x264_encode_agent *xea;
+    struct avcodec_decode_agent *avda;
     struct network_agent *na;
     struct display_agent *da;
-
 } ipcam_t;
 
 static struct ipcam *ipcam_instance = NULL;
@@ -34,20 +31,6 @@ static struct ipcam *ipcam_instance = NULL;
 struct ipcam *ipcam_init()
 {
     ipcam_t *ipcam = NULL;
-    struct video_device_agent *ua = NULL;
-    struct x264_agent *xa = NULL;
-    struct network_agent *na = NULL;
-    struct queue_ctx *dev_qout = NULL;
-    struct queue_ctx *enc_qout = NULL;
-    struct queue_ctx *dec_qout = NULL;
-
-    struct buffer_ctx *dev_buf_src = NULL;
-    struct buffer_ctx *dev_buf_snk = NULL;
-    struct buffer_ctx *enc_buf_src = NULL;
-    struct buffer_ctx *enc_buf_snk = NULL;
-    struct buffer_ctx *net_buf_src = NULL;
-    struct buffer_ctx *net_buf_snk = NULL;
-
 
     device_register_all();
     protocol_register_all();
@@ -56,44 +39,44 @@ struct ipcam *ipcam_init()
     ipcam = (ipcam_t *)calloc(1, sizeof(ipcam_t));
     if (!ipcam)
         return NULL;
-    dev_qout = queue_new(5);
-    enc_qout = queue_new(5);
-    dec_qout = queue_new(5);
 
-    dev_buf_src = NULL;
-    dev_buf_snk = enc_buf_src = buffer_create(5);
-    enc_buf_snk = net_buf_src = buffer_create(5);
-    net_buf_snk = NULL;
-
-    ipcam->ua = video_device_agent_create(dev_buf_src, dev_buf_snk);
-    if (!ipcam->ua) {
+    struct buffer_ctx *dev_buf_src = NULL;
+    struct buffer_ctx *dev_buf_snk = buffer_create(3);
+    ipcam->vca = video_capture_agent_create(dev_buf_src, dev_buf_snk);
+    if (!ipcam->vca) {
         printf("usbcam_agent_create failed!\n");
         return NULL;
     }
-#if 1
-    ipcam->xa = x264_agent_create(ipcam->ua, enc_buf_src, enc_buf_snk);
-    if (!ipcam->xa) {
+
+    struct buffer_ctx *enc_buf_src = dev_buf_snk;
+    struct buffer_ctx *enc_buf_snk = buffer_create(4);
+    ipcam->xea = x264_encode_agent_create(ipcam->vca, enc_buf_src, enc_buf_snk);
+    if (!ipcam->xea) {
         printf("x264_agent_create failed!\n");
         return NULL;
     }
-#endif
-#if 1
+
+#ifdef TEST_DISPLAY
+    struct buffer_ctx *dec_buf_src = enc_buf_snk;
+    struct buffer_ctx *dec_buf_snk = buffer_create(3);
+    ipcam->avda = avcodec_decode_agent_create(dec_buf_src, dec_buf_snk);
+    if (!ipcam->avda) {
+        printf("network_agent_create failed!\n");
+        return NULL;
+    }
+
+    struct buffer_ctx *dsp_buf_src = dec_buf_snk;
+    struct buffer_ctx *dsp_buf_snk = NULL;
+    ipcam->da = display_agent_create(dsp_buf_src, dsp_buf_snk);
+    if (!ipcam->da) {
+        printf("network_agent_create failed!\n");
+        return NULL;
+    }
+#else
+    struct buffer_ctx *net_buf_src = enc_buf_snk;
+    struct buffer_ctx *net_buf_snk = NULL;
     ipcam->na = network_agent_create(net_buf_src, net_buf_snk);
     if (!ipcam->na) {
-        printf("network_agent_create failed!\n");
-        return NULL;
-    }
-#endif
-#if 0
-    ipcam->na = decoder_agent_create(enc_qout, dec_qout);
-    if (!ipcam->na) {
-        printf("network_agent_create failed!\n");
-        return NULL;
-    }
-#endif
-#if 0
-    ipcam->da = display_agent_create(dec_qout, NULL);
-    if (!ipcam->da) {
         printf("network_agent_create failed!\n");
         return NULL;
     }
@@ -101,82 +84,20 @@ struct ipcam *ipcam_init()
     return ipcam;
 }
 
-int ipcam_open()
+void ipcam_dispatch(struct ipcam *ipc)
 {
-#if 0
-    struct device_ctx *dev = ipcam_instance->dev;
-    struct protocol_ctx *prt = ipcam_instance->prt;
-    struct codec_ctx *encoder = ipcam_instance->encoder;
-    struct codec_ctx *decoder = ipcam_instance->decoder;
-
-    if (-1 == device_open(dev)) {
-        err("source_open failed!\n");
-        return -1;
+    video_capture_agent_dispatch(ipc->vca);
+    x264_encode_agent_dispatch(ipc->xea);
+    network_agent_dispatch(ipc->na);
+    while (1) {
+        sleep(2);
     }
-    if (-1 == codec_open(encoder, dev->width, dev->height)) {
-        err("codec_open failed!\n");
-        return -1;
-    }
-    if (-1 == codec_open(decoder, dev->width, dev->height)) {
-        err("codec_open failed!\n");
-        return -1;
-    }
-    if (-1 == protocol_open(prt)) {
-        err("sink_open failed!\n");
-        return -1;
-    }
-#endif
-}
-
-void ipcam_dispatch()
-{
-    struct device_ctx *dev = ipcam_instance->dev;
-    struct protocol_ctx *prt = ipcam_instance->prt;
-    struct codec_ctx *encoder = ipcam_instance->encoder;
-    struct codec_ctx *decoder = ipcam_instance->decoder;
-    int ret, len;
-    int flen = 0x100000;
-    void *frm = calloc(1, flen);
-    void *pkt = calloc(1, flen);
-    void *yuv = frm;
-    int quit = 0;
-
-    while (!quit) {
-        len = device_read(dev, frm, flen);
-        if (len == -1) {
-            err("source read failed!\n");
-            continue;
-        }
-#if 0
-        len = codec_encode(encoder, frm, pkt);
-        if (len == -1) {
-            err("encode failed!\n");
-            continue;
-        }
-        ret = codec_decode(decoder, pkt, len, &yuv);
-        if (ret == -1) {
-            err("decode failed!\n");
-            continue;
-        }
-        ret == protocol_write(prt, yuv, len);
-        if (ret == -1) {
-            err("sink write failed!\n");
-            continue;
-        }
-#endif
-        printf("write %d\n", ret);
-        if (-1 == device_write(dev, NULL, 0)) {
-            err("source write failed!\n");
-            continue;
-        }
-    }
-
 }
 
 static void sigterm_handler(int sig)
 {
-    video_device_agent_destroy(ipcam_instance->ua);
-    x264_agent_destroy(ipcam_instance->xa);
+    video_capture_agent_destroy(ipcam_instance->vca);
+    x264_encode_agent_destroy(ipcam_instance->xea);
     network_agent_destroy(ipcam_instance->na);
     exit(0);
 }
@@ -191,12 +112,6 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    while (1) {
-        sleep(2);
-    }
-#if 0
-    ipcam_open();
-    ipcam_dispatch();
-#endif
-
+    ipcam_dispatch(ipcam_instance);
+    return 0;
 }

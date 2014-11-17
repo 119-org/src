@@ -31,6 +31,7 @@ struct v4l2_ctx {
     int height;
     struct v4l2_buf buf[MAX_V4L_BUF];
     int buf_index;
+    int req_count;
 };
 
 static int v4l2_set_format(struct v4l2_ctx *vc)
@@ -91,6 +92,7 @@ static int v4l2_req_buf(struct v4l2_ctx *vc)
         printf("ioctl(VIDIOC_REQBUFS): %s\n", strerror(errno));
         return -1;
     }
+    vc->req_count = req.count;
     if (req.count > MAX_V4L_REQBUF_CNT || req.count < 2) {
         printf("Insufficient buffer memory\n");
         return -1;
@@ -219,7 +221,6 @@ static int v4l2_read(struct device_ctx *dc, void *buf, int len)
         printf("v4l2 frame is %d bytes, but buffer len is %d, not enough!\n", flen, len);
         return -1;
     }
-    printf("buffer len = %d, f.len = %d\n", len, f.len);
     assert(len>=f.len);
 
     for (i = 0; i < f.len; i++) {//8 byte copy
@@ -244,7 +245,7 @@ static void v4l2_close(struct device_ctx *dc)
     if (-1 == ioctl(vc->fd, VIDIOC_STREAMOFF, &type)) {
         printf("ioctl(VIDIOC_STREAMOFF) failed: %s\n", strerror(errno));
     }
-    for (i = 0; i < MAX_V4L_REQBUF_CNT; i++) {
+    for (i = 0; i < vc->req_count; i++) {
         munmap(vc->buf[i].addr, vc->buf[i].len);
     }
     close(vc->fd);

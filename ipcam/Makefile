@@ -11,7 +11,7 @@ LDFLAGS_LIBEVENT = -levent
 LDFLAGS_FFMPEG	= `pkg-config --libs libavformat libavutil libavcodec libswscale`
 
 CFLAGS	:= -g -Wall
-#CFLAGS	+= -Werror
+CFLAGS	+= -Werror
 CFLAGS	+= -I$(TOPDIR)
 CFLAGS	+= -I./codecs
 CFLAGS	+= -I./devices
@@ -35,7 +35,7 @@ LDFLAGS += $(LDFLAGS_LIBEVENT)
 TGT := ipcam test_libevent
 
 DEVICE_OBJS := \
-    devices/video_device_agent.o \
+    devices/video_capture_agent.o \
     devices/device.o \
     devices/v4l2.o \
     devices/alsa.o
@@ -51,8 +51,8 @@ CODEC_OBJS := \
     codecs/codec.o \
     codecs/x264_enc.o \
     codecs/avcodec_dec.o \
-    codecs/x264_agent.o \
-    codecs/decoder_agent.o
+    codecs/x264_encode_agent.o \
+    codecs/avcodec_decode_agent.o
 
 BUFFER_OBJS := \
     buffer/queue.o \

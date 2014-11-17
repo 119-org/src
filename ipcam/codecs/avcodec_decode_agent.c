@@ -11,7 +11,7 @@
 #include "common.h"
 #include "codec.h"
 #include "buffer.h"
-#include "decoder_agent.h"
+#include "avcodec_decode_agent.h"
 
 static void on_break_event(int fd, short what, void *arg)
 {
@@ -23,7 +23,7 @@ static void on_buffer_read(int fd, short what, void *arg)
 {
     int len;
     struct buffer_item *in_item, *out_item;
-    decoder_agent_t *na = (decoder_agent_t *)arg;
+    avcodec_decode_agent_t *na = (avcodec_decode_agent_t *)arg;
     struct buffer_ctx *buf_src = na->buf_src;
     struct buffer_ctx *buf_snk = na->buf_snk;
     int flen = 0x100000;//bigger than one x264 packet buffer
@@ -41,9 +41,9 @@ static void on_buffer_read(int fd, short what, void *arg)
 //    printf("%s:%d codec_write len=%d\n", __func__, __LINE__, len);
     }
 }
-static void *decoder_agent_loop(void *arg)
+static void *avcodec_decode_agent_loop(void *arg)
 {
-    struct decoder_agent *na = (struct decoder_agent *)arg;
+    struct avcodec_decode_agent *na = (struct avcodec_decode_agent *)arg;
     if (!na)
         return NULL;
     event_base_loop(na->ev_base, 0);
@@ -51,13 +51,13 @@ static void *decoder_agent_loop(void *arg)
 }
 
 
-struct decoder_agent *decoder_agent_create(struct buffer_ctx *buf_src, struct buffer_ctx *buf_snk)
+struct avcodec_decode_agent *avcodec_decode_agent_create(struct buffer_ctx *buf_src, struct buffer_ctx *buf_snk)
 {
     pthread_t tid;
-    decoder_agent_t *na = NULL;
+    avcodec_decode_agent_t *na = NULL;
     int fds[2];
 
-    na = (decoder_agent_t *)calloc(1, sizeof(decoder_agent_t));
+    na = (avcodec_decode_agent_t *)calloc(1, sizeof(avcodec_decode_agent_t));
     if (!na) {
         return NULL;
     }
@@ -97,7 +97,7 @@ struct decoder_agent *decoder_agent_create(struct buffer_ctx *buf_src, struct bu
         return NULL;
     }
 
-    if (0 != pthread_create(&tid, NULL, decoder_agent_loop, na)) {
+    if (0 != pthread_create(&tid, NULL, avcodec_decode_agent_loop, na)) {
         printf("pthread_create falied: %s\n", strerror(errno));
         free(na);
         return NULL;

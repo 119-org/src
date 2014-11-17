@@ -169,7 +169,7 @@ static int yuv_surface_init(struct sdl_ctx *c)
     struct sdl_yuv_ctx *yuv = (struct sdl_yuv_ctx *)calloc(1, sizeof(struct sdl_yuv_ctx));
     yuv->overlay = SDL_CreateYUVOverlay(c->width, c->height, SDL_YV12_OVERLAY, c->surface);
     if (yuv->overlay == NULL) {
-        err("SDL: could not create YUV overlay\n");
+        printf("SDL: could not create YUV overlay\n");
         return -1;
     }
     c->yuv = yuv;
@@ -190,7 +190,7 @@ static int wnd_init(struct sdl_ctx *c)
     }
     c->surface = SDL_SetVideoMode(c->width, c->height, c->bpp, flags);
     if (c->surface == NULL) {
-        err("SDL: could not set video mode - exiting\n");
+        printf("SDL: could not set video mode - exiting\n");
         return -1;
     }
     if (c->type == SDL_RGB) {
@@ -205,12 +205,12 @@ static int sdl_init(struct sdl_ctx *c)
 {
     int flags = SDL_INIT_VIDEO | SDL_INIT_TIMER;// | SDL_INIT_EVENTTHREAD;
     if (-1 == SDL_Init(flags)) {
-        err("Could not initialize SDL - %s\n", SDL_GetError());
+        printf("Could not initialize SDL - %s\n", SDL_GetError());
         goto fail;
     }
     SDL_WM_SetCaption(wnd_title, NULL);
     if (-1 == wnd_init(c)) {
-        err("Could not initialize RGB surface\n");
+        printf("Could not initialize RGB surface\n");
         goto fail;
     }
     return 0;
@@ -225,10 +225,10 @@ static int sdl_open(struct protocol_ctx *sc, const char *type)
     struct sdl_ctx *c = sc->priv;
     if (!strcmp(type, "rgb")) {
         c->type = SDL_RGB;
-        dbg("use RGB surface\n");
+        printf("use RGB surface\n");
     } else {// if (!strcmp(type, "yuv")) {
         c->type = SDL_YUV;
-        dbg("use YUV surface\n");
+        printf("use YUV surface\n");
     }
     sdl_init(c);
     return 0;
@@ -284,7 +284,7 @@ static void sdl_handle(struct protocol_ctx *sc)
     }
     return;
 quit:
-    info("Quit %s\n", wnd_title);
+    printf("Quit %s\n", wnd_title);
     sdl_deinit();
     exit(0);
 }

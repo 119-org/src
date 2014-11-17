@@ -37,9 +37,8 @@ static int x264_init(struct codec_ctx *cc, int width, int height)
     c->param->i_keyint_max = 128;
     c->param->i_log_level = X264_LOG_NONE;
     c->handle = x264_encoder_open(c->param);
-    dbg("handle = %p\n", c->handle);
     if (c->handle == 0) {
-        err("x264_encoder_open failed!\n");
+        printf("x264_encoder_open failed!\n");
         return -1;
     }
 
@@ -50,14 +49,14 @@ static int x264_init(struct codec_ctx *cc, int width, int height)
     return 0;
 }
 
-static int x264_encode(struct codec_ctx *cc, void *in, void *out)
+static int x264_encode(struct codec_ctx *cc, void *in, void **out)
 {
     struct x264_ctx *c = cc->priv;
     x264_picture_t pic_out;
     int nNal = 0;
     int bit_len = 0;
     int i = 0, j = 0;
-    uint8_t *p_out = out;
+    uint8_t *p_out;
     c->nal = NULL;
     uint8_t *p422;
 
@@ -91,11 +90,17 @@ static int x264_encode(struct codec_ctx *cc, void *in, void *out)
     c->picture->i_pts++;
 
     for (i = 0; i < nNal; i++) {
-        memcpy(p_out, c->nal[i].p_payload, c->nal[i].i_payload);
-        p_out += c->nal[i].i_payload;
         bit_len += c->nal[i].i_payload;
     }
-
+    p_out = calloc(1, bit_len);
+    if (!p_out) {
+        return -1;
+    }
+    *out = p_out;
+    for (i = 0; i < nNal; i++) {
+        memcpy(p_out, c->nal[i].p_payload, c->nal[i].i_payload);
+        p_out += c->nal[i].i_payload;
+    }
     return bit_len;
 }
 
