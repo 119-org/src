@@ -6,6 +6,7 @@
 #include <time.h>
 #include <event2/event.h>
 
+#include "device.h"
 #include "common.h"
 
 #ifdef __cplusplus
@@ -21,7 +22,8 @@ typedef struct video_device_agent {
     int pipe_wfd;
     int width;
     int height;
-    struct queue_ctx *qout;
+    struct buffer_ctx *buf_src;
+    struct buffer_ctx *buf_snk;
 
 } video_device_agent_t;
 

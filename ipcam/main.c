@@ -41,6 +41,14 @@ struct ipcam *ipcam_init()
     struct queue_ctx *enc_qout = NULL;
     struct queue_ctx *dec_qout = NULL;
 
+    struct buffer_ctx *dev_buf_src = NULL;
+    struct buffer_ctx *dev_buf_snk = NULL;
+    struct buffer_ctx *enc_buf_src = NULL;
+    struct buffer_ctx *enc_buf_snk = NULL;
+    struct buffer_ctx *net_buf_src = NULL;
+    struct buffer_ctx *net_buf_snk = NULL;
+
+
     device_register_all();
     protocol_register_all();
     codec_register_all();
@@ -52,48 +60,44 @@ struct ipcam *ipcam_init()
     enc_qout = queue_new(5);
     dec_qout = queue_new(5);
 
-    ipcam->ua = video_device_agent_create(NULL, dev_qout);
+    dev_buf_src = NULL;
+    dev_buf_snk = enc_buf_src = buffer_create(5);
+    enc_buf_snk = net_buf_src = buffer_create(5);
+    net_buf_snk = NULL;
+
+    ipcam->ua = video_device_agent_create(dev_buf_src, dev_buf_snk);
     if (!ipcam->ua) {
         printf("usbcam_agent_create failed!\n");
         return NULL;
     }
 #if 1
-    ipcam->xa = x264_agent_create(dev_qout, enc_qout);
+    ipcam->xa = x264_agent_create(ipcam->ua, enc_buf_src, enc_buf_snk);
     if (!ipcam->xa) {
         printf("x264_agent_create failed!\n");
         return NULL;
     }
 #endif
-#if 0
-    ipcam->na = network_agent_create(enc_qout, NULL);
+#if 1
+    ipcam->na = network_agent_create(net_buf_src, net_buf_snk);
     if (!ipcam->na) {
         printf("network_agent_create failed!\n");
         return NULL;
     }
 #endif
-#if 1
+#if 0
     ipcam->na = decoder_agent_create(enc_qout, dec_qout);
     if (!ipcam->na) {
         printf("network_agent_create failed!\n");
         return NULL;
     }
 #endif
-#if 1
+#if 0
     ipcam->da = display_agent_create(dec_qout, NULL);
     if (!ipcam->da) {
         printf("network_agent_create failed!\n");
         return NULL;
     }
 #endif
-#if 0
-    ipcam->ua = ua;
-    ipcam->dev = device_new("v4l2:///dev/video0");
-    ipcam->prt = protocol_init("sdl://player");
-//    ipcam->prt = protocol_init("udp://127.0.0.1:2333");
-    ipcam->encoder = codec_init("x264");
-    ipcam->decoder = codec_init("avcodec");
-#endif
-
     return ipcam;
 }
 

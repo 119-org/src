@@ -10,13 +10,13 @@
 
 #include "common.h"
 #include "device.h"
-#include "queue.h"
+#include "buffer.h"
 #include "video_device_agent.h"
 
 static void on_video_device_read(int fd, short what, void *arg)
 {
     int ret, len;
-    struct queue_item *item = NULL;
+    struct buffer_item *item = NULL;
     int flen = 0x96000;//equals to one v4l2 frame buffer
     void *frm = calloc(1, flen);
     video_device_agent_t *ua = (video_device_agent_t *)arg;
@@ -34,10 +34,10 @@ static void on_video_device_read(int fd, short what, void *arg)
     if (-1 == device_write(dev, NULL, 0)) {
         printf("device_write failed!\n");
     }
-    item = queue_item_new(frm, flen);
-    ret = queue_push(ua->qout, item);
+    item = buffer_item_new(frm, flen);
+    ret = buffer_push(ua->buf_snk, item);
     if (ret == -1) {
-        printf("queue_push failed!\n");
+        printf("buffer_push failed!\n");
     }
 }
 
@@ -65,7 +65,7 @@ static void break_event_base_loop(struct video_device_agent *ua)
     }
 }
 
-struct video_device_agent *video_device_agent_create(struct queue_ctx *qin, struct queue_ctx *qout)
+struct video_device_agent *video_device_agent_create(struct buffer_ctx *buf_src, struct buffer_ctx *buf_snk)
 {
     int fds[2];
     pthread_t tid;
@@ -85,7 +85,8 @@ struct video_device_agent *video_device_agent_create(struct queue_ctx *qin, stru
         return NULL;
     }
 
-    ua->qout = qout;
+    ua->buf_src = buf_src;
+    ua->buf_snk = buf_snk;
     ua->ev_base = event_base_new();
     if (!ua->ev_base)
         return NULL;
@@ -136,6 +137,5 @@ void video_device_agent_destroy(struct video_device_agent *ua)
     event_base_free(ua->ev_base);
     device_close(ua->dev);
     device_free(ua->dev);
-    queue_free(ua->qout);
     free(ua);
 }

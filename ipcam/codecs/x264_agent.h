@@ -15,16 +15,15 @@ typedef struct x264_agent {
     struct event_base *ev_base;
     struct event *ev_read;
     struct event *ev_close;
-    timer_t timerid;
-    int on_read_fd;
-    int on_write_fd;
-    struct queue_ctx *qin;
-    struct queue_ctx *qout;
+    int pipe_rfd;
+    int pipe_wfd;
+    struct buffer_ctx *buf_src;
+    struct buffer_ctx *buf_snk;
 
 } x264_agent_t;
 
 
-struct x264_agent *x264_agent_create();
+struct x264_agent *x264_agent_create(struct video_device_agent *vda, struct buffer_ctx *buf_src, struct buffer_ctx *buf_snk);
 int x264_agent_dispatch(struct x264_agent *ua);
 void x264_agent_destroy(struct x264_agent *ua);
 

@@ -55,9 +55,11 @@ CODEC_OBJS := \
     codecs/decoder_agent.o
 
 BUFFER_OBJS := \
-    buffer/queue.o
+    buffer/queue.o \
+    buffer/buffer.o
 
 UTILS_OBJS := \
+    utils/atomic.o \
     utils/common.o
 
 IPCAM_OBJS := \
