@@ -10,7 +10,7 @@
 
 #include "common.h"
 #include "codec.h"
-#include "queue.h"
+#include "buffer.h"
 #include "decoder_agent.h"
 
 static void on_break_event(int fd, short what, void *arg)
@@ -22,22 +22,22 @@ static void on_break_event(int fd, short what, void *arg)
 static void on_buffer_read(int fd, short what, void *arg)
 {
     int len;
-    struct queue_item *in_item, *out_item;
+    struct buffer_item *in_item, *out_item;
     decoder_agent_t *na = (decoder_agent_t *)arg;
-    struct queue_ctx *qin = na->qin;
-    struct queue_ctx *qout = na->qout;
+    struct buffer_ctx *buf_src = na->buf_src;
+    struct buffer_ctx *buf_snk = na->buf_snk;
     int flen = 0x100000;//bigger than one x264 packet buffer
     void *dec_buf = calloc(1, flen);
 
-    while (NULL != (in_item = queue_pop(qin))) {
+    while (NULL != (in_item = buffer_pop(buf_src))) {
         len = codec_decode(na->pc, in_item->data, in_item->len, &dec_buf);
         if (len == -1) {
             printf("codec_write failed!\n");
         }
         assert(len <= flen);
-        out_item = queue_item_new(dec_buf, in_item->len);
-        queue_push(qout, out_item);
-//        queue_item_free(in_item);
+        out_item = buffer_item_new(dec_buf, in_item->len);
+        buffer_push(buf_snk, out_item);
+//        buffer_item_free(in_item);
 //    printf("%s:%d codec_write len=%d\n", __func__, __LINE__, len);
     }
 }
@@ -51,7 +51,7 @@ static void *decoder_agent_loop(void *arg)
 }
 
 
-struct decoder_agent *decoder_agent_create(struct queue_ctx *qin, struct queue_ctx *qout)
+struct decoder_agent *decoder_agent_create(struct buffer_ctx *buf_src, struct buffer_ctx *buf_snk)
 {
     pthread_t tid;
     decoder_agent_t *na = NULL;
@@ -73,9 +73,9 @@ struct decoder_agent *decoder_agent_create(struct queue_ctx *qin, struct queue_c
         return NULL;
     }
 
-    na->qin = qin;
-    na->qout = qout;
-    na->ev_read = event_new(na->ev_base, qin->on_read_fd, EV_READ|EV_PERSIST, on_buffer_read, na);
+    na->buf_src = buf_src;
+    na->buf_snk = buf_snk;
+    na->ev_read = event_new(na->ev_base, buf_src->pipe_rfd, EV_READ|EV_PERSIST, on_buffer_read, na);
     if (!na->ev_read) {
         return NULL;
     }
@@ -86,10 +86,10 @@ struct decoder_agent *decoder_agent_create(struct queue_ctx *qin, struct queue_c
         printf("create pipe failed: %s\n", strerror(errno));
         return NULL;
     }
-    na->on_read_fd = fds[0];
-    na->on_write_fd = fds[1];
+    na->pipe_rfd = fds[0];
+    na->pipe_wfd = fds[1];
 
-    na->ev_close = event_new(na->ev_base, na->on_read_fd, EV_READ|EV_PERSIST, on_break_event, na->pc);
+    na->ev_close = event_new(na->ev_base, na->pipe_rfd, EV_READ|EV_PERSIST, on_break_event, na->pc);
     if (!na->ev_close) {
         return NULL;
     }

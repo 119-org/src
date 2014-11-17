@@ -219,7 +219,8 @@ static int v4l2_read(struct device_ctx *dc, void *buf, int len)
         printf("v4l2 frame is %d bytes, but buffer len is %d, not enough!\n", flen, len);
         return -1;
     }
-    assert(len==f.len);
+    printf("buffer len = %d, f.len = %d\n", len, f.len);
+    assert(len>=f.len);
 
     for (i = 0; i < f.len; i++) {//8 byte copy
         *((char *)buf + i) = *((char *)f.addr + i);

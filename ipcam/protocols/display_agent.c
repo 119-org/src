@@ -10,7 +10,7 @@
 
 #include "common.h"
 #include "protocol.h"
-#include "queue.h"
+#include "buffer.h"
 #include "display_agent.h"
 
 static void on_break_event(int fd, short what, void *arg)
@@ -22,17 +22,17 @@ static void on_break_event(int fd, short what, void *arg)
 static void on_buffer_read(int fd, short what, void *arg)
 {
     int len;
-    struct queue_item *item;
+    struct buffer_item *item;
     display_agent_t *na = (display_agent_t *)arg;
-    struct queue_ctx *qin = na->qin;
+    struct buffer_ctx *buf_src = na->buf_src;
 
-    while (NULL != (item = queue_pop(qin))) {
+    while (NULL != (item = buffer_pop(buf_src))) {
         len = protocol_write(na->pc, item->data, item->len);
         if (len == -1) {
             printf("protocol_write failed!\n");
         }
 //    printf("%s:%d protocol_write len=%d\n", __func__, __LINE__, len);
-//        queue_item_free(item);
+//        buffer_item_free(item);
     }
 }
 static void *display_agent_loop(void *arg)
@@ -45,7 +45,7 @@ static void *display_agent_loop(void *arg)
 }
 
 
-struct display_agent *display_agent_create(struct queue_ctx *qin, struct queue_ctx *qout)
+struct display_agent *display_agent_create(struct buffer_ctx *buf_src, struct buffer_ctx *buf_snk)
 {
     pthread_t tid;
     display_agent_t *na = NULL;
@@ -68,9 +68,9 @@ struct display_agent *display_agent_create(struct queue_ctx *qin, struct queue_c
         return NULL;
     }
 
-    na->qin = qin;
-    na->qout = qout;
-    na->ev_read = event_new(na->ev_base, qin->on_read_fd, EV_READ|EV_PERSIST, on_buffer_read, na);
+    na->buf_src = buf_src;
+    na->buf_snk = buf_snk;
+    na->ev_read = event_new(na->ev_base, buf_src->pipe_rfd, EV_READ|EV_PERSIST, on_buffer_read, na);
     if (!na->ev_read) {
         return NULL;
     }
@@ -81,10 +81,10 @@ struct display_agent *display_agent_create(struct queue_ctx *qin, struct queue_c
         printf("create pipe failed: %s\n", strerror(errno));
         return NULL;
     }
-    na->on_read_fd = fds[0];
-    na->on_write_fd = fds[1];
+    na->pipe_rfd = fds[0];
+    na->pipe_wfd = fds[1];
 
-    na->ev_close = event_new(na->ev_base, na->on_read_fd, EV_READ|EV_PERSIST, on_break_event, na->pc);
+    na->ev_close = event_new(na->ev_base, na->pipe_rfd, EV_READ|EV_PERSIST, on_break_event, na->pc);
     if (!na->ev_close) {
         return NULL;
     }
