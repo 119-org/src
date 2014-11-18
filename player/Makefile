@@ -3,8 +3,8 @@ CC	= gcc
 LD	= ld
 
 TOPDIR		= `pwd`
-CFLAGS_SDL2	= `pkg-config --cflags sdl2`
-LDFLAGS_SDL2	= `pkg-config --libs sdl2`
+CFLAGS_SDL	= `pkg-config --cflags sdl`
+LDFLAGS_SDL	= `pkg-config --libs sdl`
 LDFLAGS_X264	= -lx264
 LDFLAGS_LIBEVENT= -levent
 LDFLAGS_FFMPEG	= `pkg-config --libs libavformat libavutil libavcodec libswscale`
@@ -12,11 +12,18 @@ LDFLAGS_FFMPEG	= `pkg-config --libs libavformat libavutil libavcodec libswscale`
 CFLAGS	:= -g -Wall
 #CFLAGS	+= -Werror -Wcast-align
 CFLAGS	+= -I$(TOPDIR)
-CFLAGS	+= $(CFLAGS_SDL2)
+CFLAGS	+= -I./utils
+CFLAGS	+= -I./buffer
+CFLAGS	+= -I./protocol
+CFLAGS	+= -I./decode
+CFLAGS	+= -I./display
+CFLAGS	+= -I../libraries
+CFLAGS	+= $(CFLAGS_SDL)
 
 LDFLAGS	:=
-LDFLAGS	+= -lpthread
-LDFLAGS	+= $(LDFLAGS_SDL2)
+LDFLAGS	+= ../libraries/libskt/libskt.a
+LDFLAGS	+= -lpthread -lrt
+LDFLAGS	+= $(LDFLAGS_SDL)
 LDFLAGS	+= $(LDFLAGS_X264)
 LDFLAGS += $(LDFLAGS_FFMPEG)
 LDFLAGS += $(LDFLAGS_LIBEVENT)
@@ -26,15 +33,42 @@ LDFLAGS += -Wl,-rpath=/usr/local/lib -lrt
 
 TGT	:= player
 
-OBJS	= player.o
+UTILS_OBJS := \
+    utils/atomic.o \
+    utils/common.o
+
+BUFFER_OBJS := \
+    buffer/buffer.o
+
+PROTOCOL_OBJS := \
+    protocol/protocol.o \
+    protocol/udp.o \
+    protocol/network_agent.o \
+
+DECODE_OBJS := \
+    decode/codec.o \
+    decode/avcodec_dec.o \
+    decode/avcodec_decode_agent.o
+
+DISPLAY_OBJS := \
+    display/sdl.o \
+    display/display_agent.o
+
+PLAYER_OBJS := \
+    $(UTILS_OBJS) \
+    $(BUFFER_OBJS) \
+    $(PROTOCOL_OBJS) \
+    $(DECODE_OBJS) \
+    $(DISPLAY_OBJS) \
+    main.o
 
 all: $(TGT)
 
 %.o:%.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
-player: $(OBJS)
+player: $(PLAYER_OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 clean:
-	rm -f $(OBJS) $(TGT)
+	rm -f $(PLAYER_OBJS) $(TGT)
