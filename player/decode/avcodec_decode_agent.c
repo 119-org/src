@@ -26,7 +26,7 @@ static void on_buffer_read(int fd, short what, void *arg)
     avcodec_decode_agent_t *na = (avcodec_decode_agent_t *)arg;
     struct buffer_ctx *buf_src = na->buf_src;
     struct buffer_ctx *buf_snk = na->buf_snk;
-    int flen = 0x100000;//bigger than one x264 packet buffer
+    int flen = 40000;//bigger than one x264 packet buffer
     void *dec_buf = calloc(1, flen);
 
     while (NULL != (in_item = buffer_pop(buf_src))) {
@@ -37,8 +37,7 @@ static void on_buffer_read(int fd, short what, void *arg)
         assert(len <= flen);
         out_item = buffer_item_new(dec_buf, in_item->len);
         buffer_push(buf_snk, out_item);
-//        buffer_item_free(in_item);
-//    printf("%s:%d codec_write len=%d\n", __func__, __LINE__, len);
+        buffer_item_free(in_item);
     }
 }
 static void *avcodec_decode_agent_loop(void *arg)

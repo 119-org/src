@@ -10,6 +10,7 @@ extern "C" {
 #endif
 
 struct protocol_ctx {
+    int fd;
     struct url url;
     struct protocol *ops;
     void *priv;

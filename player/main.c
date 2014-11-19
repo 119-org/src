@@ -45,7 +45,7 @@ static int player_quit()
     return 0;
 }
 
-struct player *player_init()
+struct player *player_init(char *url)
 {
     player_t *player = NULL;
 
@@ -58,7 +58,7 @@ struct player *player_init()
 
     struct buffer_ctx *net_buf_src = NULL;
     struct buffer_ctx *net_buf_snk = buffer_create(3);
-    player->na = network_agent_create(net_buf_src, net_buf_snk);
+    player->na = network_agent_create(url, net_buf_src, net_buf_snk);
     if (!player->na) {
         printf("network_agent_create failed!\n");
         return NULL;
@@ -67,7 +67,7 @@ struct player *player_init()
     struct buffer_ctx *dec_buf_snk = buffer_create(3);
     player->avda = avcodec_decode_agent_create(dec_buf_src, dec_buf_snk);
     if (!player->avda) {
-        printf("network_agent_create failed!\n");
+        printf("avcodec_decode_agent_create failed!\n");
         return NULL;
     }
 
@@ -75,15 +75,26 @@ struct player *player_init()
     struct buffer_ctx *dsp_buf_snk = NULL;
     player->da = display_agent_create(dsp_buf_src, dsp_buf_snk);
     if (!player->da) {
-        printf("network_agent_create failed!\n");
+        printf("display_agent_create failed!\n");
         return NULL;
     }
     return player;
 }
 
+
+static void sigterm_handler(int sig)
+{
+    network_agent_destroy(player_instace->na);
+    exit(0);
+}
+
 int main(int argc, char **argv)
 {
-    player_instace = player_init();
+    signal(SIGPIPE,SIG_IGN);
+    signal(SIGINT, sigterm_handler);
+
+    char *url = argv[1];
+    player_instace = player_init(url);
     player_dispatch(player_instace);
     player_quit();
     return 0;

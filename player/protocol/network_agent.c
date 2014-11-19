@@ -18,20 +18,18 @@ static void on_break_event(int fd, short what, void *arg)
 
 }
 
-static void on_buffer_read(int fd, short what, void *arg)
+static void on_udp_read(int fd, short what, void *arg)
 {
-    int len;
+    int len, ret;
     struct buffer_item *item;
     network_agent_t *na = (network_agent_t *)arg;
-    struct buffer_ctx *buf_src = na->buf_src;
-
-    while (NULL != (item = buffer_pop(buf_src))) {
-        len = protocol_write(na->pc, item->data, item->len);
-        if (len == -1) {
-            printf("protocol_write failed!\n");
-        }
-        buffer_item_free(item);
-    }
+    struct buffer_ctx *buf_snk = na->buf_snk;
+    int flen = 15000;
+    void *buf = calloc(1, flen);
+    len = protocol_read(na->pc, buf, flen);
+    assert(len <= flen);
+    item = buffer_item_new(buf, len);
+    ret = buffer_push(buf_snk, item);
 }
 
 static void notify_to_break_event_loop(struct network_agent *na)
@@ -55,7 +53,7 @@ static void *network_agent_loop(void *arg)
 }
 
 
-struct network_agent *network_agent_create(struct buffer_ctx *buf_src, struct buffer_ctx *buf_snk)
+struct network_agent *network_agent_create(char *url, struct buffer_ctx *buf_src, struct buffer_ctx *buf_snk)
 {
     network_agent_t *na = NULL;
     int fds[2];
@@ -64,8 +62,8 @@ struct network_agent *network_agent_create(struct buffer_ctx *buf_src, struct bu
     if (!na) {
         return NULL;
     }
-    na->pc = protocol_new("udp://127.0.0.1:2333");
-//    na->pc = protocol_new("udp://192.168.1.103:2333");
+//    na->pc = protocol_new("udp://127.0.0.1:2333");
+    na->pc = protocol_new(url);
     if (!na->pc) {
         return NULL;
     }
@@ -79,7 +77,8 @@ struct network_agent *network_agent_create(struct buffer_ctx *buf_src, struct bu
 
     na->buf_src = buf_src;
     na->buf_snk = buf_snk;
-    na->ev_read = event_new(na->ev_base, buf_src->pipe_rfd, EV_READ|EV_PERSIST, on_buffer_read, na);
+    printf("on read fd = %d\n", na->pc->fd);
+    na->ev_read = event_new(na->ev_base, na->pc->fd, EV_READ|EV_PERSIST, on_udp_read, na);
     if (!na->ev_read) {
         return NULL;
     }

@@ -24,7 +24,7 @@ typedef struct network_agent {
     struct buffer_ctx *buf_snk;
 } network_agent_t;
 
-struct network_agent *network_agent_create(struct buffer_ctx *qin, struct buffer_ctx *qout);
+struct network_agent *network_agent_create(char *url, struct buffer_ctx *qin, struct buffer_ctx *qout);
 int network_agent_dispatch(struct network_agent *na);
 void network_agent_destroy(struct network_agent *na);
 

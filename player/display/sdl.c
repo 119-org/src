@@ -147,20 +147,19 @@ static int yuv_surface_update(struct sdl_ctx *c, void *in)
     AVFrame *avfrm = (AVFrame *)in;
     SDL_Rect rect;
     SDL_Overlay *overlay = c->yuv->overlay;
-//    SDL_LockYUVOverlay(overlay);
+    SDL_LockYUVOverlay(overlay);
     overlay->pixels[0] = avfrm->data[0];
     overlay->pixels[2] = avfrm->data[1];
     overlay->pixels[1] = avfrm->data[2];
     overlay->pitches[0] = avfrm->linesize[0];
     overlay->pitches[2] = avfrm->linesize[1];
     overlay->pitches[1] = avfrm->linesize[2];
-//    SDL_UnlockYUVOverlay(overlay);
     rect.x = 0;
     rect.y = 0;
     rect.w = c->width;
     rect.h = c->height;
     SDL_DisplayYUVOverlay(overlay, &rect);
-//    SDL_Delay(40);
+    SDL_UnlockYUVOverlay(overlay);
     return 0;
 }
 

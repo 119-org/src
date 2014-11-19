@@ -31,8 +31,6 @@ static void on_buffer_read(int fd, short what, void *arg)
         if (len == -1) {
             printf("protocol_write failed!\n");
         }
-//    printf("%s:%d protocol_write len=%d\n", __func__, __LINE__, len);
-//        buffer_item_free(item);
     }
 }
 static void *display_agent_loop(void *arg)
