@@ -19,139 +19,73 @@
 #ifndef FALSE
 #define FALSE (0 == 1)
 #endif
+struct my_struct {
+    ptcp_socket_t *ps;
+    int fd;
+};
 
-typedef void (*timeout_func_t)(union sigval sv);
 
-static void adjust_clock(ptcp_socket_t *ps);
-
-static void notify_clock(union sigval sv)
-{
-    void *data = (void *)sv.sival_ptr;
-    ptcp_socket_t *sock = (ptcp_socket_t *)data;
-    printf("Socket %p: Notifying clock\n", sock);
-    ptcp_notify_clock(sock);
-    adjust_clock(sock);
-//    return FALSE;
-}
-
-uint32_t add_timer(uint64_t msec, timeout_func_t func, void *data)
-{
-    timer_t timerid;
-    struct sigevent sev;
-    struct itimerspec its;
-
-    memset(&sev, 0, sizeof(struct sigevent));
-
-    sev.sigev_notify = SIGEV_THREAD;
-    sev.sigev_notify_function = func;
-    sev.sigev_value.sival_ptr = data;
-
-    if (timer_create(CLOCK_REALTIME, &sev, &timerid) == -1) {
-        perror("timer_create");
-        return -1;
-    }
-
-    its.it_value.tv_sec = msec/1000;
-    its.it_value.tv_nsec = 0;
-    its.it_interval.tv_sec = its.it_value.tv_sec;
-    its.it_interval.tv_nsec = its.it_value.tv_nsec;
-
-    if (timer_settime(timerid, 0, &its, NULL) == -1) {
-        perror("timer_settime");
-        return -1;
-    }
-
-    return timerid;
-}
-
-int del_timer(uint32_t id)
-{
-    return timer_delete(id);
-}
-
-uint32_t clock_id = 0;
-static void adjust_clock(ptcp_socket_t *ps)
-{
-    uint64_t timeout = 0;
-
-    if (ptcp_get_next_clock(ps, &timeout)) {
-        timeout -= get_monotonic_time () / 1000;
-        printf("Socket %p: Adjusting clock to %llu ms\n", ps, timeout);
-        if (clock_id != 0)
-            del_timer(clock_id);
-        clock_id = add_timer(timeout, notify_clock, ps);
-    } else {
-        printf("Socket %p should be destroyed, it's done\n", ps);
-    }
-}
-
-void on_opened(ptcp_socket_t *p, void *data)
-{
-    printf("%s:%d xxxx\n", __func__, __LINE__);
-
-}
-
-void on_readable(ptcp_socket_t *p, void *data)
-{
-    printf("%s:%d xxxx\n", __func__, __LINE__);
-
-}
-
-void on_writable(ptcp_socket_t *p, void *data)
-{
-    printf("%s:%d xxxx\n", __func__, __LINE__);
-
-}
-
-void on_closed(ptcp_socket_t *p, uint32_t error, void *data)
-{
-    printf("%s:%d xxxx\n", __func__, __LINE__);
-
-}
-
-ptcp_write_result_t write(ptcp_socket_t *p, const char *buf, uint32_t len, void *data)
-{
-    printf("%s:%d xxxx\n", __func__, __LINE__);
-
-    return WR_SUCCESS;
-}
-
-void recv_msg(int fd)
-{
-    int ret;
-    char buf[1024] = {0};
-    ret = recv(fd, buf, sizeof(buf), 0);
-    if (ret == -1) {
-        printf("%s:%d: errno = %d: %s\n", __func__, __LINE__, errno, strerror(errno));
-    }
-    printf("\nrecv msg> %s\n", buf);
-}
-
-int server(const char *local_ip, uint16_t local_port)
+void printf_buf(const char *buf, uint32_t len)
 {
     int i;
-    int ret;
-    int epfd, fd;
-    struct in_addr sa;
+    for (i = 0; i < len; i++) {
+        if (!(i%16))
+           printf("\n0x%04x: ", buf+i);
+        printf("%02x ", (buf[i] & 0xFF));
+    }
+    printf("\n");
+}
+
+//=======================================================
+
+void recv_msg(struct my_struct *my)
+{
+    int len;
+    char buf[1024] = {0};
+
+    ptcp_read(my->ps, buf, 0, NULL);
+    len = ptcp_recv(my->ps, buf, 1024);
+    if (len > 0) {
+        printf("ptcp_recv len=%d, buf=%s\n", len, buf);
+    }
+}
+
+int server()
+{
+    int i, ret, epfd;
     struct epoll_event event;
     struct epoll_event evbuf[MAX_EPOLL_EVENT];
+    const char *host = "127.0.0.1";
+    uint16_t port = 4444;
+    struct sockaddr_in si;
+
+    ptcp_socket_t *ps = ptcp_socket();
+    if (ps == NULL) {
+        printf("error!\n");
+    }
+
+    si.sin_family = AF_INET;
+    si.sin_addr.s_addr = host ? inet_addr(host) : INADDR_ANY;
+    si.sin_port = htons(port);
+    __ptcp_bind(ps, (struct sockaddr*)&si, sizeof(si));
 
     epfd = epoll_create(1);
     if (epfd == -1) {
         perror("epoll_create");
         return -1;
     }
-
+    struct my_struct *my = (struct my_struct *)calloc(1, sizeof(*my));
+    my->ps = ps;
+    my->fd = ptcp_get_fd(ps);
     memset(&event, 0, sizeof(event));
-    event.data.fd = fd;
+    event.data.ptr = my;
     event.events = EPOLLIN | EPOLLET;
 
-    if (-1 == epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &event)) {
+    if (-1 == epoll_ctl(epfd, EPOLL_CTL_ADD, my->fd, &event)) {
         perror("epoll_ctl");
         close(epfd);
         return -1;
     }
-
     while (1) {
         ret = epoll_wait(epfd, evbuf, MAX_EPOLL_EVENT, -1);
         if (ret == -1) {
@@ -168,29 +102,111 @@ int server(const char *local_ip, uint16_t local_port)
                 perror("epoll out");
             }
             if (evbuf[i].events & EPOLLIN) {
-                recv_msg(evbuf[i].data.fd);
+                recv_msg(evbuf[i].data.ptr);
             }
         }
     }
 }
 
+static void *cli_send_thread(void *arg)
+{
+    struct ptcp_socket_t *p = (struct ptcp_socket_t *)arg;
+    char buf[10] = {0};
+    int i, len;
+    sleep(1);
+    for (i = 0; i < 1000; i++) {
+        usleep(100 * 1000);
+        snprintf(buf, sizeof(buf), "client %d", i);
+        len = ptcp_send(p, buf, sizeof(buf));
+        printf("ptcp_send len=%d, buf=%s\n", len, buf);
+    }
+    __ptcp_close(p);
+}
+
+
+void cli_recv_msg(struct my_struct *my)
+{
+    char buf[1024] = {0};
+    ptcp_read(my->ps, buf, 0, NULL);
+}
+
 int client()
 {
-    ptcp_callbacks_t cbs = {
-        NULL, on_opened, on_readable, on_writable, on_closed, write
-    };
-    ptcp_socket_t *ps = ptcp_create(&cbs);
+    pthread_t tid;
+    int ret;
+    int epfd;
+    struct epoll_event event;
+    struct epoll_event evbuf[MAX_EPOLL_EVENT];
+    int i;
+    const char *host = "127.0.0.1";
+    uint16_t port = 4444;
+    struct sockaddr_in si;
+    
+    ptcp_socket_t *ps = ptcp_socket();
     if (ps == NULL) {
         printf("error!\n");
     }
-    ptcp_notify_mtu(ps, 1496);
-    ptcp_connect(ps);
-    adjust_clock(ps);
+
+    si.sin_family = AF_INET;
+    si.sin_addr.s_addr = inet_addr(host);
+    si.sin_port = htons(port);
+    if (0 != __ptcp_connect(ps, (struct sockaddr*)&si, sizeof(si))) {
+        printf("ptcp_connect failed!\n");
+    } else {
+        printf("ptcp_connect success\n");
+    }
+
+    struct my_struct *my = (struct my_struct *)calloc(1, sizeof(*my));
+    epfd = epoll_create(1);
+    if (epfd == -1) {
+        perror("epoll_create");
+        return -1;
+    }
+    
+    my->ps = ps;
+    my->fd = ptcp_get_fd(ps);
+    memset(&event, 0, sizeof(event));
+    event.data.ptr = my;
+    event.events = EPOLLIN | EPOLLET;
+
+    if (-1 == epoll_ctl(epfd, EPOLL_CTL_ADD, my->fd, &event)) {
+        perror("epoll_ctl");
+        close(epfd);
+        return -1;
+    }
+
+    pthread_create(&tid, NULL, cli_send_thread, ps);
+    while (1) {
+        ret = epoll_wait(epfd, evbuf, MAX_EPOLL_EVENT, -1);
+        if (ret == -1) {
+            perror("epoll_wait");
+            continue;
+        }
+        for (i = 0; i < ret; i++) {
+            if (evbuf[i].data.fd == -1)
+                continue;
+            if (evbuf[i].events & (EPOLLERR | EPOLLHUP)) {
+                perror("epoll error");
+            }
+            if (evbuf[i].events & EPOLLOUT) {
+                perror("epoll out");
+            }
+            if (evbuf[i].events & EPOLLIN) {
+                cli_recv_msg(evbuf[i].data.ptr);
+            }
+        }
+    }
 }
 
 int main(int argc, char **argv)
 {
-    client();
-    sleep(10);
+    if (argc != 2) {
+        printf("./test -c / -s\n");
+        return 0;
+    }
+    if (!strcmp(argv[1], "-c"))
+        client();
+    if (!strcmp(argv[1], "-s"))
+        server();
     return 0;
 }

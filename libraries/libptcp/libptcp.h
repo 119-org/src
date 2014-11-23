@@ -86,7 +86,9 @@ int ptcp_is_closed_remotely(ptcp_socket_t *p);
 void ptcp_get_option(ptcp_option_t opt, int *value);
 void ptcp_set_option(ptcp_option_t opt, int value);
 
+ptcp_write_result_t ptcp_write(ptcp_socket_t *p, const char *buf, uint32_t len, void *data);
 
+ptcp_write_result_t ptcp_read(ptcp_socket_t *p, const char *buf, uint32_t len, void *data);
 
 #ifdef __cplusplus
 }

@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <assert.h>
 #include <time.h>
+#include <signal.h>
 #include <errno.h>
 #include <arpa/inet.h>
 
@@ -381,6 +382,11 @@ typedef enum {
 
 
 struct _ptcp_socket {
+//=================
+  int fd;
+  struct sockaddr_in si;
+  timer_t timer_id;
+//=================
   ptcp_callbacks_t callbacks;
 
   Shutdown shutdown;  /* only used if !support_fin_ack */
@@ -481,7 +487,7 @@ static int parse (ptcp_socket_t *self,
     const uint8_t *data_buf, size_t data_buf_len);
 static int process(ptcp_socket_t *self, Segment *seg);
 static int transmit(ptcp_socket_t *self, SSegment *sseg, uint32_t now);
-static void attempt_send(ptcp_socket_t *self, SendFlags sflags);
+static int attempt_send(ptcp_socket_t *self, SendFlags sflags);
 static void closedown (ptcp_socket_t *self, uint32_t err,
     ClosedownSource source);
 static void adjustMTU(ptcp_socket_t *self);
@@ -545,9 +551,11 @@ void ptcp_destroy(ptcp_socket_t *ps)
   while ((sseg = queue_pop_head(&ps->slist)))
     free(sseg);
   queue_clear(&ps->unsent_slist);
+  if (ps->rlist) {
   list_for_each_safe(i, next, &ps->rlist->entry) {
     RSegment *rseg = (RSegment *)container_of(i, list_t, entry);
     free(rseg);   
+  }
   }
   free(ps->rlist);
   ps->rlist = NULL;
@@ -559,6 +567,8 @@ void ptcp_destroy(ptcp_socket_t *ps)
   ps = NULL;
 }
 
+static void notify_clock(union sigval sv);
+uint32_t timeout_add(uint64_t msec, void (*func)(union sigval sv), void *data);
 
 ptcp_socket_t *ptcp_create(ptcp_callbacks_t *cbs)
 {
@@ -567,6 +577,7 @@ ptcp_socket_t *ptcp_create(ptcp_callbacks_t *cbs)
     ptcp_log(LOG_ERR, "malloc failed!\n");
     return NULL;
   }
+  ps->timer_id = timeout_add(0, notify_clock, ps);
   ps->callbacks = *cbs;
   ps->shutdown = SD_NONE;
   ps->error = 0;
@@ -668,9 +679,7 @@ int ptcp_connect(ptcp_socket_t *p)
   set_state(p, TCP_SYN_SENT);
 
   queue_connect_message(p);
-  attempt_send(p, sfNone);
-
-  return TRUE;
+  return attempt_send(p, sfNone);
 }
 
 void ptcp_notify_mtu(ptcp_socket_t *ps, uint16_t mtu)
@@ -953,23 +962,27 @@ ptcp_recv(ptcp_socket_t *ps, void *buffer, size_t len)
 }
 
 int
-ptcp_socket_send(ptcp_socket_t *ps, const char * buffer, uint32_t len)
+ptcp_send(ptcp_socket_t *ps, const void * buffer, size_t len)
 {
   int written;
   size_t available_space;
 
+    printf("%s:%d xxxx\n", __func__, __LINE__);
   if (ps->state != TCP_ESTABLISHED) {
     ps->error = ptcp_state_has_sent_fin (ps->state) ? EPIPE : ENOTCONN;
     return -1;
   }
+    printf("%s:%d xxxx\n", __func__, __LINE__);
 
   available_space = ptcp_fifo_get_write_remaining (&ps->sbuf);
 
+    printf("%s:%d xxxx\n", __func__, __LINE__);
   if (!available_space) {
     ps->bWriteEnable = TRUE;
     ps->error = EWOULDBLOCK;
     return -1;
   }
+    printf("%s:%d xxxx\n", __func__, __LINE__);
 
   written = queue (ps, buffer, len, FLAG_NONE);
   attempt_send(ps, sfNone);
@@ -977,6 +990,7 @@ ptcp_socket_send(ptcp_socket_t *ps, const char * buffer, uint32_t len)
   if (written > 0 && (uint32_t)written < len) {
     ps->bWriteEnable = TRUE;
   }
+    printf("%s:%d xxxx\n", __func__, __LINE__);
 
   return written;
 }
@@ -1635,6 +1649,7 @@ process(ptcp_socket_t *ps, Segment *seg)
 
       if (seg->seq == ps->rcv_nxt) {
         list_t *iter = NULL;
+        list_t *next = NULL;
 
         ptcp_fifo_consume_write_buffer (&ps->rbuf, seg->len);
         ps->rcv_nxt += seg->len;
@@ -1660,7 +1675,8 @@ process(ptcp_socket_t *ps, Segment *seg)
           iter = ps->rlist;
         }
 #else
-        list_for_each_entry(iter, &ps->rlist->entry, entry) {
+        if (ps->rlist) {
+        list_for_each_entry_safe(iter, next, &ps->rlist->entry, entry) {
           if (!SMALLER_OR_EQUAL(((RSegment *)iter->data)->seq, ps->rcv_nxt)) {
                 break;
           }
@@ -1677,6 +1693,7 @@ process(ptcp_socket_t *ps, Segment *seg)
           free(iter->data);
           list_del(&iter->entry);
         }
+      }
 #endif
       } else {
 #if 0
@@ -1818,7 +1835,7 @@ transmit(ptcp_socket_t *ps, SSegment *segment, uint32_t now)
   return TRUE;
 }
 
-static void
+static int
 attempt_send(ptcp_socket_t *ps, SendFlags sflags)
 {
   uint32_t now = get_current_time (ps);
@@ -1873,7 +1890,7 @@ attempt_send(ptcp_socket_t *ps, SendFlags sflags)
 
     if (nAvailable == 0 && sflags != sfFin && sflags != sfRst) {
       if (sflags == sfNone)
-        return;
+        return -1;
 
       // If this is an immediate ack, or the second delayed ack
       if ((sflags == sfImmediateAck) || ps->t_ack) {
@@ -1881,7 +1898,7 @@ attempt_send(ptcp_socket_t *ps, SendFlags sflags)
       } else {
         ps->t_ack = now;
       }
-      return;
+      return -1;
     }
 
     // Nagle algorithm
@@ -1891,13 +1908,13 @@ attempt_send(ptcp_socket_t *ps, SendFlags sflags)
     if (ps->use_nagling && sflags != sfFin && sflags != sfRst &&
         (ps->snd_nxt > ps->snd_una) &&
         (nAvailable < ps->mss))  {
-      return;
+      return -1;
     }
 
     // Find the next segment to transmit
     iter = queue_peek_head_link (&ps->unsent_slist);
     if (iter == NULL)
-      return;
+      return -1;
     sseg = iter->data;
 
     // If the segment is too large, break it into two
@@ -1916,12 +1933,13 @@ attempt_send(ptcp_socket_t *ps, SendFlags sflags)
     if (!transmit(ps, sseg, now)) {
 //      DEBUG (PSEUDO_TCP_DEBUG_NORMAL, "transmit failed");
       // TODO: consider closing socket
-      return;
+      return -1;
     }
 
     if (sflags == sfImmediateAck || sflags == sfDelayedAck)
       sflags = sfNone;
   }
+  return 0;
 }
 
 /* If @source is %CLOSEDOWN_REMOTE, don’t send an RST packet, since closedown()
@@ -2273,4 +2291,188 @@ int
 ptcp_is_closed_remotely (ptcp_socket_t *ps)
 {
   return ptcp_state_has_received_fin (ps->state);
+}
+
+//===========================
+uint32_t timeout_add(uint64_t msec, void (*func)(union sigval sv), void *data)
+{
+    timer_t timerid;
+    struct sigevent sev;
+    struct itimerspec its;
+
+    memset(&sev, 0, sizeof(struct sigevent));
+
+    sev.sigev_notify = SIGEV_THREAD;
+    sev.sigev_notify_function = func;
+    sev.sigev_value.sival_ptr = data;
+
+    if (timer_create(CLOCK_REALTIME, &sev, &timerid) == -1) {
+        perror("timer_create");
+        return -1;
+    }
+
+#if 0
+    its.it_value.tv_sec = msec/1000;
+    its.it_value.tv_nsec = 0;
+    its.it_interval.tv_sec = its.it_value.tv_sec;
+    its.it_interval.tv_nsec = its.it_value.tv_nsec;
+
+    if (timer_settime(timerid, 0, &its, NULL) == -1) {
+        perror("timer_settime");
+        return -1;
+    }
+#endif
+
+    return timerid;
+}
+
+int del_timer(uint32_t id)
+{
+    return timer_delete(id);
+}
+
+static void clock_reset(ptcp_socket_t *p, uint64_t timeout)
+{
+    timer_t *timer_id = &p->timer_id; 
+    struct itimerspec its;
+
+    its.it_value.tv_sec = timeout / 1000; 
+    its.it_value.tv_nsec = timeout % 1000 * 1000000;
+    its.it_interval.tv_sec = 0; 
+    its.it_interval.tv_nsec = 0; 
+    if (timer_settime(*timer_id, 0, &its, NULL) < 0) {
+        perror("timer_settime");
+        printf("time = %ld s, %ld ns\n", 
+                    its.it_value.tv_sec, its.it_value.tv_nsec );
+    }
+}
+
+static void adjust_clock(ptcp_socket_t *p);
+static void notify_clock(union sigval sv)
+{
+    void *data = (void *)sv.sival_ptr;
+    ptcp_socket_t *p = (ptcp_socket_t *)data;
+//    printf("Socket %p: Notifying clock\n", p);
+    ptcp_notify_clock(p);
+    adjust_clock(p);
+}
+
+static void adjust_clock(ptcp_socket_t *p)
+{
+    uint64_t timeout = 0;
+    if (ptcp_get_next_clock(p, &timeout)) {
+        timeout -= get_monotonic_time () / 1000;
+//        printf("Socket %p: Adjusting clock to %llu ms\n", p, timeout);
+        clock_reset(p, timeout);
+//        if (p->timer_id != 0)
+//            del_timer(p->timer_id);
+//        p->timer_id = timeout_add(timeout, notify_clock, p);
+    } else {
+        printf("Socket %p should be destroyed, it's done\n", p);
+    }
+}
+
+
+ptcp_write_result_t ptcp_write(ptcp_socket_t *p, const char *buf, uint32_t len, void *data)
+{
+    ssize_t res;
+    res = sendto(p->fd, buf, len, 0, (struct sockaddr *)&p->si, sizeof(struct sockaddr));
+    if (-1 == res) {
+        printf("sendto error: %s\n", strerror(errno));
+    }
+    adjust_clock(p);
+    if (res < len) {
+        return WR_FAIL;
+    }
+    return WR_SUCCESS;
+}
+
+ptcp_write_result_t ptcp_read(ptcp_socket_t *p, const char *buf, uint32_t len, void *data)
+{
+    ssize_t res;
+#define RECV_BUF_LEN (64*1024)
+    char rbuf[RECV_BUF_LEN] = {0};
+    socklen_t addrlen = sizeof(struct sockaddr);
+    res = recvfrom(p->fd, rbuf, sizeof(rbuf), MSG_DONTWAIT,
+                (struct sockaddr *)&p->si, &addrlen);
+    ptcp_notify_packet(p, rbuf, res);
+    adjust_clock(p);
+    if (res < 0) {
+        return WR_FAIL;
+    }
+    return WR_SUCCESS;
+}
+void on_opened(ptcp_socket_t *p, void *data)
+{
+//    printf("%s:%d xxxx\n", __func__, __LINE__);
+}
+void on_readable(ptcp_socket_t *p, void *data)
+{
+//    printf("%s:%d xxxx\n", __func__, __LINE__);
+}
+void on_writable(ptcp_socket_t *p, void *data)
+{
+//    printf("%s:%d xxxx\n", __func__, __LINE__);
+}
+void on_closed(ptcp_socket_t *p, uint32_t error, void *data)
+{
+//    printf("%s:%d xxxx\n", __func__, __LINE__);
+}
+
+
+ptcp_socket_t *ptcp_socket()
+{
+    int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (-1 == fd) {
+        return NULL;
+    }
+    ptcp_callbacks_t cbs = {NULL,
+                            on_opened,
+                            on_readable,
+                            on_writable,
+                            on_closed,
+                            ptcp_write};
+    ptcp_socket_t *p = ptcp_create(&cbs);
+    p->fd = fd;
+    ptcp_notify_mtu(p, 1496);
+    return p;
+}
+
+int ptcp_get_fd(ptcp_socket_t *p)
+{
+    return p->fd;
+}
+
+int __ptcp_connect(ptcp_socket_t *p, const struct sockaddr *addr,
+                   socklen_t addrlen)
+{
+    if (-1 == connect(p->fd, addr, addrlen)) {
+        printf("connect error: %s\n", strerror(errno));
+        return -1;
+    }
+    memcpy(&p->si, (struct sockaddr_in *)addr, addrlen);
+    ptcp_connect(p);
+    return 0;
+}
+
+int  __ptcp_bind(ptcp_socket_t *p, const struct sockaddr *addr,
+                socklen_t addrlen)
+{
+    if (-1 == bind(p->fd, addr, addrlen)) {
+        printf("bind error: %s\n", strerror(errno));
+        return -1;
+    }
+    memcpy(&p->si, (struct sockaddr_in *)&addr, addrlen);
+    return 0;
+}
+
+int __ptcp_listen(ptcp_socket_t *p, int backlog)
+{
+
+}
+
+void __ptcp_close(ptcp_socket_t *p)
+{
+    ptcp_close(p, 0);
+    ptcp_destroy(p);
 }
