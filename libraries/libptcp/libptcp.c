@@ -6,6 +6,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <arpa/inet.h>
+#include <sys/epoll.h>
 
 #include "ut_utils.h"
 #include "ut_list.h"
@@ -2475,4 +2476,82 @@ void __ptcp_close(ptcp_socket_t *p)
 {
     ptcp_close(p, 0);
     ptcp_destroy(p);
+}
+
+struct my_struct {
+    ptcp_socket_t *ps;
+    int fd;
+};
+#define MAX_EPOLL_EVENT 16
+
+
+static void recv_msg(struct my_struct *my)
+{
+    int len;
+    char buf[1024] = {0};
+
+    ptcp_read(my->ps, buf, 0, NULL);
+#if 0
+    len = ptcp_recv(my->ps, buf, 1024);
+    if (len > 0) {
+        printf("ptcp_recv len=%d, buf=%s\n", len, buf);
+    }
+#endif
+}
+
+
+int ptcp_server_init(const char *host, uint16_t port)
+{
+    int i, ret, epfd;
+    struct epoll_event event;
+    struct epoll_event evbuf[MAX_EPOLL_EVENT];
+    struct sockaddr_in si;
+
+    ptcp_socket_t *ps = ptcp_socket();
+    if (ps == NULL) {
+        printf("error!\n");
+    }
+
+    si.sin_family = AF_INET;
+    si.sin_addr.s_addr = host ? inet_addr(host) : INADDR_ANY;
+    si.sin_port = htons(port);
+    __ptcp_bind(ps, (struct sockaddr*)&si, sizeof(si));
+
+    epfd = epoll_create(1);
+    if (epfd == -1) {
+        perror("epoll_create");
+        return -1;
+    }
+    struct my_struct *my = (struct my_struct *)calloc(1, sizeof(*my));
+    my->ps = ps;
+    my->fd = ptcp_get_fd(ps);
+    memset(&event, 0, sizeof(event));
+    event.data.ptr = my;
+    event.events = EPOLLIN | EPOLLET;
+
+    if (-1 == epoll_ctl(epfd, EPOLL_CTL_ADD, my->fd, &event)) {
+        perror("epoll_ctl");
+        close(epfd);
+        return -1;
+    }
+    while (1) {
+        ret = epoll_wait(epfd, evbuf, MAX_EPOLL_EVENT, -1);
+        if (ret == -1) {
+            perror("epoll_wait");
+            continue;
+        }
+        for (i = 0; i < ret; i++) {
+            if (evbuf[i].data.fd == -1)
+                continue;
+            if (evbuf[i].events & (EPOLLERR | EPOLLHUP)) {
+                perror("epoll error");
+            }
+            if (evbuf[i].events & EPOLLOUT) {
+                perror("epoll out");
+            }
+            if (evbuf[i].events & EPOLLIN) {
+                recv_msg(evbuf[i].data.ptr);
+            }
+        }
+    }
 }
