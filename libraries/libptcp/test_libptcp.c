@@ -19,11 +19,6 @@
 #ifndef FALSE
 #define FALSE (0 == 1)
 #endif
-struct my_struct {
-    ptcp_socket_t *ps;
-    int fd;
-};
-
 
 void printf_buf(const char *buf, uint32_t len)
 {
@@ -46,6 +41,8 @@ void recv_msg(struct my_struct *my)
     ptcp_read(my->ps, buf, 0, NULL);
     len = ptcp_recv(my->ps, buf, 1024);
     if (len > 0) {
+        printf("ptcp_recv len=%d, buf=%s\n", len, buf);
+    } else {
         printf("ptcp_recv len=%d, buf=%s\n", len, buf);
     }
 }

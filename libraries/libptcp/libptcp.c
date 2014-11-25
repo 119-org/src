@@ -968,22 +968,18 @@ ptcp_send(ptcp_socket_t *ps, const void * buffer, size_t len)
   int written;
   size_t available_space;
 
-    printf("%s:%d xxxx\n", __func__, __LINE__);
   if (ps->state != TCP_ESTABLISHED) {
     ps->error = ptcp_state_has_sent_fin (ps->state) ? EPIPE : ENOTCONN;
     return -1;
   }
-    printf("%s:%d xxxx\n", __func__, __LINE__);
 
   available_space = ptcp_fifo_get_write_remaining (&ps->sbuf);
 
-    printf("%s:%d xxxx\n", __func__, __LINE__);
   if (!available_space) {
     ps->bWriteEnable = TRUE;
     ps->error = EWOULDBLOCK;
     return -1;
   }
-    printf("%s:%d xxxx\n", __func__, __LINE__);
 
   written = queue (ps, buffer, len, FLAG_NONE);
   attempt_send(ps, sfNone);
@@ -991,7 +987,6 @@ ptcp_send(ptcp_socket_t *ps, const void * buffer, size_t len)
   if (written > 0 && (uint32_t)written < len) {
     ps->bWriteEnable = TRUE;
   }
-    printf("%s:%d xxxx\n", __func__, __LINE__);
 
   return written;
 }
@@ -2478,12 +2473,6 @@ void __ptcp_close(ptcp_socket_t *p)
     ptcp_destroy(p);
 }
 
-struct my_struct {
-    ptcp_socket_t *ps;
-    int fd;
-};
-#define MAX_EPOLL_EVENT 16
-
 
 static void recv_msg(struct my_struct *my)
 {
@@ -2500,7 +2489,7 @@ static void recv_msg(struct my_struct *my)
 }
 
 
-int ptcp_server_init(const char *host, uint16_t port)
+static int ptcp_server_init(const char *host, uint16_t port)
 {
     int i, ret, epfd;
     struct epoll_event event;

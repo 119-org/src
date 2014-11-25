@@ -9,6 +9,13 @@ extern "C" {
 #include <stddef.h>
 
 typedef struct _ptcp_socket ptcp_socket_t;
+struct my_struct {
+    ptcp_socket_t *ps;
+    int fd;
+    int epfd;
+};
+#define MAX_EPOLL_EVENT 16
+
 
 typedef enum {
     PSEUDO_TCP_DEBUG_NONE = 0,
