@@ -69,13 +69,18 @@ typedef enum {
 
 
 
+ptcp_socket_t *ptcp_socket();
 ptcp_socket_t *ptcp_create(ptcp_callbacks_t *cbs);
 void ptcp_destroy(ptcp_socket_t *p);
 
-int ptcp_connect(ptcp_socket_t *p);
+int ptcp_bind(ptcp_socket_t *p, const struct sockaddr *addr,
+                socklen_t addrlen);
+int ptcp_listen(ptcp_socket_t *p, int backlog);
+int ptcp_connect(ptcp_socket_t *p, const struct sockaddr *addr,
+                   socklen_t addrlen);
 int ptcp_recv(ptcp_socket_t *p, void *buf, size_t len);
 int ptcp_send(ptcp_socket_t *p, const void *buf, size_t len);
-void ptcp_close(ptcp_socket_t *p, int force);
+void ptcp_close(ptcp_socket_t *p);
 void ptcp_shutdown(ptcp_socket_t *p, ptcp_shutdown_t how);
 int ptcp_get_error(ptcp_socket_t *p);
 int ptcp_get_next_clock(ptcp_socket_t *p, uint64_t *timeout);
@@ -93,9 +98,6 @@ int ptcp_is_closed_remotely(ptcp_socket_t *p);
 void ptcp_get_option(ptcp_option_t opt, int *value);
 void ptcp_set_option(ptcp_option_t opt, int value);
 
-ptcp_write_result_t ptcp_write(ptcp_socket_t *p, const char *buf, uint32_t len, void *data);
-
-ptcp_write_result_t ptcp_read(ptcp_socket_t *p, const char *buf, uint32_t len, void *data);
 
 #ifdef __cplusplus
 }

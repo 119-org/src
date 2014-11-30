@@ -3,7 +3,8 @@ CC	= gcc
 LD	= ld
 
 CFLAGS	:= -g -Wall -fPIC
-#CFLAGS	+= -Werror
+CFLAGS	+= -Werror
+CFLAGS	+= -D__STDC_FORMAT_MACROS
 LDFLAGS	:= -lrt -lpthread
 
 TGT_LIB_A	= libptcp.a
@@ -15,7 +16,7 @@ OBJS_UNIT_TEST	= test_libptcp.o
 
 .PHONY : all clean
 
-all: $(TGT_LIB_A) $(TGT_LIB_SO) $(TGT_UNIT_TEST) test_file
+all: $(TGT_LIB_A) $(TGT_LIB_SO) $(TGT_UNIT_TEST) # test_file
 
 %.o:%.c
 	$(CC) -c $(CFLAGS) $< -o $@

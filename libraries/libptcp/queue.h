@@ -34,11 +34,14 @@ static inline void queue_clear(queue_t *q)
     if (q == NULL) {
         return;
     }
-    list_t *iter;
-    list_for_each_entry(iter, &q->member.entry, entry) {
-        if (iter->data)
-            free(iter->data);
+    list_t *iter = NULL;
+    list_t *next = NULL;
+    list_for_each_entry_safe(iter, next, &q->member.entry, entry) {
         list_del(&iter->entry);
+        if (!iter) {
+            continue;
+        }
+        free(iter->data);
         free(iter);
     }
     q->length = 0;

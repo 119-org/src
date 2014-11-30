@@ -4,7 +4,11 @@
 #include <assert.h>
 #include <time.h>
 #include <signal.h>
+#include <unistd.h>
 #include <errno.h>
+#include <inttypes.h>
+#include <pthread.h>
+#include <semaphore.h>
 #include <arpa/inet.h>
 #include <sys/epoll.h>
 
@@ -22,6 +26,7 @@
 #define FALSE (0 == 1)
 #endif
 
+#define MAX_EPOLL_EVENT 16
 
 //////////////////////////////////////////////////////////////////////
 // Network Constants
@@ -387,6 +392,7 @@ struct _ptcp_socket {
   int fd;
   struct sockaddr_in si;
   timer_t timer_id;
+  sem_t sem;
 //=================
   ptcp_callbacks_t callbacks;
 
@@ -494,7 +500,7 @@ static void closedown (ptcp_socket_t *self, uint32_t err,
 static void adjustMTU(ptcp_socket_t *self);
 static void parse_options (ptcp_socket_t *self, const uint8_t *data,
     uint32_t len);
-static void resize_send_buffer (ptcp_socket_t *self, uint32_t new_size);
+//static void resize_send_buffer (ptcp_socket_t *self, uint32_t new_size);
 static void resize_receive_buffer (ptcp_socket_t *self, uint32_t new_size);
 static void set_state (ptcp_socket_t *self, ptcp_state_t new_state);
 static void set_state_established (ptcp_socket_t *self);
@@ -569,7 +575,7 @@ void ptcp_destroy(ptcp_socket_t *ps)
 }
 
 static void notify_clock(union sigval sv);
-uint32_t timeout_add(uint64_t msec, void (*func)(union sigval sv), void *data);
+timer_t timeout_add(uint64_t msec, void (*func)(union sigval sv), void *data);
 
 ptcp_socket_t *ptcp_create(ptcp_callbacks_t *cbs)
 {
@@ -579,6 +585,7 @@ ptcp_socket_t *ptcp_create(ptcp_callbacks_t *cbs)
     return NULL;
   }
   ps->timer_id = timeout_add(0, notify_clock, ps);
+  sem_init(&ps->sem, 0, 0);
   ps->callbacks = *cbs;
   ps->shutdown = SD_NONE;
   ps->error = 0;
@@ -670,7 +677,7 @@ static void queue_rst_message(ptcp_socket_t *ps)
   queue (ps, "", 0, FLAG_RST);
 }
 
-int ptcp_connect(ptcp_socket_t *p)
+static int _ptcp_connect(ptcp_socket_t *p)
 {
   if (p->state != TCP_LISTEN) {
     p->error = EINVAL;
@@ -992,7 +999,7 @@ ptcp_send(ptcp_socket_t *ps, const void * buffer, size_t len)
 }
 
 void
-ptcp_close(ptcp_socket_t *ps, int force)
+_ptcp_close(ptcp_socket_t *ps, int force)
 {
 //  DEBUG (PSEUDO_TCP_DEBUG_NORMAL, "Closing socket %p %s", ps,
 //      force ? "forcefully" : "gracefully");
@@ -1707,19 +1714,22 @@ process(ptcp_socket_t *ps, Segment *seg)
         ps->rlist = g_list_insert_before(ps->rlist, iter, rseg);
 #else
         list_t *iter = NULL;
+        list_t *next = NULL;
         RSegment *rseg = (RSegment *)calloc(1, sizeof(RSegment));
 
 //        DEBUG (PSEUDO_TCP_DEBUG_NORMAL, "Saving %d bytes (%d -> %d)",
 //            seg->len, seg->seq, seg->seq + seg->len);
         rseg->seq = seg->seq;
         rseg->len = seg->len;
-        list_for_each_entry(iter, &ps->rlist->entry, entry) {
+        if (ps->rlist) {
+        list_for_each_entry_safe(iter, next, &ps->rlist->entry, entry) {
           if (!SMALLER (((RSegment*)iter->data)->seq, rseg->seq)) {
             break;
           }
         }
         iter->data = rseg;
         list_add_tail(&iter->entry, &ps->rlist->entry);
+        }
 #endif
       }
     }
@@ -1814,8 +1824,10 @@ transmit(ptcp_socket_t *ps, SSegment *segment, uint32_t now)
   }
 
   if (segment->xmit == 0) {
-    assert (queue_peek_head (&ps->unsent_slist) == segment);
-    queue_pop_head (&ps->unsent_slist);
+    //assert (queue_peek_head (&ps->unsent_slist) == segment);
+    if (queue_peek_head (&ps->unsent_slist) == segment) {
+      queue_pop_head (&ps->unsent_slist);
+    }
     ps->snd_nxt += segment->len;
 
     /* FIN flags require acknowledgement. */
@@ -2114,12 +2126,14 @@ parse_options (ptcp_socket_t *ps, const uint8_t *data, uint32_t len)
   }
 }
 
+#if 0
 static void
 resize_send_buffer (ptcp_socket_t *ps, uint32_t new_size)
 {
   ps->sbuf_len = new_size;
   ptcp_fifo_set_capacity (&ps->sbuf, new_size);
 }
+#endif
 
 
 static void
@@ -2217,9 +2231,9 @@ set_state (ptcp_socket_t *ps, ptcp_state_t new_state)
   if (new_state == old_state)
     return;
 
-//  DEBUG (PSEUDO_TCP_DEBUG_NORMAL, "State %s → %s.",
-//      ptcp_state_get_name (old_state),
-//      ptcp_state_get_name (new_state));
+  printf("State %s → %s.\n",
+      ptcp_state_get_name (old_state),
+      ptcp_state_get_name (new_state));
 
   /* Check whether it’s a valid state transition. */
 #define TRANSITION(OLD, NEW) \
@@ -2290,11 +2304,10 @@ ptcp_is_closed_remotely (ptcp_socket_t *ps)
 }
 
 //===========================
-uint32_t timeout_add(uint64_t msec, void (*func)(union sigval sv), void *data)
+timer_t timeout_add(uint64_t msec, void (*func)(union sigval sv), void *data)
 {
-    timer_t timerid;
+    timer_t timerid = (timer_t)-1;
     struct sigevent sev;
-    struct itimerspec its;
 
     memset(&sev, 0, sizeof(struct sigevent));
 
@@ -2304,25 +2317,12 @@ uint32_t timeout_add(uint64_t msec, void (*func)(union sigval sv), void *data)
 
     if (timer_create(CLOCK_REALTIME, &sev, &timerid) == -1) {
         perror("timer_create");
-        return -1;
     }
-
-#if 0
-    its.it_value.tv_sec = msec/1000;
-    its.it_value.tv_nsec = 0;
-    its.it_interval.tv_sec = its.it_value.tv_sec;
-    its.it_interval.tv_nsec = its.it_value.tv_nsec;
-
-    if (timer_settime(timerid, 0, &its, NULL) == -1) {
-        perror("timer_settime");
-        return -1;
-    }
-#endif
 
     return timerid;
 }
 
-int del_timer(uint32_t id)
+int del_timer(timer_t id)
 {
     return timer_delete(id);
 }
@@ -2358,7 +2358,7 @@ static void adjust_clock(ptcp_socket_t *p)
     uint64_t timeout = 0;
     if (ptcp_get_next_clock(p, &timeout)) {
         timeout -= get_monotonic_time () / 1000;
-//        printf("Socket %p: Adjusting clock to %llu ms\n", p, timeout);
+//        printf("Socket %p: Adjusting clock to %"PRIu64" ms\n", p, timeout);
         clock_reset(p, timeout);
 //        if (p->timer_id != 0)
 //            del_timer(p->timer_id);
@@ -2369,7 +2369,7 @@ static void adjust_clock(ptcp_socket_t *p)
 }
 
 
-ptcp_write_result_t ptcp_write(ptcp_socket_t *p, const char *buf, uint32_t len, void *data)
+static ptcp_write_result_t ptcp_write(ptcp_socket_t *p, const char *buf, uint32_t len, void *data)
 {
     ssize_t res;
     res = sendto(p->fd, buf, len, 0, (struct sockaddr *)&p->si, sizeof(struct sockaddr));
@@ -2383,7 +2383,7 @@ ptcp_write_result_t ptcp_write(ptcp_socket_t *p, const char *buf, uint32_t len, 
     return WR_SUCCESS;
 }
 
-ptcp_write_result_t ptcp_read(ptcp_socket_t *p, const char *buf, uint32_t len, void *data)
+static ptcp_write_result_t ptcp_read(ptcp_socket_t *p, void *buf, size_t len)
 {
     ssize_t res;
 #define RECV_BUF_LEN (64*1024)
@@ -2401,6 +2401,8 @@ ptcp_write_result_t ptcp_read(ptcp_socket_t *p, const char *buf, uint32_t len, v
 void on_opened(ptcp_socket_t *p, void *data)
 {
 //    printf("%s:%d xxxx\n", __func__, __LINE__);
+    sem_post(&p->sem);
+  
 }
 void on_readable(ptcp_socket_t *p, void *data)
 {
@@ -2434,95 +2436,39 @@ ptcp_socket_t *ptcp_socket()
     return p;
 }
 
-int ptcp_get_fd(ptcp_socket_t *p)
+static void event_read(void *arg)
 {
-    return p->fd;
-}
-
-int __ptcp_connect(ptcp_socket_t *p, const struct sockaddr *addr,
-                   socklen_t addrlen)
-{
-    if (-1 == connect(p->fd, addr, addrlen)) {
-        printf("connect error: %s\n", strerror(errno));
-        return -1;
-    }
-    memcpy(&p->si, (struct sockaddr_in *)addr, addrlen);
-    ptcp_connect(p);
-    return 0;
-}
-
-int  __ptcp_bind(ptcp_socket_t *p, const struct sockaddr *addr,
-                socklen_t addrlen)
-{
-    if (-1 == bind(p->fd, addr, addrlen)) {
-        printf("bind error: %s\n", strerror(errno));
-        return -1;
-    }
-    memcpy(&p->si, (struct sockaddr_in *)&addr, addrlen);
-    return 0;
-}
-
-int __ptcp_listen(ptcp_socket_t *p, int backlog)
-{
-
-}
-
-void __ptcp_close(ptcp_socket_t *p)
-{
-    ptcp_close(p, 0);
-    ptcp_destroy(p);
-}
-
-
-static void recv_msg(struct my_struct *my)
-{
-    int len;
+    ptcp_socket_t *ps = (ptcp_socket_t *)arg;
     char buf[1024] = {0};
-
-    ptcp_read(my->ps, buf, 0, NULL);
-#if 0
-    len = ptcp_recv(my->ps, buf, 1024);
-    if (len > 0) {
-        printf("ptcp_recv len=%d, buf=%s\n", len, buf);
-    }
-#endif
+    ptcp_read(ps, buf, sizeof(buf));
+//    printf("%s:%d xxxx\n", __func__, __LINE__);
 }
 
-
-static int ptcp_server_init(const char *host, uint16_t port)
+static void *event_loop(void *arg)
 {
-    int i, ret, epfd;
-    struct epoll_event event;
+    struct _ptcp_socket *ps = (struct _ptcp_socket *)arg;
+    int epfd;
+    int ret, i;
     struct epoll_event evbuf[MAX_EPOLL_EVENT];
-    struct sockaddr_in si;
+    struct epoll_event event;
 
-    ptcp_socket_t *ps = ptcp_socket();
-    if (ps == NULL) {
-        printf("error!\n");
-    }
-
-    si.sin_family = AF_INET;
-    si.sin_addr.s_addr = host ? inet_addr(host) : INADDR_ANY;
-    si.sin_port = htons(port);
-    __ptcp_bind(ps, (struct sockaddr*)&si, sizeof(si));
-
+    int fd = ps->fd;
     epfd = epoll_create(1);
     if (epfd == -1) {
         perror("epoll_create");
-        return -1;
+        return NULL;
     }
-    struct my_struct *my = (struct my_struct *)calloc(1, sizeof(*my));
-    my->ps = ps;
-    my->fd = ptcp_get_fd(ps);
+    
     memset(&event, 0, sizeof(event));
-    event.data.ptr = my;
+    event.data.ptr = ps;
     event.events = EPOLLIN | EPOLLET;
 
-    if (-1 == epoll_ctl(epfd, EPOLL_CTL_ADD, my->fd, &event)) {
+    if (-1 == epoll_ctl(epfd, EPOLL_CTL_ADD, fd, &event)) {
         perror("epoll_ctl");
         close(epfd);
-        return -1;
+        return NULL;
     }
+
     while (1) {
         ret = epoll_wait(epfd, evbuf, MAX_EPOLL_EVENT, -1);
         if (ret == -1) {
@@ -2539,8 +2485,66 @@ static int ptcp_server_init(const char *host, uint16_t port)
                 perror("epoll out");
             }
             if (evbuf[i].events & EPOLLIN) {
-                recv_msg(evbuf[i].data.ptr);
+                event_read(evbuf[i].data.ptr);
             }
         }
     }
+    return NULL;
 }
+
+int ptcp_connect(ptcp_socket_t *p, const struct sockaddr *addr,
+                   socklen_t addrlen)
+{
+    pthread_t tid;
+    if (-1 == connect(p->fd, addr, addrlen)) {
+        printf("connect error: %s\n", strerror(errno));
+        return -1;
+    }
+    memcpy(&p->si, (struct sockaddr_in *)addr, addrlen);
+
+    pthread_create(&tid, NULL, event_loop, p);
+    if (-1 == _ptcp_connect(p)) {
+        printf("ptcp_connect failed\n");
+    }
+    sem_wait(&p->sem);
+    return 0;
+}
+
+int ptcp_bind(ptcp_socket_t *p, const struct sockaddr *addr,
+                socklen_t addrlen)
+{
+    if (-1 == bind(p->fd, addr, addrlen)) {
+        printf("bind error: %s\n", strerror(errno));
+        return -1;
+    }
+    memcpy(&p->si, (struct sockaddr_in *)&addr, addrlen);
+    return 0;
+}
+
+int ptcp_listen(ptcp_socket_t *p, int backlog)
+{
+    pthread_t tid;
+
+    pthread_create(&tid, NULL, event_loop, p);
+    sem_wait(&p->sem);
+    return 0;
+}
+
+void ptcp_close(ptcp_socket_t *p)
+{
+    _ptcp_close(p, 0);
+    ptcp_destroy(p);
+}
+
+#if 0
+static void printf_buf(const char *buf, uint32_t len)
+{
+    int i;
+    for (i = 0; i < len; i++) {
+        if (!(i%16))
+           printf("\n0x%04x: ", buf[i]);
+        printf("%02x ", (buf[i] & 0xFF));
+    }
+    printf("\n");
+}
+#endif

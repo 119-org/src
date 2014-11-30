@@ -203,7 +203,7 @@ ptcp_socket_t *ptcp_server_init(const char *host, uint16_t port)
     si.sin_family = AF_INET;
     si.sin_addr.s_addr = host ? inet_addr(host) : INADDR_ANY;
     si.sin_port = htons(port);
-    __ptcp_bind(ps, (struct sockaddr*)&si, sizeof(si));
+    ptcp_bind(ps, (struct sockaddr*)&si, sizeof(si));
 
     epfd = epoll_create(1);
     if (epfd == -1) {
@@ -266,7 +266,7 @@ static void *cli_send_thread(void *arg)
         len = fread(buf, 1, sizeof(buf), g_sfp);
         if (len == -1) {
             printf("%s:%d xxxx\n", __func__, __LINE__);
-            ptcp_close(ps, 1);
+            ptcp_close(ps);
             fclose(g_sfp);
             return -1;
         }
@@ -275,7 +275,7 @@ static void *cli_send_thread(void *arg)
         flen -= len;
     }
 
-    __ptcp_close(ps);
+    ptcp_close(ps);
 }
 
 
@@ -298,7 +298,7 @@ ptcp_socket_t *ptcp_client_init(const char *host, uint16_t port)
     si.sin_family = AF_INET;
     si.sin_addr.s_addr = inet_addr(host);
     si.sin_port = htons(port);
-    if (0 != __ptcp_connect(ps, (struct sockaddr*)&si, sizeof(si))) {
+    if (0 != ptcp_connect(ps, (struct sockaddr*)&si, sizeof(si))) {
         printf("ptcp_connect failed!\n");
     } else {
         printf("ptcp_connect success\n");
@@ -365,7 +365,7 @@ int ptcp_file_send(char *name)
         len = fread(buf, 1, sizeof(buf), fp);
         if (len == -1) {
             printf("%s:%d xxxx\n", __func__, __LINE__);
-            ptcp_close(ps, 1);
+            ptcp_close(ps);
             fclose(fp);
             return -1;
         }
@@ -374,7 +374,7 @@ int ptcp_file_send(char *name)
         flen -= len;
     }
     sleep(1);
-    ptcp_close(ps, 1);
+    ptcp_close(ps);
     fclose(fp);
     printf("file %s length is %u\n", name, flen);
     return total;
