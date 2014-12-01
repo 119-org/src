@@ -949,6 +949,7 @@ ptcp_recv(ptcp_socket_t *ps, void *buffer, size_t len)
   if (bytesread == 0) {
     ps->bReadEnable = TRUE;
     ps->error = EWOULDBLOCK;
+    printf("%s:%d xxxx\n", __func__, __LINE__);
     return -1;
   }
 
@@ -985,6 +986,7 @@ ptcp_send(ptcp_socket_t *ps, const void * buffer, size_t len)
   if (!available_space) {
     ps->bWriteEnable = TRUE;
     ps->error = EWOULDBLOCK;
+    printf("%s:%d xxxx\n", __func__, __LINE__);
     return -1;
   }
 

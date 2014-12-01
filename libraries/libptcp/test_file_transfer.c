@@ -259,17 +259,21 @@ int file_send(char *name, struct xfer_callback *cbs)
 
     sleep(1);
     while (flen > 0) {
-        usleep(80 *1000);
+        printf("%s:%d xxxx\n", __func__, __LINE__);
         len = fread(buf, 1, sizeof(buf), fp);
         if (len == -1) {
-            printf("%s:%d xxxx\n", __func__, __LINE__);
             cbs->xfer_close(arg);
             fclose(fp);
             return -1;
         }
+        while (1) {
         slen = cbs->xfer_send(arg, buf, len);
         if (slen <= 0) {
-            printf("%s:%d slen=%d, len=%d\n", __func__, __LINE__, slen, len);
+            printf("xfer_send error: %d\n", cbs->xfer_errno(arg));
+            usleep(500 *1000);
+            continue;
+        }
+        break;
         }
         //assert(slen==len);
         flen -= len;
