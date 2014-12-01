@@ -46,7 +46,17 @@ long filesize(FILE *fd)
     return length;
 }
 
-int tcp_server_init(const char *host, uint16_t port)
+struct xfer_callback {
+    void *(*xfer_server_init)(const char *host, uint16_t port);
+    void *(*xfer_client_init)(const char *host, uint16_t port);
+    int (*xfer_send)(void *arg, void *buf, size_t len);
+    int (*xfer_recv)(void *arg, void *buf, size_t len);
+    int (*xfer_close)(void *arg);
+    int (*xfer_errno)(void *arg);
+};
+
+//=====================tcp=======================
+void *tcp_server_init(const char *host, uint16_t port)
 {
     int fd;
     struct sockaddr_in si;
@@ -58,118 +68,136 @@ int tcp_server_init(const char *host, uint16_t port)
     fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (-1 == fd) {
         printf("socket: %s\n", strerror(errno));
-        return -1;
+        return NULL;
     }
     if (-1 == bind(fd, (struct sockaddr*)&si, sizeof(si))) {
         printf("bind: %s\n", strerror(errno));
         close(fd);
-        return -1;
+        return NULL;
     }
     if (-1 == listen(fd, SOMAXCONN)) {
         printf("listen: %s\n", strerror(errno));
         close(fd);
-        return -1;
+        return NULL;
     }
 
-    int afd = accept(fd, (struct sockaddr *)&si, &len);
-    if (afd == -1) {
+    int *afd = (int *)calloc(1, sizeof(int));
+    *afd = accept(fd, (struct sockaddr *)&si, &len);
+    if (*afd == -1) {
         printf("accept: %s\n", strerror(errno));
-        return -1;
+        return NULL;
     }
-    return afd;
+    return (void *)afd;
 }
 
-int tcp_client_init(const char *host, uint16_t port)
+void *tcp_client_init(const char *host, uint16_t port)
 {
-    int fd;
+    int *fd = (int *)calloc(1, sizeof(int));
     struct sockaddr_in si;
-    fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (-1 == fd) {
+    *fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (-1 == *fd) {
         printf("socket: %s\n", strerror(errno));
-        return -1;
+        return NULL;
     }
     si.sin_family = AF_INET;
     si.sin_addr.s_addr = inet_addr(host);
     si.sin_port = htons(port);
 
-    if (-1 == connect(fd, (struct sockaddr*)&si, sizeof(si))) {
+    if (-1 == connect(*fd, (struct sockaddr*)&si, sizeof(si))) {
         printf("connect: %s\n", strerror(errno));
-        close(fd);
-        return -1;
+        close(*fd);
+        return NULL;
     }
-    return fd;
+    return (void *)fd;
 }
 
-int tcp_client_send(int fd, void *buf, size_t len)
+int tcp_send(void *arg, void *buf, size_t len)
 {
-    return send(fd, buf, len, 0);
+    int *fd = (int *)arg;
+    return send(*fd, buf, len, 0);
 }
 
-int tcp_server_recv(int fd, void *buf, size_t len)
+int tcp_recv(void *arg, void *buf, size_t len)
 {
-    return recv(fd, buf, len, 0);
+    int *fd = (int *)arg;
+    return recv(*fd, buf, len, 0);
 }
 
-int tcp_close(int fd)
+int tcp_close(void *arg)
 {
-    return close(fd);
+    int *fd = (int *)arg;
+    return close(*fd);
 }
 
-int udp_server_init(const char *host, uint16_t port)
+int tcp_errno(void *arg)
 {
-    int fd;
+    return errno;
+}
+
+//=================udp=======================
+void *udp_server_init(const char *host, uint16_t port)
+{
+    int *fd = (int *)calloc(1, sizeof(int));
     struct sockaddr_in si;
-    fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (-1 == fd) {
+    *fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (-1 == *fd) {
         printf("socket: %s\n", strerror(errno));
-        return -1;
+        return NULL;
     }
     si.sin_family = AF_INET;
     si.sin_addr.s_addr = inet_addr(host);
     si.sin_port = htons(port);
 
-    if (-1 == bind(fd, (struct sockaddr*)&si, sizeof(si))) {
+    if (-1 == bind(*fd, (struct sockaddr*)&si, sizeof(si))) {
         printf("connect: %s\n", strerror(errno));
-        close(fd);
-        return -1;
+        close(*fd);
+        return NULL;
     }
-    return fd;
+    return (void *)fd;
 }
 
-int udp_client_init(const char *host, uint16_t port)
+void *udp_client_init(const char *host, uint16_t port)
 {
-    int fd;
+    int *fd = (int *)calloc(1, sizeof(int));
     struct sockaddr_in si;
-    fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (-1 == fd) {
+    *fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (-1 == *fd) {
         printf("socket: %s\n", strerror(errno));
-        return -1;
+        return NULL;
     }
     si.sin_family = AF_INET;
     si.sin_addr.s_addr = inet_addr(host);
     si.sin_port = htons(port);
 
-    if (-1 == connect(fd, (struct sockaddr*)&si, sizeof(si))) {
+    if (-1 == connect(*fd, (struct sockaddr*)&si, sizeof(si))) {
         printf("connect: %s\n", strerror(errno));
-        close(fd);
-        return -1;
+        close(*fd);
+        return NULL;
     }
-    return fd;
+    return (void *)fd;
 }
 
-int udp_client_send(int fd, void *buf, size_t len)
+int udp_send(void *arg, void *buf, size_t len)
 {
-    return send(fd, buf, len, 0);
+    int *fd = (int *)arg;
+    return send(*fd, buf, len, 0);
 }
 
-int udp_server_recv(int fd, void *buf, size_t len)
+int udp_recv(void *arg, void *buf, size_t len)
 {
-    return recv(fd, buf, len, 0);
+    int *fd = (int *)arg;
+    return recv(*fd, buf, len, 0);
 }
 
-int udp_close(int fd)
+int udp_close(void *arg)
 {
-    return close(fd);
+    int *fd = (int *)arg;
+    return close(*fd);
+}
+
+int udp_errno(void *arg)
+{
+    return errno;
 }
 
 int ptcp_file_send(char *name, const char *host, uint16_t port)
@@ -219,37 +247,104 @@ int ptcp_file_send(char *name, const char *host, uint16_t port)
     return total;
 }
 
-int file_send(char *name,
-              int (xfer_init)(const char *host, uint16_t port),
-              int (xfer_send)(int fd, void *buf, size_t len),
-              int (xfer_close(int fd)))
+int file_send(char *name, struct xfer_callback *cbs)
 {
     int len, flen, slen, total;
-    char buf[128] = {0};
+    char buf[1024] = {0};
     FILE *fp = fopen(name, "r");
     assert(fp);
     g_sfp = fp;
     total = flen = filesize(fp);
-    int xfd = xfer_init("127.0.0.1", 5555);
+    void *arg = cbs->xfer_client_init("127.0.0.1", 5555);
 
+    sleep(1);
     while (flen > 0) {
+        usleep(80 *1000);
         len = fread(buf, 1, sizeof(buf), fp);
         if (len == -1) {
             printf("%s:%d xxxx\n", __func__, __LINE__);
-            xfer_close(xfd);
+            cbs->xfer_close(arg);
             fclose(fp);
             return -1;
         }
-        slen = xfer_send(xfd, buf, len);
-        assert(slen==len);
+        slen = cbs->xfer_send(arg, buf, len);
+        if (slen <= 0) {
+            printf("%s:%d slen=%d, len=%d\n", __func__, __LINE__, slen, len);
+        }
+        //assert(slen==len);
         flen -= len;
     }
     sleep(1);
-    xfer_close(xfd);
+    cbs->xfer_close(arg);
     fclose(fp);
     printf("file %s length is %u\n", name, flen);
     return total;
 }
+
+void *ptcp_server_init(const char *host, uint16_t port)
+{
+    ptcp_socket_t *ps = ptcp_socket();
+    if (ps == NULL) {
+        printf("error!\n");
+        return NULL;
+    }
+
+    struct sockaddr_in si;
+    si.sin_family = AF_INET;
+    si.sin_addr.s_addr = host ? inet_addr(host) : INADDR_ANY;
+    si.sin_port = htons(port);
+
+    ptcp_bind(ps, (struct sockaddr*)&si, sizeof(si));
+    ptcp_listen(ps, 0);
+    return ps;
+}
+
+int _ptcp_recv(void *arg, void *buf, size_t len)
+{
+    ptcp_socket_t *ps = (ptcp_socket_t *)arg;
+    return ptcp_recv(ps, buf, len);
+}
+
+void *ptcp_client_init(const char *host, uint16_t port)
+{
+    ptcp_socket_t *ps = ptcp_socket();
+    if (ps == NULL) {
+        printf("error!\n");
+        return NULL;
+    }
+
+    struct sockaddr_in si;
+    si.sin_family = AF_INET;
+    si.sin_addr.s_addr = inet_addr(host);
+    si.sin_port = htons(port);
+    if (0 != ptcp_connect(ps, (struct sockaddr*)&si, sizeof(si))) {
+        printf("ptcp_connect failed!\n");
+    } else {
+        printf("ptcp_connect success\n");
+    }
+    return ps;
+}
+
+int _ptcp_send(void *arg, void *buf, size_t len)
+{
+    ptcp_socket_t *ps = (ptcp_socket_t *)arg;
+    return ptcp_send(ps, buf, len);
+}
+
+int _ptcp_close(void *arg)
+{
+    ptcp_socket_t *ps = (ptcp_socket_t *)arg;
+    ptcp_close(ps);
+    return 0;
+}
+
+
+int ptcp_errno(void *arg)
+{
+    ptcp_socket_t *ps = (ptcp_socket_t *)arg;
+    return ptcp_get_error(ps);
+}
+
 int ptcp_file_recv(char *name, const char *host, uint16_t port)
 {
     int len, flen, rlen;
@@ -278,61 +373,50 @@ int ptcp_file_recv(char *name, const char *host, uint16_t port)
         rlen = ptcp_recv(ps, buf, sizeof(buf));
         if (rlen > 0) {
             len = fwrite(buf, 1, rlen, fp);
+            assert(len==rlen);
+            flen += len;
         } else if (ptcp_is_closed(ps)) {
             printf("ptcp is closed\n");
             return -1;
         } else if (EWOULDBLOCK == ptcp_get_error(ps)){
             //printf("ptcp is error: %d\n", ptcp_get_error(ps));
             usleep(100 * 1000);
+            continue;
         }
-#if 0
-        memset(buf, 0, sizeof(buf));
-        rlen = xfer_recv(xfd, buf, sizeof(buf));
-        if (rlen == 0) {
-            printf("%s:%d xxxx\n", __func__, __LINE__);
-            xfer_close(xfd);
-            fclose(fp);
-            break;
-        } else if (rlen == -1) {
-            printf("%s:%d xxxx\n", __func__, __LINE__);
-            xfer_close(xfd);
-            fclose(fp);
-            return -1;
-        }
-#endif
-        assert(len==rlen);
-        flen += len;
     }
     return flen;
 }
 
-int file_recv(char *name,
-              int (xfer_init)(const char *host, uint16_t port),
-              int (xfer_recv)(int fd, void *buf, size_t len),
-              int (xfer_close(int fd)))
+int file_recv(char *name, struct xfer_callback *cbs)
 {
     int len, flen, rlen;
     char buf[128] = {0};
     FILE *fp = fopen(name, "w");
     assert(fp);
     g_rfp = fp;
-    int xfd = xfer_init("127.0.0.1", 5555);
-    assert(xfd!=-1);
+    void *arg = cbs->xfer_server_init("127.0.0.1", 5555);
+    assert(arg);
 
     flen = 0;
     while (1) {
         memset(buf, 0, sizeof(buf));
-        rlen = xfer_recv(xfd, buf, sizeof(buf));
+        rlen = cbs->xfer_recv(arg, buf, sizeof(buf));
         if (rlen == 0) {
             printf("%s:%d xxxx\n", __func__, __LINE__);
-            xfer_close(xfd);
+            cbs->xfer_close(arg);
             fclose(fp);
             break;
         } else if (rlen == -1) {
-            printf("%s:%d xxxx\n", __func__, __LINE__);
-            xfer_close(xfd);
-            fclose(fp);
-            return -1;
+            if (EWOULDBLOCK == cbs->xfer_errno(arg)){
+                //printf("ptcp is error!\n");
+                usleep(100 * 1000);
+                continue;
+            } else {
+                printf("%s:%d xxxx\n", __func__, __LINE__);
+                cbs->xfer_close(arg);
+                fclose(fp);
+                return -1;
+            }
         }
         len = fwrite(buf, 1, rlen, fp);
         assert(len==rlen);
@@ -346,6 +430,30 @@ static void sigterm_handler(int sig)
     exit(0);
 }
 
+struct xfer_callback tcp_cbs = {
+    tcp_server_init,
+    tcp_client_init,
+    tcp_send,
+    tcp_recv,
+    tcp_close,
+    tcp_errno
+};
+struct xfer_callback udp_cbs = {
+    udp_server_init,
+    udp_client_init,
+    udp_send,
+    udp_recv,
+    udp_close,
+    udp_errno
+};
+struct xfer_callback ptcp_cbs = {
+    ptcp_server_init,
+    ptcp_client_init,
+    _ptcp_send,
+    _ptcp_recv,
+    _ptcp_close,
+    ptcp_errno
+};
 int main(int argc, char **argv)
 {
     if (argc != 3) {
@@ -355,16 +463,15 @@ int main(int argc, char **argv)
     signal(SIGPIPE,SIG_IGN);
     signal(SIGINT, sigterm_handler);
 
-
+    struct xfer_callback *cbs;
+    cbs = &tcp_cbs;
+    cbs = &udp_cbs;
+    cbs = &ptcp_cbs;
     if (!strcmp(argv[1], "-s")) {
-//        file_send(argv[2], tcp_client_init, tcp_client_send, tcp_close);
-//        file_send(argv[2], udp_client_init, udp_client_send, udp_close);
-        ptcp_file_send(argv[2], "127.0.0.1", 5555);
+        file_send(argv[2], cbs);
     }
     if (!strcmp(argv[1], "-r")) {
-//        file_recv(argv[2], tcp_server_init, tcp_server_recv, tcp_close);
-//        file_recv(argv[2], udp_server_init, udp_server_recv, udp_close);
-        ptcp_file_recv(argv[2], "127.0.0.1", 5555);
+        file_recv(argv[2], cbs);
     }
     return 0;
 }

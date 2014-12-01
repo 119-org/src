@@ -998,7 +998,7 @@ ptcp_send(ptcp_socket_t *ps, const void * buffer, size_t len)
   return written;
 }
 
-void
+static void
 _ptcp_close(ptcp_socket_t *ps, int force)
 {
 //  DEBUG (PSEUDO_TCP_DEBUG_NORMAL, "Closing socket %p %s", ps,
@@ -1168,7 +1168,10 @@ packet(ptcp_socket_t *ps, uint32_t seq, TcpFlags flags,
 
     bytes_read = ptcp_fifo_read_offset (&ps->sbuf, buffer.u8 + HEADER_SIZE,
         len, offset);
-    assert (bytes_read == len);
+    //assert (bytes_read == len);
+    if (bytes_read != len) {
+      printf("bytes_read=%zd, len=%u\n", bytes_read, len);
+    }
   }
 
 //  DEBUG (PSEUDO_TCP_DEBUG_VERBOSE, "<-- <CONV=%d><FLG=%d><SEQ=%d:%d><ACK=%d>"
