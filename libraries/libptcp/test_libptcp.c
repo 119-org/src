@@ -17,7 +17,7 @@ int server(const char *host, uint16_t port)
 {
     int len;
     struct sockaddr_in si;
-    char buf[1024] = {0};
+    char buf[32] = {0};
 
     ptcp_socket_t *ps = ptcp_socket();
     if (ps == NULL) {
@@ -33,6 +33,7 @@ int server(const char *host, uint16_t port)
     ptcp_listen(ps, 0);
 
     while (1) {
+        memset(buf, 0, sizeof(buf));
         len = ptcp_recv(ps, buf, sizeof(buf));
         if (len > 0) {
             printf("ptcp_recv len=%d, buf=%s\n", len, buf);
@@ -73,7 +74,7 @@ int client(const char *host, uint16_t port)
         usleep(10 * 1000);
         memset(buf, 0, sizeof(buf));
         snprintf(buf, sizeof(buf), "client %d", i);
-        len = ptcp_send(ps, buf, sizeof(buf));
+        len = ptcp_send(ps, buf, strlen(buf));
         printf("ptcp_send i=%d, len=%d, buf=%s\n", i, len, buf);
     }
     sleep(1);

@@ -16,7 +16,7 @@ OBJS_UNIT_TEST	= test_libptcp.o
 
 .PHONY : all clean
 
-all: $(TGT_LIB_A) $(TGT_LIB_SO) $(TGT_UNIT_TEST) # test_file
+all: $(TGT_LIB_A) $(TGT_LIB_SO) $(TGT_UNIT_TEST) test_file
 
 %.o:%.c
 	$(CC) -c $(CFLAGS) $< -o $@
@@ -35,4 +35,4 @@ test_file: test_file_transfer.o
 
 clean:
 	rm -f *.o
-	rm -f $(TGT_LIB_A) $(TGT_LIB_SO) $(TGT_UNIT_TEST)
+	rm -f test_file $(TGT_LIB_A) $(TGT_LIB_SO) $(TGT_UNIT_TEST)
