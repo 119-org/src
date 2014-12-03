@@ -1,11 +1,12 @@
 #include <stdlib.h>
+#include <errno.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <assert.h>
 #include <time.h>
 #include <signal.h>
 #include <unistd.h>
-#include <errno.h>
 #include <inttypes.h>
 #include <pthread.h>
 #include <semaphore.h>
@@ -101,7 +102,7 @@ const uint16_t PACKET_MAXIMUMS[] = {
 
 // MIN_RTO = 250 ms (RFC1122, Sec 4.2.3.1 "fractions of a second")
 #define MIN_RTO      250
-#define DEF_RTO     3000 /* 3 seconds (RFC1122, Sec 4.2.3.1) */
+#define DEF_RTO     1000 /* 1 seconds (RFC 6298 sect 2.1) */
 #define MAX_RTO    60000 /* 60 seconds */
 #define DEFAULT_ACK_DELAY    100 /* 100 milliseconds */
 #define DEFAULT_NO_DELAY     FALSE
@@ -217,12 +218,15 @@ static void ptcp_fifo_init(PseudoTcpFifo *b, size_t size)
 {
   b->buffer = (uint8_t *)calloc(1, size);
   b->buffer_length = size;
+  printf("%s:%d b->buffer=%p, size=%zd\n", __func__, __LINE__, b->buffer, size);
 }
 
 static void ptcp_fifo_clear(PseudoTcpFifo *b)
 {
-  if (b->buffer)
+  if (b->buffer) {
+    printf("%s:%d b->buffer=%p, size=%zd\n", __func__, __LINE__, b->buffer, b->buffer_length);
     free(b->buffer);
+  }
   b->buffer = NULL;
   b->buffer_length = 0;
 }
@@ -949,7 +953,6 @@ ptcp_recv(ptcp_socket_t *ps, void *buffer, size_t len)
   if (bytesread == 0) {
     ps->bReadEnable = TRUE;
     ps->error = EWOULDBLOCK;
-    printf("%s:%d xxxx\n", __func__, __LINE__);
     return -1;
   }
 
@@ -2437,7 +2440,7 @@ ptcp_socket_t *ptcp_socket()
                             ptcp_write};
     ptcp_socket_t *p = ptcp_create(&cbs);
     p->fd = fd;
-    ptcp_notify_mtu(p, 1496);
+    ptcp_notify_mtu(p, 1460);
     return p;
 }
 
