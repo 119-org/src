@@ -72,7 +72,8 @@ struct avcodec_decode_agent *avcodec_decode_agent_create(struct buffer_ctx *buf_
     if (!na->pc) {
         return NULL;
     }
-    if (-1 == codec_open(na->pc, 640, 480)) {
+    //if (-1 == codec_open(na->pc, 640, 480)) {
+    if (-1 == codec_open(na->pc, 352, 288)) {
         return NULL;
     }
     na->ev_base = event_base_new();

@@ -37,6 +37,7 @@ int protocol_register_all()
     prt_registered = 1;
 
     REGISTER_PROTOCOL(udp);
+    REGISTER_PROTOCOL(ptcp);
     REGISTER_PROTOCOL(sdl);
 
     return 0;

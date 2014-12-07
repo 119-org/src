@@ -22,6 +22,7 @@ CFLAGS	+= $(CFLAGS_SDL)
 
 LDFLAGS	:=
 LDFLAGS	+= ../libraries/libskt/libskt.a
+LDFLAGS	+= ../libraries/libptcp/libptcp.a
 LDFLAGS	+= -lpthread -lrt
 LDFLAGS	+= $(LDFLAGS_SDL)
 LDFLAGS	+= $(LDFLAGS_X264)
@@ -43,6 +44,7 @@ BUFFER_OBJS := \
 PROTOCOL_OBJS := \
     protocol/protocol.o \
     protocol/udp.o \
+    protocol/ptcp.o \
     protocol/network_agent.o \
 
 DECODE_OBJS := \

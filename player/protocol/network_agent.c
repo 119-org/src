@@ -27,6 +27,10 @@ static void on_udp_read(int fd, short what, void *arg)
     int flen = 15000;
     void *buf = calloc(1, flen);
     len = protocol_read(na->pc, buf, flen);
+    if (len == -1) {
+        return;
+    }
+    printf("protocol_read len=%d\n", len);
     assert(len <= flen);
     item = buffer_item_new(buf, len);
     ret = buffer_push(buf_snk, item);
