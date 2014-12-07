@@ -7,14 +7,10 @@ extern "C" {
 
 #include <stdint.h>
 #include <stddef.h>
+#include <ifaddrs.h>
+#include <net/if.h>
 
 typedef struct _ptcp_socket ptcp_socket_t;
-struct my_struct {
-    ptcp_socket_t *ps;
-    int fd;
-    int epfd;
-};
-#define MAX_EPOLL_EVENT 16
 
 
 typedef enum {
@@ -70,8 +66,8 @@ typedef enum {
 
 
 ptcp_socket_t *ptcp_socket();
-ptcp_socket_t *ptcp_create(ptcp_callbacks_t *cbs);
-void ptcp_destroy(ptcp_socket_t *p);
+
+int ptcp_socket_fd(ptcp_socket_t *p);
 
 int ptcp_bind(ptcp_socket_t *p, const struct sockaddr *addr,
                 socklen_t addrlen);

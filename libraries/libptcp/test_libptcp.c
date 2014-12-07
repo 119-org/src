@@ -70,11 +70,13 @@ int client(const char *host, uint16_t port)
     }
 
     sleep(1);
-    for (i = 0; i < 100; i++) {
+    i = 1;
+    //for (i = 0; i < 100; i++) {
+    while (1) {
         usleep(10 * 1000);
         memset(buf, 0, sizeof(buf));
         snprintf(buf, sizeof(buf), "client %d", i);
-        len = ptcp_send(ps, buf, strlen(buf));
+        len = 0;//ptcp_send(ps, buf, strlen(buf));
         printf("ptcp_send i=%d, len=%d, buf=%s\n", i, len, buf);
     }
     sleep(1);
@@ -89,9 +91,10 @@ int main(int argc, char **argv)
         return 0;
     }
     if (!strcmp(argv[1], "-c"))
-        client("127.0.0.1", 4444);
+        //client("127.0.0.1", 2333);
+        client("192.168.1.103", 2333);
     if (!strcmp(argv[1], "-s"))
-        server("127.0.0.1", 4444);
+        server("127.0.0.1", 2333);
     while (1) {
         sleep(1);
     }

@@ -17,7 +17,6 @@
 #include "ut_list.h"
 #include "queue.h"
 #include "libptcp.h"
-#include "libptcp_log.h"
 
 #ifndef TRUE
 #define TRUE (1 == 1)
@@ -107,8 +106,8 @@ const uint16_t PACKET_MAXIMUMS[] = {
 #define DEFAULT_ACK_DELAY    100 /* 100 milliseconds */
 #define DEFAULT_NO_DELAY     FALSE
 
-#define DEFAULT_RCV_BUF_SIZE (60 * 1024)
-#define DEFAULT_SND_BUF_SIZE (90 * 1024)
+#define DEFAULT_RCV_BUF_SIZE (600 * 1024)
+#define DEFAULT_SND_BUF_SIZE (900 * 1024)
 
 /* NOTE: This must fit in 8 bits. This is used on the wire. */
 typedef enum {
@@ -392,6 +391,8 @@ typedef enum {
 
 
 struct _ptcp_socket {
+  int on_read_fd;
+  int on_write_fd;
 //=================
   int fd;
   struct sockaddr_in si;
@@ -585,7 +586,7 @@ ptcp_socket_t *ptcp_create(ptcp_callbacks_t *cbs)
 {
   ptcp_socket_t *ps = (ptcp_socket_t *)calloc(1, sizeof(ptcp_socket_t));
   if (ps == NULL) {
-    ptcp_log(LOG_ERR, "malloc failed!\n");
+    printf("malloc failed!\n");
     return NULL;
   }
   ps->timer_id = timeout_add(0, notify_clock, ps);
@@ -2399,12 +2400,15 @@ static ptcp_write_result_t ptcp_read(ptcp_socket_t *p, void *buf, size_t len)
     socklen_t addrlen = sizeof(struct sockaddr);
     res = recvfrom(p->fd, rbuf, sizeof(rbuf), MSG_DONTWAIT,
                 (struct sockaddr *)&p->si, &addrlen);
-    ptcp_notify_packet(p, rbuf, res);
-    adjust_clock(p);
-    if (res < 0) {
+    if (-1 == res) {
+        printf("recvfrom error: %s\n", strerror(errno));
         return WR_FAIL;
     }
-    return WR_SUCCESS;
+    if (TRUE == ptcp_notify_packet(p, rbuf, res)) {
+        adjust_clock(p);
+        return WR_SUCCESS;
+    }
+    return WR_FAIL;
 }
 void on_opened(ptcp_socket_t *p, void *data)
 {
@@ -2428,6 +2432,7 @@ void on_closed(ptcp_socket_t *p, uint32_t error, void *data)
 
 ptcp_socket_t *ptcp_socket()
 {
+    int fds[2];
     int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (-1 == fd) {
         return NULL;
@@ -2441,14 +2446,31 @@ ptcp_socket_t *ptcp_socket()
     ptcp_socket_t *p = ptcp_create(&cbs);
     p->fd = fd;
     ptcp_notify_mtu(p, 1460);
+
+    if (pipe(fds)) {
+        printf("create pipe failed: %s\n", strerror(errno));
+        return NULL;
+    }
+    p->on_read_fd = fds[0];
+    p->on_write_fd = fds[1];
     return p;
+}
+
+int ptcp_socket_fd(ptcp_socket_t *p)
+{
+    return p->on_read_fd;
 }
 
 static void event_read(void *arg)
 {
     ptcp_socket_t *ps = (ptcp_socket_t *)arg;
-    char buf[1024] = {0};
-    ptcp_read(ps, buf, sizeof(buf));
+    char notify = '1';
+    char buf[10240] = {0};
+    if (WR_SUCCESS == ptcp_read(ps, buf, sizeof(buf))) {
+        if (write(ps->on_write_fd, &notify, sizeof(notify)) != 1) {
+            printf("write pipe failed: %s\n", strerror(errno));
+        }
+    }
 //    printf("%s:%d xxxx\n", __func__, __LINE__);
 }
 
@@ -2540,6 +2562,8 @@ int ptcp_listen(ptcp_socket_t *p, int backlog)
 
 void ptcp_close(ptcp_socket_t *p)
 {
+    close(p->on_read_fd);
+    close(p->on_write_fd);
     _ptcp_close(p, 0);
     ptcp_destroy(p);
 }

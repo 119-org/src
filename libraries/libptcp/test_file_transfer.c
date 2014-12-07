@@ -273,7 +273,7 @@ int file_send(char *name, struct xfer_callback *cbs)
 
     sleep(1);
     while (flen > 0) {
-        usleep(200 * 1000);
+        usleep(20 * 1000);
         len = fread(buf, 1, sizeof(buf), fp);
         if (len == -1) {
             printf("%s:%d xxxx\n", __func__, __LINE__);
@@ -313,13 +313,10 @@ int file_recv(char *name, struct xfer_callback *cbs)
             if (ECLOSED == cbs->xfer_errno(arg)){
                 printf("xfer closed\n");
                 break;
-            } else if (EWOULDBLOCK == cbs->xfer_errno(arg)){
-                //printf("ptcp is error!\n");
+            } else {
+                printf("%s:%d errno:%d\n", __func__, __LINE__, cbs->xfer_errno(arg));
                 usleep(100 * 1000);
                 continue;
-            } else {
-                printf("%s:%d unknown error\n", __func__, __LINE__);
-                break;
             }
         }
         len = fwrite(buf, 1, rlen, fp);
