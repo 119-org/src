@@ -44,6 +44,8 @@ static int v4l2_set_format(struct v4l2_ctx *vc)
         printf("ioctl(VIDIOC_G_FMT) failed: %s\n", strerror(errno));
         return -1;
     }
+    pix->width = 352;
+    pix->height = 288;
     printf("pix.format: %d*%d\n", pix->width, pix->height);
     if (-1 == ioctl(vc->fd, VIDIOC_S_FMT, &fmt)) {
         printf("ioctl(VIDIOC_S_FMT) failed: %s\n", strerror(errno));

@@ -82,6 +82,7 @@ static int x264_encode(struct codec_ctx *cc, void *in, void **out)
             *(y++) = p422[j+2];
         }
     }
+    c->picture->i_type = X264_TYPE_I;
 
     if (x264_encoder_encode(c->handle, &(c->nal), &nNal, c->picture,
                 &pic_out) < 0) {

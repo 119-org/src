@@ -17,7 +17,7 @@
 #include "avcodec_decode_agent.h"
 #include "display_agent.h"
 
-#define TEST_DISPLAY 1
+#define TEST_DISPLAY 0
 typedef struct ipcam {
     struct video_capture_agent *vca;
     struct x264_encode_agent *xea;
@@ -56,7 +56,7 @@ struct ipcam *ipcam_init()
         return NULL;
     }
 
-#ifdef TEST_DISPLAY
+#if TEST_DISPLAY
     struct buffer_ctx *dec_buf_src = enc_buf_snk;
     struct buffer_ctx *dec_buf_snk = buffer_create(3);
     ipcam->avda = avcodec_decode_agent_create(dec_buf_src, dec_buf_snk);

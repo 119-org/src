@@ -29,7 +29,10 @@ static void on_buffer_read(int fd, short what, void *arg)
         len = protocol_write(na->pc, item->data, item->len);
         if (len == -1) {
             printf("protocol_write failed!\n");
+        } else {
+            printf("protocol_write success! len=%d\n", len);
         }
+        usleep(200 *1000);
         buffer_item_free(item);
     }
 }
@@ -64,8 +67,9 @@ struct network_agent *network_agent_create(struct buffer_ctx *buf_src, struct bu
     if (!na) {
         return NULL;
     }
-    na->pc = protocol_new("udp://127.0.0.1:2333");
+//    na->pc = protocol_new("udp://127.0.0.1:2333");
 //    na->pc = protocol_new("udp://192.168.1.103:2333");
+    na->pc = protocol_new("ptcp://192.168.1.103:2333");
     if (!na->pc) {
         return NULL;
     }
