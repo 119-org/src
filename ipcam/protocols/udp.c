@@ -81,7 +81,5 @@ struct protocol ipc_udp_protocol = {
     .read = udp_read,
     .write = udp_write,
     .close = udp_close,
-    .poll = NULL,
-    .handle = NULL,
     .priv_size = sizeof(struct udp_ctx),
 };

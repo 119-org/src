@@ -27,12 +27,12 @@ int parse_url(struct url *u, const char *input)
     return 0;
 }
 
-void dump_buffer(void *buf, int len)
+void dump_buffer(const char *buf, int len)
 {
     int i;
     for (i = 0; i < len; i++) {
-        if (i % 8 == 0)
-            printf("\n:\t");
+        if (!(i%16))
+           printf("\n%p: ", buf+i);
         printf("%02x ", (*((char *)buf + i)) & 0xff);
     }
 }

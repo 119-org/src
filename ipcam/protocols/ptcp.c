@@ -59,14 +59,14 @@ static int ptcp_open(struct protocol_ctx *sc, const char *url)
     return 0;
 }
 
-static int ptcp_read(struct protocol_ctx *sc, void *buf, int len)
+static int __ptcp_read(struct protocol_ctx *sc, void *buf, int len)
 {
 //    struct udp_ctx *c = sc->priv;
 //    return ptcp_recv(c->ps, c->dst_ip, c->dst_port, buf, len);
     return 0;
 }
 
-static int ptcp_write(struct protocol_ctx *sc, void *buf, int len)
+static int __ptcp_write(struct protocol_ctx *sc, void *buf, int len)
 {
     struct ptcp_ctx *c = sc->priv;
 #if 0
@@ -103,10 +103,8 @@ static void _ptcp_close(struct protocol_ctx *sc)
 struct protocol ipc_ptcp_protocol = {
     .name = "ptcp",
     .open = ptcp_open,
-    .read = ptcp_read,
-    .write = ptcp_write,
+    .read = __ptcp_read,
+    .write = __ptcp_write,
     .close = _ptcp_close,
-    .poll = NULL,
-    .handle = NULL,
     .priv_size = sizeof(struct ptcp_ctx),
 };

@@ -69,6 +69,7 @@ struct buffer_ctx *buffer_create(int max)
     pthread_mutex_init(&q->lock, NULL);
     if (pipe(fds)) {
         printf("create pipe failed: %s\n", strerror(errno));
+        free(q);
         return NULL;
     }
     q->depth = 0;
@@ -139,10 +140,10 @@ int buffer_get_depth(struct buffer_ctx *q)
 
 void buffer_destroy(struct buffer_ctx *q)
 {
+    struct buffer_item *item, *next;
     if (!q) {
         return;
     }
-    struct buffer_item *item, *next;
 
     list_for_each_entry_safe(item, next, &q->head, entry) {
         list_del(&item->entry);

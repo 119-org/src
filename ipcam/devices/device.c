@@ -63,7 +63,7 @@ struct device_ctx *device_new(const char *input)
         printf("%s protocol is not support!\n", sc->url.head);
         return NULL;
     }
-    printf("use %s device module\n", p->name);
+    printf("[device] %s module\n", p->name);
 
     sc->ops = p;
     sc->priv = calloc(1, p->priv_size);

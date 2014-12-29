@@ -21,8 +21,6 @@ struct protocol {
     int (*read)(struct protocol_ctx *c, void *buf, int len);
     int (*write)(struct protocol_ctx *c, void *buf, int len);
     void (*close)(struct protocol_ctx *c);
-    int (*poll)(struct protocol_ctx *c);
-    void (*handle)(struct protocol_ctx *c);
     int priv_size;
     struct protocol *next;
 };

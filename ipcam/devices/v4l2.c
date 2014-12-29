@@ -44,15 +44,21 @@ static int v4l2_set_format(struct v4l2_ctx *vc)
         printf("ioctl(VIDIOC_G_FMT) failed: %s\n", strerror(errno));
         return -1;
     }
-    pix->width = 352;
-    pix->height = 288;
-    printf("pix.format: %d*%d\n", pix->width, pix->height);
+    printf("v4l2 default pix format: %d*%d\n", pix->width, pix->height);
+
+    if (vc->width > 0 || vc->height > 0) {
+        //set v4l2 pixel format
+        pix->width = vc->width;
+        pix->height = vc->height;
+    } else {
+        vc->width = pix->width;
+        vc->height = pix->height;
+    }
+    printf("v4l2 using pix format: %d*%d\n", pix->width, pix->height);
     if (-1 == ioctl(vc->fd, VIDIOC_S_FMT, &fmt)) {
         printf("ioctl(VIDIOC_S_FMT) failed: %s\n", strerror(errno));
         return -1;
     }
-    vc->width = pix->width;
-    vc->height = pix->height;
 
     return 0;
 }
@@ -183,6 +189,8 @@ static int v4l2_open(struct device_ctx *dc, const char *dev)
         return -1;
     }
     vc->fd = fd;
+    vc->width = 320;
+    vc->height = 240;
 
     if (-1 == v4l2_set_format(vc)) {
         printf("v4l2_set_format failed\n");
@@ -193,7 +201,7 @@ static int v4l2_open(struct device_ctx *dc, const char *dev)
         goto fail;
     }
 
-    dc->fd = vc->on_read_fd;
+    dc->fd = vc->on_read_fd;//use pipe fd to trigger event
     dc->video.width = vc->width;
     dc->video.height = vc->height;
     return 0;

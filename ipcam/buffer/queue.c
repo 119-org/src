@@ -25,10 +25,15 @@ void queue_item_free(struct queue_item *item)
     free(item);
 }
 
-struct queue_ctx *queue_new(int max)
+struct queue *queue_new(int max)
 {
     int fds[2];
-    struct queue_ctx *q = (struct queue_ctx *)calloc(1, sizeof(struct queue_ctx));
+    struct queue *q;
+    if (max < 1) {
+        printf("warning: queue max depth must > 0\n");
+        max = 1;
+    }
+    q = (struct queue *)calloc(1, sizeof(struct queue));
     if (!q) {
         return NULL;
     }
@@ -36,17 +41,18 @@ struct queue_ctx *queue_new(int max)
     pthread_mutex_init(&q->lock, NULL);
     if (pipe(fds)) {
         printf("create pipe failed: %s\n", strerror(errno));
+        free(q);
         return NULL;
     }
     q->depth = 0;
     q->max_depth = max;
-    q->on_read_fd = fds[0];
-    q->on_write_fd = fds[1];
+    q->pipe_rfd = fds[0];
+    q->pipe_wfd = fds[1];
 
     return q;
 }
 
-int queue_push(struct queue_ctx *q, struct queue_item *item)
+int queue_push(struct queue *q, struct queue_item *item)
 {
     char notify = '1';
     if (!q || !item) {
@@ -55,7 +61,7 @@ int queue_push(struct queue_ctx *q, struct queue_item *item)
     pthread_mutex_lock(&q->lock);
     list_add_tail(&item->entry, &q->head);
     ++(q->depth);
-    if (write(q->on_write_fd, &notify, sizeof(notify)) != 1) {
+    if (write(q->pipe_wfd, &notify, sizeof(notify)) != 1) {
         printf("write pipe failed: %s\n", strerror(errno));
     }
     pthread_mutex_unlock(&q->lock);
@@ -65,7 +71,7 @@ int queue_push(struct queue_ctx *q, struct queue_item *item)
     return 0;
 }
 
-struct queue_item *queue_pop(struct queue_ctx *q)
+struct queue_item *queue_pop(struct queue *q)
 {
     if (!q) {
         return NULL;
@@ -80,7 +86,7 @@ struct queue_item *queue_pop(struct queue_ctx *q)
     if (item) {
         list_del(&item->entry);
         --(q->depth);
-        if (read(q->on_read_fd, &notify, sizeof(notify)) != 1) {
+        if (read(q->pipe_rfd, &notify, sizeof(notify)) != 1) {
             printf("read pipe failed: %s\n", strerror(errno));
         }
     }
@@ -88,7 +94,7 @@ struct queue_item *queue_pop(struct queue_ctx *q)
     return item;
 }
 
-int queue_empty(struct queue_ctx *q)
+int queue_empty(struct queue *q)
 {
     if (!q) {
         return 1;
@@ -96,7 +102,7 @@ int queue_empty(struct queue_ctx *q)
     return (q->depth == 0);
 }
 
-int queue_depth(struct queue_ctx *q)
+int queue_depth(struct queue *q)
 {
     if (!q) {
         return 0;
@@ -104,7 +110,7 @@ int queue_depth(struct queue_ctx *q)
     return q->depth;
 }
 
-void queue_free(struct queue_ctx *q)
+void queue_free(struct queue *q)
 {
     struct queue_item *item, *next;
     if (!q) {
@@ -116,7 +122,8 @@ void queue_free(struct queue_ctx *q)
         queue_item_free(item);
     }
     pthread_mutex_destroy(&q->lock);
-    close(q->on_read_fd);
-    close(q->on_write_fd);
+    close(q->pipe_rfd);
+    close(q->pipe_wfd);
     free(q);
+    q = NULL;
 }

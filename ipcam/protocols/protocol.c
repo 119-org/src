@@ -38,8 +38,8 @@ int protocol_register_all()
     prt_registered = 1;
 
     REGISTER_PROTOCOL(udp);
+    REGISTER_PROTOCOL(tcp);
     REGISTER_PROTOCOL(ptcp);
-    REGISTER_PROTOCOL(sdl);
 
     return 0;
 }
@@ -61,7 +61,7 @@ struct protocol_ctx *protocol_new(const char *input)
         printf("%s protocol is not support!\n", sc->url.head);
         return NULL;
     }
-    printf("use %s protocol module\n", p->name);
+    printf("[protocol] %s module\n", p->name);
 
     sc->ops = p;
     sc->priv = calloc(1, p->priv_size);
@@ -92,20 +92,6 @@ int protocol_write(struct protocol_ctx *c, void *buf, int len)
     return c->ops->write(c, buf, len);
 }
 
-int protocol_poll(struct protocol_ctx *c)
-{
-    if (!c->ops->poll)
-        return -1;
-    return c->ops->poll(c);
-}
-
-void protocol_handle(struct protocol_ctx *c)
-{
-    if (!c->ops->handle)
-        return;
-    return c->ops->handle(c);
-}
-
 void protocol_close(struct protocol_ctx *c)
 {
     if (!c->ops->close)
@@ -117,5 +103,6 @@ void protocol_free(struct protocol_ctx *sc)
 {
     if (!sc)
         return;
+    free(sc->priv);
     free(sc);
 }

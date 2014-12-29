@@ -7,7 +7,7 @@ CFLAGS_SDL	= `pkg-config --cflags sdl`
 LDFLAGS_SDL	= `pkg-config --libs sdl`
 LDFLAGS_X264	= -lx264
 LDFLAGS_ALSA	= -lasound
-LDFLAGS_LIBEVENT = -levent
+LDFLAGS_LIBEVENT = -levent -levent_pthreads
 LDFLAGS_FFMPEG	= `pkg-config --libs libavformat libavutil libavcodec libswscale`
 
 CFLAGS	:= -g -Wall
@@ -16,7 +16,9 @@ CFLAGS	+= -I$(TOPDIR)
 CFLAGS	+= -I./codecs
 CFLAGS	+= -I./devices
 CFLAGS	+= -I./protocols
+CFLAGS	+= -I./display
 CFLAGS	+= -I./buffer
+CFLAGS	+= -I./agent
 CFLAGS	+= -I./utils
 CFLAGS	+= -I../libraries
 CFLAGS	+= $(CFLAGS_SDL)
@@ -33,10 +35,9 @@ LDFLAGS += $(LDFLAGS_LIBEVENT)
 
 .PHONY : all clean
 
-TGT := ipcam test_libevent
+TGT := test_libevent ipcam 
 
 DEVICE_OBJS := \
-    devices/video_capture_agent.o \
     devices/device.o \
     devices/v4l2.o \
     devices/alsa.o
@@ -44,32 +45,42 @@ DEVICE_OBJS := \
 PROTOCOL_OBJS := \
     protocols/protocol.o \
     protocols/udp.o \
-    protocols/ptcp.o \
-    protocols/sdl.o \
-    protocols/network_agent.o \
-    protocols/display_agent.o
+    protocols/tcp.o \
+    protocols/ptcp.o
+
+DISPLAY_OBJS := \
+    display/display.o \
+    display/sdl.o
 
 CODEC_OBJS := \
     codecs/codec.o \
     codecs/x264_enc.o \
-    codecs/avcodec_dec.o \
-    codecs/x264_encode_agent.o \
-    codecs/avcodec_decode_agent.o
+    codecs/avcodec_dec.o
 
 BUFFER_OBJS := \
     buffer/queue.o \
+    buffer/yqueue.o \
     buffer/buffer.o
 
 UTILS_OBJS := \
     utils/atomic.o \
     utils/common.o
 
+AGENT_OBJS := \
+    agent/agent.o \
+    agent/videocap_agent.o \
+    agent/x264enc_agent.o \
+    agent/display_agent.o \
+    agent/upstream_agent.o
+
 IPCAM_OBJS := \
     $(DEVICE_OBJS) \
     $(PROTOCOL_OBJS) \
+    $(DISPLAY_OBJS) \
     $(CODEC_OBJS) \
     $(BUFFER_OBJS) \
     $(UTILS_OBJS) \
+    $(AGENT_OBJS) \
     main.o 
 
 UNITTEST_OBJS := \

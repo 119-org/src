@@ -17,7 +17,6 @@ struct url {
 };
 
 int parse_url(struct url *u, const char *input);
-void dump_buffer(void *buf, int len);
 
 struct frame {
     void *addr;
@@ -31,6 +30,7 @@ struct packet {
     int index;
 };
 
+void dump_buffer(const char *buf, int len);
 
 #ifdef __cplusplus
 }

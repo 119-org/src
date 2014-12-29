@@ -120,10 +120,60 @@ int test_event_base()
     return 0;
 }
 
+static void on_write(int fd, short what, void *arg)
+{
+    int rfd = *(int *)arg;
+    char ch;
+    read(rfd, &ch, 1);
+    printf("%s:%d fd = %d, rfd = %d, ch = %c\n", __func__, __LINE__, fd, rfd, ch);
+}
+
+static void on_read(int fd, short what, void *arg)
+{
+    int rfd = *(int *)arg;
+    char ch;
+    read(rfd, &ch, 1);
+    printf("%s:%d fd = %d, rfd = %d, ch = %c\n", __func__, __LINE__, fd, rfd, ch);
+}
+
+
+static void *thread_event_write(void *arg)
+{
+    int *fd = (int *)arg;
+    int rfd = fd[0];
+    int wfd = fd[1];
+    char ch = 'a';
+    while (1) {
+        write(wfd, &ch, 1);
+        sleep(1);
+        read(rfd, &ch, 1);
+        sleep(1);
+    }
+    return NULL;
+}
+int test_event_write()
+{
+    pthread_t tid;
+    int fds[2];
+    pipe(fds);
+    int wfd = fds[1];
+    int rfd = fds[0];
+    printf("wfd = %d\n", wfd);
+    struct event_base *evbase = event_base_new();
+    struct event *evread = event_new(evbase, rfd, EV_WRITE|EV_PERSIST, on_read, &wfd);
+    event_add(evread, NULL);
+    struct event *evwrite = event_new(evbase, wfd, EV_WRITE|EV_PERSIST, on_write, &rfd);
+    event_add(evwrite, NULL);
+    pthread_create(&tid, NULL, thread_event_write, fds);
+    event_base_loop(evbase, 0);
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
-    test_pipe();
-    test_event_base();
+//    test_pipe();
+//    test_event_base();
+    test_event_write();
     while (1) {
         sleep(10);
     }

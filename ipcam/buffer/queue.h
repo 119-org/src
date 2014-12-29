@@ -16,24 +16,24 @@ struct queue_item {
     int len;
 };
 
-struct queue_ctx {
+struct queue {
     struct list_head head;
     pthread_mutex_t lock;
     int depth;
     int max_depth;
-    int on_write_fd;
-    int on_read_fd;
+    int pipe_wfd;
+    int pipe_rfd;
 };
 
 
 struct queue_item *queue_item_new(void *data, int len);
 void queue_item_free(struct queue_item *item);
 
-struct queue_ctx *queue_new(int max);
-int queue_push(struct queue_ctx *q, struct queue_item *item);
-struct queue_item *queue_pop(struct queue_ctx *q);
-void queue_free(struct queue_ctx *q);
-int queue_depth(struct queue_ctx *q);
+struct queue *queue_new(int max);
+int queue_push(struct queue *q, struct queue_item *item);
+struct queue_item *queue_pop(struct queue *q);
+void queue_free(struct queue *q);
+int queue_depth(struct queue *q);
 
 
 #ifdef __cplusplus

@@ -2,17 +2,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <SDL/SDL.h>
+#include <SDL_thread.h>
 #include <libavformat/avformat.h>
 
-#include "protocol.h"
+#include "display.h"
 #include "common.h"
 #include "debug.h"
 
 const char *wnd_title = "Stream Media Player v0.1";
 
 enum wnd_type {
-    SDL_RGB,
-    SDL_YUV
+    DATA_TYPE_RGB,
+    DATA_TYPE_YUV
 };
 
 struct sdl_rgb_ctx {
@@ -43,13 +44,11 @@ struct sdl_ctx {
     struct sdl_yuv_ctx *yuv;
     SDL_Surface *surface;
     SDL_Event event;
-};
+    SDL_Thread *event_thread;
 
-static void sdl_deinit()
-{
-    SDL_Quit();
-    exit(0);
-}
+    SDL_mutex *mutex;
+    SDL_cond *init_cond;
+};
 
 static int clamp(double x)
 {
@@ -74,6 +73,20 @@ static void yuv2rgb(uint8_t Y, uint8_t Cb, uint8_t Cr, int *ER, int *EG, int *EB
     *ER = clamp(r);
     *EG = clamp(g);
     *EB = clamp(b);
+}
+
+static void rgb_surface_deinit(struct sdl_ctx *c)
+{
+    if (!c->rgb) {
+        return;
+    }
+    if (c->rgb->surface) {
+        SDL_FreeSurface(c->rgb->surface);
+    }
+    if (c->rgb->pixels) {
+        free(c->rgb->pixels);
+    }
+    free(c->rgb);
 }
 
 static int rgb_surface_init(struct sdl_ctx *c)
@@ -147,21 +160,38 @@ static int yuv_surface_update(struct sdl_ctx *c, void *in)
     AVFrame *avfrm = (AVFrame *)in;
     SDL_Rect rect;
     SDL_Overlay *overlay = c->yuv->overlay;
-//    SDL_LockYUVOverlay(overlay);
+    SDL_LockYUVOverlay(overlay);
     overlay->pixels[0] = avfrm->data[0];
     overlay->pixels[2] = avfrm->data[1];
     overlay->pixels[1] = avfrm->data[2];
     overlay->pitches[0] = avfrm->linesize[0];
     overlay->pitches[2] = avfrm->linesize[1];
     overlay->pitches[1] = avfrm->linesize[2];
-//    SDL_UnlockYUVOverlay(overlay);
     rect.x = 0;
     rect.y = 0;
     rect.w = c->width;
     rect.h = c->height;
     SDL_DisplayYUVOverlay(overlay, &rect);
+    SDL_UnlockYUVOverlay(overlay);
 //    SDL_Delay(40);
+
+#if 0
+    SDL_UpdateRect(c->surface,
+                   rect.x, rect.y,
+                   rect.w, rect.h);
+#endif
     return 0;
+}
+
+static void yuv_surface_deinit(struct sdl_ctx *c)
+{
+    if (!c->yuv) {
+        return;
+    }
+    if (c->yuv->overlay) {
+        SDL_FreeYUVOverlay(c->yuv->overlay);
+    }
+    free(c->yuv);
 }
 
 static int yuv_surface_init(struct sdl_ctx *c)
@@ -180,12 +210,9 @@ static int wnd_init(struct sdl_ctx *c)
 {
     int flags = SDL_SWSURFACE;// | SDL_DOUBLEBUF;
     flags |= SDL_RESIZABLE;
-    c->width = 640;
-    c->height = 480;
-
-    if (c->type == SDL_RGB) {
+    if (c->type == DATA_TYPE_RGB) {
         c->bpp = 32;
-    } else if (c->type == SDL_YUV) {
+    } else if (c->type == DATA_TYPE_YUV) {
         c->bpp = 24;
     }
     c->surface = SDL_SetVideoMode(c->width, c->height, c->bpp, flags);
@@ -193,11 +220,89 @@ static int wnd_init(struct sdl_ctx *c)
         printf("SDL: could not set video mode - exiting\n");
         return -1;
     }
-    if (c->type == SDL_RGB) {
+    if (c->type == DATA_TYPE_RGB) {
         rgb_surface_init(c);
-    } else if (c->type == SDL_YUV) {
+    } else if (c->type == DATA_TYPE_YUV) {
         yuv_surface_init(c);
     }
+    return 0;
+}
+
+static void sdl_deinit(struct sdl_ctx *c)
+{
+    if (c->event_thread) {
+        SDL_WaitThread(c->event_thread, NULL);
+    }
+
+    SDL_LockMutex(c->mutex);
+    if (c->type == DATA_TYPE_RGB) {
+        rgb_surface_deinit(c);
+    } else if (c->type == DATA_TYPE_YUV) {
+        yuv_surface_deinit(c);
+    }
+    SDL_UnlockMutex(c->mutex);
+    if (c->mutex) {
+        SDL_DestroyMutex(c->mutex);
+        c->mutex = NULL;
+    }
+    SDL_Quit();
+}
+
+static int event_thread_loop(void *arg)
+{
+    int quit = 0;
+    struct sdl_ctx *c = (struct sdl_ctx *)arg;
+    while (!quit) {
+        int ret;
+        SDL_Event event;
+        ret = SDL_PollEvent(&event);
+        if (ret < 0) {
+            printf("Error when getting SDL event: %s\n", SDL_GetError());
+            continue;
+        }
+        if (ret == 0) {
+            SDL_Delay(10);
+            continue;
+        }
+
+        switch (event.type) {
+        case SDL_KEYDOWN:
+            switch (event.key.keysym.sym) {
+            case SDLK_ESCAPE:
+            case SDLK_q:
+                quit = 1;
+                break;
+            default:
+                break;
+            }
+            break;
+        case SDL_QUIT:
+            quit = 1;
+            break;
+
+        case SDL_VIDEORESIZE:
+            //sdl->window_width  = event.resize.w;
+            //sdl->window_height = event.resize.h;
+            break;
+
+        default:
+            break;
+        }
+    }
+//quit:
+
+    SDL_LockMutex(c->mutex);
+    if (c->type == DATA_TYPE_RGB) {
+        rgb_surface_deinit(c);
+    } else if (c->type == DATA_TYPE_YUV) {
+        yuv_surface_deinit(c);
+    }
+    SDL_UnlockMutex(c->mutex);
+    if (c->mutex) {
+        SDL_DestroyMutex(c->mutex);
+        c->mutex = NULL;
+    }
+    SDL_Quit();
     return 0;
 }
 
@@ -210,92 +315,77 @@ static int sdl_init(struct sdl_ctx *c)
     }
     SDL_WM_SetCaption(wnd_title, NULL);
     if (-1 == wnd_init(c)) {
-        printf("Could not initialize RGB surface\n");
+        printf("wnd_init failed\n");
+        goto fail;
+    }
+    c->mutex = SDL_CreateMutex();
+    if (!c->mutex) {
+        printf("SDL_CreateMutex failed\n");
+        goto fail;
+    }
+
+    c->event_thread = SDL_CreateThread(event_thread_loop, c);
+    if (!c->event_thread) {
+        printf("SDL_CreateThread failed\n");
         goto fail;
     }
     return 0;
 
 fail:
-    sdl_deinit();
+    sdl_deinit(c);
     return -1;
 }
 
-static int sdl_open(struct protocol_ctx *sc, const char *type)
+static int sdl_open(struct display_ctx *sc, const char *type, int width, int height)
 {
     struct sdl_ctx *c = sc->priv;
     if (!strcmp(type, "rgb")) {
-        c->type = SDL_RGB;
+        c->type = DATA_TYPE_RGB;
         printf("use RGB surface\n");
     } else {// if (!strcmp(type, "yuv")) {
-        c->type = SDL_YUV;
+        c->type = DATA_TYPE_YUV;
         printf("use YUV surface\n");
     }
-    sdl_init(c);
-    return 0;
+    c->width = width;
+    c->height = height;
+    int ret = sdl_init(c);
+    return ret;
 }
 
-static int sdl_read(struct protocol_ctx *sc, void *buf, int len)
+static int sdl_read(struct display_ctx *sc, void *buf, int len)
 {
 
     return 0;
 }
 
-static int sdl_write(struct protocol_ctx *sc, void *buf, int len)
+static int sdl_write(struct display_ctx *sc, void *buf, int len)
 {
     struct sdl_ctx *c = sc->priv;
-    if (c->type == SDL_RGB) {
+    if (-1 == SDL_LockMutex(c->mutex)) {
+        //in case mutex be destroyed in sdl event thread
+        return -1;
+    }
+    if (c->type == DATA_TYPE_RGB) {
         rgb_surface_update(c, buf);
-    } else if (c->type == SDL_YUV) {
+    } else if (c->type == DATA_TYPE_YUV) {
         yuv_surface_update(c, buf);
     }
+    SDL_UnlockMutex(c->mutex);
 
     return 0;
 }
 
-static void sdl_close(struct protocol_ctx *sc)
-{
-    sdl_deinit();
-}
-
-static int sdl_poll(struct protocol_ctx *sc)
+static void sdl_close(struct display_ctx *sc)
 {
     struct sdl_ctx *c = sc->priv;
-    return SDL_PollEvent(&c->event);
+    sdl_deinit(c);
 }
 
-static void sdl_handle(struct protocol_ctx *sc)
-{
-    struct sdl_ctx *c = sc->priv;
-    switch (c->event.type) {
-    case SDL_KEYDOWN:
-        switch (c->event.key.keysym.sym) {
-            case SDLK_q:
-                goto quit;
-                break;
-            default:
-                break;
-        }
-        break;
-    case SDL_QUIT:
-        goto quit;
-        break;
-    default:
-        break;
-    }
-    return;
-quit:
-    printf("Quit %s\n", wnd_title);
-    sdl_deinit();
-    exit(0);
-}
-
-struct protocol ipc_sdl_protocol = {
+struct display ipc_sdl_display = {
     .name = "sdl",
     .open = sdl_open,
     .read = sdl_read,
     .write = sdl_write,
     .close = sdl_close,
-    .poll = sdl_poll,
-    .handle = sdl_handle,
     .priv_size = sizeof(struct sdl_ctx),
 };

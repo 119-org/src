@@ -63,7 +63,7 @@ struct codec_ctx *codec_new(const char *name)
         printf("%s codec is not support!\n", name);
         return NULL;
     }
-    printf("use %s codec module\n", p->name);
+    printf("[codec] %s module\n", p->name);
     c->ops = p;
     c->priv = calloc(1, p->priv_size);
     if (!c->priv) {
