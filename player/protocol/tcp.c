@@ -8,7 +8,7 @@
 #include "common.h"
 #include "debug.h"
 
-struct udp_ctx {
+struct tcp_ctx {
     int fd;
     char src_ip[64];
     uint16_t src_port;
@@ -16,9 +16,9 @@ struct udp_ctx {
     uint16_t dst_port;
 };
 
-static int udp_open(struct protocol_ctx *sc, const char *url)
+static int tcp_open(struct protocol_ctx *sc, const char *url)
 {
-    struct udp_ctx *c = sc->priv;
+    struct tcp_ctx *c = sc->priv;
     struct skt_addr addr;
     skt_addr_list_t *tmp;
     char str[MAX_ADDR_STRING];
@@ -27,7 +27,7 @@ static int udp_open(struct protocol_ctx *sc, const char *url)
     char *tag = ":";
     p = strstr(url, tag);
     if (!p) {
-        printf("udp url is invalid\n");
+        printf("tcp url is invalid\n");
         return -1;
     }
     len = p - url;//"127.0.0.1:2333"
@@ -35,7 +35,7 @@ static int udp_open(struct protocol_ctx *sc, const char *url)
     strncpy(c->dst_ip, url, len);
     p += strlen(tag);
     c->dst_port = atoi(p);
-
+    
     if (0 == skt_get_local_list(&tmp, 0)) {
         for (; tmp; tmp = tmp->next) {
             skt_addr_ntop(str, tmp->addr.ip);
@@ -43,52 +43,47 @@ static int udp_open(struct protocol_ctx *sc, const char *url)
         }
     }
     strcpy(c->src_ip, str);
-    c->fd = skt_udp_bind(str, c->dst_port, 0);
-    if (c->fd == -1) {
-        printf("bind %s failed\n", str);
+    struct skt_connection *conn = skt_tcp_connect(str, c->dst_port);
+    if (!conn) {
+        printf("connect %s:%d failed\n", str, c->dst_port);
         return -1;
     }
-    printf("bind fd = %d\n", c->fd);
+    c->fd = conn->fd;
+
     sc->fd = c->fd;
     skt_get_addr_by_fd(&addr, c->fd);
     c->src_port = addr.port;
 //    skt_set_noblk(c->fd, 1);
 //    skt_set_reuse(c->fd, 1);
-    printf("url: \"udp://%s:%d?localport=%d\"\n", c->src_ip, c->src_port, c->dst_port);
     return 0;
 }
 
-static int udp_read(struct protocol_ctx *sc, void *buf, int len)
+static int tcp_read(struct protocol_ctx *sc, void *buf, int len)
 {
-    struct udp_ctx *c = sc->priv;
-    uint32_t ip;
-    uint16_t port;
-    int ret = skt_recvfrom(c->fd, &ip, &port, buf, len);
-    if (ret == -1) {
-        printf("udp_read failed: %s\n", strerror(errno));
-    }
+    struct tcp_ctx *c = sc->priv;
+    int ret = skt_recv(c->fd, buf, len);
     return ret;
 }
 
-static int udp_write(struct protocol_ctx *sc, void *buf, int len)
+static int tcp_write(struct protocol_ctx *sc, void *buf, int len)
 {
-    struct udp_ctx *c = sc->priv;
-    return skt_sendto(c->fd, c->dst_ip, c->dst_port, buf, len);
+    struct tcp_ctx *c = sc->priv;
+    return skt_send(c->fd, buf, len);
 }
 
-static void udp_close(struct protocol_ctx *sc)
+static void tcp_close(struct protocol_ctx *sc)
 {
-    struct udp_ctx *c = sc->priv;
+    struct tcp_ctx *c = sc->priv;
     return skt_close(c->fd);
 }
 
-struct protocol mp_udp_protocol = {
-    .name = "udp",
-    .open = udp_open,
-    .read = udp_read,
-    .write = udp_write,
-    .close = udp_close,
+struct protocol mp_tcp_protocol = {
+    .name = "tcp",
+    .open = tcp_open,
+    .read = tcp_read,
+    .write = tcp_write,
+    .close = tcp_close,
     .poll = NULL,
     .handle = NULL,
-    .priv_size = sizeof(struct udp_ctx),
+    .priv_size = sizeof(struct tcp_ctx),
 };

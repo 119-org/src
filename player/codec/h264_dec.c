@@ -15,8 +15,7 @@
 #include "common.h"
 #include "debug.h"
 
-
-struct avcodec_ctx {
+struct h264dec_ctx {
     int width;
     int height;
     AVCodecContext *avctx;
@@ -25,9 +24,9 @@ struct avcodec_ctx {
     AVFrame *cvt_avfrm;
 };
 
-static int __avcodec_open(struct codec_ctx *cc, int width, int height)
+static int h264dec_open(struct codec_ctx *cc, int width, int height)
 {
-    struct avcodec_ctx *c = cc->priv;
+    struct h264dec_ctx *c = cc->priv;
     int pic_size;
     uint8_t *out_buffer;
     c->ori_avfrm = (AVFrame *)av_mallocz(sizeof(AVFrame));
@@ -71,7 +70,7 @@ static int __avcodec_open(struct codec_ctx *cc, int width, int height)
     return 0;
 }
 
-static void frame_conv(struct avcodec_ctx *c)
+static void frame_conv(struct h264dec_ctx *c)
 {
     struct SwsContext *swsctx;
     swsctx = sws_getContext(c->avctx->width, c->avctx->height, c->avctx->pix_fmt, c->avctx->width, c->avctx->height, PIX_FMT_YUV420P, SWS_BICUBIC, NULL, NULL, NULL);
@@ -79,9 +78,9 @@ static void frame_conv(struct avcodec_ctx *c)
     sws_freeContext(swsctx);
 }
 
-static int avcodec_decode(struct codec_ctx *cc, void *in, int inlen, void **out)
+static int h264dec_decode(struct codec_ctx *cc, void *in, int inlen, void **out)
 {
-    struct avcodec_ctx *c = cc->priv;
+    struct h264dec_ctx *c = cc->priv;
     int got_pic = 0;
     AVPacket avpkt;
     memset(&avpkt, 0, sizeof(AVPacket));
@@ -96,10 +95,10 @@ static int avcodec_decode(struct codec_ctx *cc, void *in, int inlen, void **out)
     return got_pic;
 }
 
-struct codec ipc_avcodec_decoder = {
-    .name = "avcodec",
-    .open = __avcodec_open,
+struct codec mp_h264dec_decoder = {
+    .name = "h264dec",
+    .open = h264dec_open,
     .encode = NULL,
-    .decode = avcodec_decode,
-    .priv_size = sizeof(struct avcodec_ctx),
+    .decode = h264dec_decode,
+    .priv_size = sizeof(struct h264dec_ctx),
 };

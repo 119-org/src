@@ -15,7 +15,6 @@
 #include "yqueue.h"
 #include "agent.h"
 
-#define TEST_DISPLAY 0
 typedef struct ipcam {
     struct agent_ctx *videocap_agent;
     struct agent_ctx *display_agent;
@@ -67,9 +66,9 @@ int main(int argc, char **argv)
     signal(SIGINT, sigterm_handler);
 
     device_register_all();
-    protocol_register_all();
     display_register_all();
     codec_register_all();
+    protocol_register_all();
     agent_register_all();
 
     ipcam_instance = ipcam_init();

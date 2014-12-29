@@ -10,12 +10,12 @@
 #include "codec.h"
 
 #define REGISTER_ENCODER(x) { \
-    extern struct codec ipc_##x##_encoder; \
-    codec_register(&ipc_##x##_encoder, sizeof(ipc_##x##_encoder)); }
+    extern struct codec mp_##x##_encoder; \
+    codec_register(&mp_##x##_encoder, sizeof(mp_##x##_encoder)); }
 
 #define REGISTER_DECODER(x) { \
-    extern struct codec ipc_##x##_decoder; \
-    codec_register(&ipc_##x##_decoder, sizeof(ipc_##x##_decoder)); }
+    extern struct codec mp_##x##_decoder; \
+    codec_register(&mp_##x##_decoder, sizeof(mp_##x##_decoder)); }
 
 static struct codec *first_codec = NULL;
 
@@ -41,7 +41,7 @@ int codec_register_all()
         return -1;
     cdc_registered = 1;
 
-    REGISTER_DECODER(avcodec);
+    REGISTER_DECODER(h264dec);
 
     return 0;
 }
@@ -62,7 +62,7 @@ struct codec_ctx *codec_new(const char *name)
         printf("%s codec is not support!\n", name);
         return NULL;
     }
-    printf("use %s codec module\n", p->name);
+    printf("[codec] %s module\n", p->name);
     c->ops = p;
     c->priv = calloc(1, p->priv_size);
     if (!c->priv) {

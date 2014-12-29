@@ -3,65 +3,37 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include "atomic.h"
-#include "buffer.h"
+#include "queue.h"
 
-void buffer_item_add_ref(struct buffer_item *item)
+struct queue_item *queue_item_new(void *data, int len)
 {
-    atomic_inc(&item->ref);
-}
-
-void buffer_item_sub_ref(struct buffer_item *item)
-{
-    if (0 < atomic_get(&item->ref)) {
-        atomic_dec(&item->ref);
-    }
-}
-
-int buffer_item_get_ref(struct buffer_item *item)
-{
-    return atomic_get(&item->ref);
-}
-
-struct buffer_item *buffer_item_new(void *data, int len)
-{
-    struct buffer_item *item = (struct buffer_item *)calloc(1, sizeof(struct buffer_item));
+    struct queue_item *item = (struct queue_item *)calloc(1, sizeof(struct queue_item));
     if (!item) {
         return NULL;
     }
     item->data = data;
     item->len = len;
-    atomic_set(&item->ref, 0);
     return item;
 }
 
-void buffer_item_free(struct buffer_item *item)
+void queue_item_free(struct queue_item *item)
 {
     if (!item) {
         return;
     }
-    buffer_item_sub_ref(item);
-    int ret = buffer_item_get_ref(item);
-    if (0 != ret) {
-        printf("warning: item is referenced, can't free!\n");
-        return;
-    }
     free(item->data);
     free(item);
-    item = NULL;
 }
 
-
-/************************************/
-struct buffer_ctx *buffer_create(int max)
+struct queue *queue_new(int max)
 {
     int fds[2];
-    struct buffer_ctx *q;
+    struct queue *q;
     if (max < 1) {
-        printf("warning: buffer max depth must > 0\n");
+        printf("warning: queue max depth must > 0\n");
         max = 1;
     }
-    q = (struct buffer_ctx *)calloc(1, sizeof(struct buffer_ctx));
+    q = (struct queue *)calloc(1, sizeof(struct queue));
     if (!q) {
         return NULL;
     }
@@ -80,7 +52,7 @@ struct buffer_ctx *buffer_create(int max)
     return q;
 }
 
-int buffer_push(struct buffer_ctx *q, struct buffer_item *item)
+int queue_push(struct queue *q, struct queue_item *item)
 {
     char notify = '1';
     if (!q || !item) {
@@ -94,12 +66,12 @@ int buffer_push(struct buffer_ctx *q, struct buffer_item *item)
     }
     pthread_mutex_unlock(&q->lock);
     if (q->depth > q->max_depth) {
-        buffer_pop(q);
+        queue_pop(q);
     }
     return 0;
 }
 
-struct buffer_item *buffer_pop(struct buffer_ctx *q)
+struct queue_item *queue_pop(struct queue *q)
 {
     if (!q) {
         return NULL;
@@ -108,9 +80,9 @@ struct buffer_item *buffer_pop(struct buffer_ctx *q)
         return NULL;
     }
     char notify;
-    struct buffer_item *item = NULL;
+    struct queue_item *item = NULL;
     pthread_mutex_lock(&q->lock);
-    item = list_first_entry_or_null(&q->head, struct buffer_item, entry);
+    item = list_first_entry_or_null(&q->head, struct queue_item, entry);
     if (item) {
         list_del(&item->entry);
         --(q->depth);
@@ -122,7 +94,7 @@ struct buffer_item *buffer_pop(struct buffer_ctx *q)
     return item;
 }
 
-int buffer_is_empty(struct buffer_ctx *q)
+int queue_empty(struct queue *q)
 {
     if (!q) {
         return 1;
@@ -130,7 +102,7 @@ int buffer_is_empty(struct buffer_ctx *q)
     return (q->depth == 0);
 }
 
-int buffer_get_depth(struct buffer_ctx *q)
+int queue_depth(struct queue *q)
 {
     if (!q) {
         return 0;
@@ -138,16 +110,16 @@ int buffer_get_depth(struct buffer_ctx *q)
     return q->depth;
 }
 
-void buffer_destroy(struct buffer_ctx *q)
+void queue_free(struct queue *q)
 {
-    struct buffer_item *item, *next;
+    struct queue_item *item, *next;
     if (!q) {
         return;
     }
 
     list_for_each_entry_safe(item, next, &q->head, entry) {
         list_del(&item->entry);
-        buffer_item_free(item);
+        queue_item_free(item);
     }
     pthread_mutex_destroy(&q->lock);
     close(q->pipe_rfd);

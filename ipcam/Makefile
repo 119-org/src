@@ -13,9 +13,9 @@ LDFLAGS_FFMPEG	= `pkg-config --libs libavformat libavutil libavcodec libswscale`
 CFLAGS	:= -g -Wall
 CFLAGS	+= -Werror
 CFLAGS	+= -I$(TOPDIR)
-CFLAGS	+= -I./codecs
-CFLAGS	+= -I./devices
-CFLAGS	+= -I./protocols
+CFLAGS	+= -I./codec
+CFLAGS	+= -I./device
+CFLAGS	+= -I./protocol
 CFLAGS	+= -I./display
 CFLAGS	+= -I./buffer
 CFLAGS	+= -I./agent
@@ -38,24 +38,24 @@ LDFLAGS += $(LDFLAGS_LIBEVENT)
 TGT := test_libevent ipcam 
 
 DEVICE_OBJS := \
-    devices/device.o \
-    devices/v4l2.o \
-    devices/alsa.o
+    device/device.o \
+    device/v4l2.o \
+    device/alsa.o
 
 PROTOCOL_OBJS := \
-    protocols/protocol.o \
-    protocols/udp.o \
-    protocols/tcp.o \
-    protocols/ptcp.o
+    protocol/protocol.o \
+    protocol/udp.o \
+    protocol/tcp.o \
+    protocol/ptcp.o
 
 DISPLAY_OBJS := \
     display/display.o \
     display/sdl.o
 
 CODEC_OBJS := \
-    codecs/codec.o \
-    codecs/x264_enc.o \
-    codecs/avcodec_dec.o
+    codec/codec.o \
+    codec/x264_enc.o \
+    codec/avcodec_dec.o
 
 BUFFER_OBJS := \
     buffer/queue.o \

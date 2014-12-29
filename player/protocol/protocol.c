@@ -9,8 +9,8 @@
 #include "protocol.h"
 
 #define REGISTER_PROTOCOL(x) { \
-    extern struct protocol ipc_##x##_protocol; \
-    protocol_register(&ipc_##x##_protocol, sizeof(ipc_##x##_protocol)); }
+    extern struct protocol mp_##x##_protocol; \
+    protocol_register(&mp_##x##_protocol, sizeof(mp_##x##_protocol)); }
 
 static struct protocol *first_protocol = NULL;
 static int prt_registered = 0;
@@ -37,8 +37,8 @@ int protocol_register_all()
     prt_registered = 1;
 
     REGISTER_PROTOCOL(udp);
+    REGISTER_PROTOCOL(tcp);
     REGISTER_PROTOCOL(ptcp);
-    REGISTER_PROTOCOL(sdl);
 
     return 0;
 }
@@ -60,7 +60,7 @@ struct protocol_ctx *protocol_new(const char *input)
         printf("%s protocol is not support!\n", sc->url.head);
         return NULL;
     }
-    printf("use %s protocol module\n", p->name);
+    printf("[protocol] %s module\n", p->name);
 
     sc->ops = p;
     sc->priv = calloc(1, p->priv_size);
